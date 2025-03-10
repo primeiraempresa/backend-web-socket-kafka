@@ -26,6 +26,7 @@ services:
         - api
     environment:
         DBAAS_MONGODB_ENDPOINT: mongodb://mongodb:27017
+        ENV_AMB: LOCAL
         VERSION: Local version  
 
   # mongodb-seed: # rodar esse container, importa os dados(json) no mongodb local
