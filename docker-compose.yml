@@ -25,24 +25,24 @@ services:
     networks:
         - api
     environment:
-        DBAAS_MONGODB_ENDPOINT: mongodb://mongodb:27017
+        DBAAS_MONGODB_ENDPOINT: mongodb://mongodb:27017/backend-app-marcelo
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
 
-  # mongodb-seed: # rodar esse container, importa os dados(json) no mongodb local
-  #   image: mongo
-  #   container_name: mongodb-seed
-  #   depends_on:
-  #     - mongodb
-  #   volumes:
-  #       - .:/home/node/app
-  #   networks:
-  #     - api
-  #   command:
-  #     - sh
-  #     - -c
-  #     - | 
-  #       mongoimport --uri mongodb://mongodb:27017 --collection users --file home/node/app/src/mocks/user.mock.json --jsonArray
+  mongodb-seed: # rodar esse container, importa os dados(json) no mongodb local
+    image: mongo
+    container_name: mongodb-seed
+    depends_on:
+      - mongodb
+    volumes:
+        - .:/home/node/app
+    networks:
+      - api
+    command:
+      - sh
+      - -c
+      - | 
+        mongoimport --uri mongodb://mongodb:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray
 
 
 networks:

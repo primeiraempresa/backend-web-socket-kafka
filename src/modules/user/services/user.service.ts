@@ -12,9 +12,9 @@ export class UserService {
   async getUsers(): Promise<UsersDocument[]> {
     const users: UsersDocument[] = await this.usersModel
       .find()
-      .populate('profilePic')
+      // .populate('profilePic')
       .exec();
-    if (!users || users.length > 1) {
+    if (!users || users.length < 1) {
       throw new NotFoundException(['nunhum usuário encontrado']);
     }
     return users;
@@ -25,7 +25,7 @@ export class UserService {
     }
     const user = await this.usersModel
       .findById(_id)
-      .populate('profilePic')
+      // .populate('profilePic')
       .exec();
     if (!user) {
       throw new NotFoundException(['usuário não encontrado']);
