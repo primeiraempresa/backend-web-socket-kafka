@@ -14,7 +14,7 @@ async function bootstrap() {
   const configSwagger = new DocumentBuilder()
     .setTitle('API app MArcelo')
     .setDescription('API description')
-    .setVersion(configService.get<string>('VERSION') || '')
+    .setVersion(configService.get<string>('APP_VERSION') || '')
     .addTag('API')
     .build();
   const document = SwaggerModule.createDocument(app, configSwagger);
