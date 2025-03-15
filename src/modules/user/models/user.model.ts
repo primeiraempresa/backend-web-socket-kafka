@@ -1,21 +1,40 @@
-import { Sports } from './sports.model';
-import { Prop, Schema } from '@nestjs/mongoose';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { ObjectId } from 'mongoose';
+import { Sports } from "./sports.model";
+import { Prop, Schema } from "@nestjs/mongoose";
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsStrongPassword,
+} from "class-validator";
+import { ObjectId } from "mongoose";
 @Schema()
 export class Users {
-  @ApiProperty({ required: true })
-  @Prop({ required: true })
-  @IsNotEmpty({ message: 'Nome de usário vazio' })
-  @IsString({ message: 'campo username deve ser uma string' })
+  @ApiProperty({ required: true, uniqueItems: true })
+  @Prop({ required: true, unique: true })
+  @IsNotEmpty()
+  @IsString()
   username: string;
+
+  @ApiProperty({ required: true, uniqueItems: true })
+  @Prop({ required: true, unique: true })
+  @IsNotEmpty()
+  @IsEmail({ allow_display_name: true }, { message: "Invalid email" })
+  @IsString()
+  email: string;
+
+  @ApiProperty({ required: true, uniqueItems: true })
+  @Prop({ required: true, unique: true })
+  @IsStrongPassword({ minLength: 8, minUppercase: 1, minSymbols: 1 })
+  @IsNotEmpty()
+  @IsString()
+  password: string;
 
   @ApiProperty({ required: true })
   @Prop({ required: true })
   esportes: Sports;
 
-  @ApiProperty()
+  @ApiProperty({ default: null })
   //   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: imagem.name, default: null, required: true })
   profilePic: ObjectId | null | string;
 }
