@@ -4,27 +4,27 @@ import { ApiProperty } from "@nestjs/swagger";
 import {
   IsEmail,
   IsNotEmpty,
+  IsObject,
   IsString,
   IsStrongPassword,
 } from "class-validator";
-import { ObjectId } from "mongoose";
 @Schema()
 export class Users {
-  @ApiProperty({ required: true, uniqueItems: true })
-  @Prop({ required: true, unique: true })
+  @ApiProperty({ required: true})
+  @Prop({ required: true })
   @IsNotEmpty()
   @IsString()
   username: string;
 
-  @ApiProperty({ required: true, uniqueItems: true })
-  @Prop({ required: true, unique: true })
+  @ApiProperty({ required: true })
+  @Prop({ required: true })
   @IsNotEmpty()
-  @IsEmail({ allow_display_name: true }, { message: "Invalid email" })
+  @IsEmail({ allow_display_name: true }, { message: "Invalid email. " })
   @IsString()
   email: string;
 
-  @ApiProperty({ required: true, uniqueItems: true })
-  @Prop({ required: true, unique: true })
+  @ApiProperty({ required: true })
+  @Prop({ required: true })
   @IsStrongPassword({ minLength: 8, minUppercase: 1, minSymbols: 1 })
   @IsNotEmpty()
   @IsString()
@@ -32,9 +32,11 @@ export class Users {
 
   @ApiProperty({ required: true })
   @Prop({ required: true })
+  @IsObject()
   esportes: Sports;
 
   @ApiProperty({ default: null })
+  @Prop({ required: false, default: null })
   //   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: imagem.name, default: null, required: true })
-  profilePic: ObjectId | null | string;
+  profilePic: string;
 }
