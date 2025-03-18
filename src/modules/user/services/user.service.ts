@@ -3,6 +3,7 @@ import {
   Logger,
   NotAcceptableException,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Users } from "@user/models/user.model";
@@ -10,6 +11,7 @@ import { UsersDocument } from "@user/schemas/user.schema";
 import { Model, isValidObjectId } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
+import { UserLogin } from "@user/dto/user_login.dto";
 @Injectable()
 export class UserService {
   constructor(
@@ -44,16 +46,13 @@ export class UserService {
     const { password } = body;
     const encryptedPassowrd = await bcrypt.hash(password, 10);
     body.password = encryptedPassowrd;
-    Logger.debug(body);
     return await this.usersModel.create(body);
   }
   async updateUser(
     body: UsersDto,
     id: string,
   ): Promise<UsersDocument | unknown> {
-    console.log(body);
     const user = await this.getUserByID(id);
-    console.log(user)
     if (body?.email && body.email !== user.email) {
       await this.emailExist(body?.email);
     }
@@ -62,21 +61,49 @@ export class UserService {
     }
     return await this.usersModel
       .findByIdAndUpdate(user._id, body, {
-        new: true, // Retorna o documento atualizado
-        runValidators: true, // Garante que as validações do Mongoose sejam aplicadas
+        new: true,
+        runValidators: true,
       })
       .exec();
   }
+  async loginUser(userLogin: UserLogin): Promise<UsersDocument> {
+    const user = await this.findUser(userLogin.user);
+    if (!user) {
+      throw new UnauthorizedException(["username/email ou senha incorreto. "]);
+    }
+    const isPasswordValid = bcrypt.compareSync(
+      userLogin.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException(["username/email ou senha incorreto."]);
+    }
+    return user;
+  }
+
+  async deleteUser(userLogin: UserLogin, _id: string) {
+    await this.loginUser(userLogin);
+    return await this.usersModel.findOneAndDelete({ _id });
+  }
+  private async findUser(user: string): Promise<UsersDocument | null> {
+    const userFind = await this.usersModel
+      .findOne({
+        $or: [{ email: user }, { username: user }],
+      })
+      .exec();
+    return userFind;
+  }
 
   private async emailExist(email: string): Promise<boolean> {
-    const existingUserByEmail = await this.usersModel.findOne({ email }).exec();
+    const existingUserByEmail = await this.findUser(email);
     if (existingUserByEmail) {
       throw new NotAcceptableException(["Email already registered. "]);
     }
     return false;
   }
+
   private async userNameExist(username: string): Promise<boolean> {
-    const existingUser = await this.usersModel.findOne({ username }).exec();
+    const existingUser = await this.findUser(username);
     if (existingUser) {
       throw new NotAcceptableException(["username already registered. "]);
     }

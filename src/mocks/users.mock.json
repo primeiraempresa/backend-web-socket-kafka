@@ -1,47 +1,50 @@
 [
-    {
-        "_id": {
-          "$oid": "67d21a67b5aed094d5c435e5"
-        },
-        "email": "renanfigueoli@outlook.com",
-        "username": "Renan",
-        "esportes": {
-          "academia": true,
-          "caminhada": false,
-          "crossfit": false,
-          "futebol": false,
-          "futevolei": false
-        },
-        "profilePic": null
-      },
-      {
-        "_id": {
-          "$oid": "67d21a76b5aed094d5c435e6"
-        },
-        "email": "teste@outlook.com",
-        "username": "Teste",
-        "esportes": {
-          "academia": true,
-          "caminhada": false,
-          "crossfit": false,
-          "futebol": true,
-          "futevolei": false
-        },
-        "profilePic": null
-      },
-      {
-        "_id": {
-          "$oid": "67d21a67b5aed094d5c435e3"
-        },
-        "email": "marcelo@teste.com",
-        "username": "Marcelo",
-        "esportes": {
-          "academia": true,
-          "caminhada": false,
-          "crossfit": false,
-          "futebol": false,
-          "futevolei": false
-        },
-        "profilePic": null
-      }
+  {
+    "_id": {
+      "$oid": "67d21a67b5aed094d5c435e5"
+    },
+    "email": "renanfigueoli@outlook.com",
+    "username": "Renan",
+    "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
+    "esportes": {
+      "academia": true,
+      "caminhada": false,
+      "crossfit": false,
+      "futebol": false,
+      "futevolei": false
+    },
+    "profilePic": null
+  },
+  {
+    "_id": {
+      "$oid": "67d21a76b5aed094d5c435e6"
+    },
+    "email": "teste@outlook.com",
+    "username": "Teste",
+    "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
+    "esportes": {
+      "academia": true,
+      "caminhada": false,
+      "crossfit": false,
+      "futebol": true,
+      "futevolei": false
+    },
+    "profilePic": null
+  },
+  {
+    "_id": {
+      "$oid": "67d21a67b5aed094d5c435e3"
+    },
+    "email": "marcelo@teste.com",
+    "username": "Marcelo",
+    "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
+    "esportes": {
+      "academia": true,
+      "caminhada": false,
+      "crossfit": false,
+      "futebol": false,
+      "futevolei": false
+    },
+    "profilePic": null
+  }
 ]

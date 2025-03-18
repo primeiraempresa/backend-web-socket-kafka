@@ -1,7 +1,6 @@
 import { Prop } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Sports } from "@user/models/sports.model";
-import { Users } from "@user/models/user.model";
 import { IsEmail, IsObject, IsString } from "class-validator";
 import { ObjectId } from "mongoose";
 export class UsersDto  {
