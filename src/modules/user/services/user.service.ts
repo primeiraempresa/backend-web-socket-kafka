@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   Logger,
   NotAcceptableException,
@@ -12,33 +13,48 @@ import { Model, isValidObjectId } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
+import { Cache } from "cache-manager";
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(Users.name) private readonly usersModel: Model<UsersDocument>,
+    @Inject("CACHE_MANAGER") private cacheManager: Cache,
   ) {}
+  private cacheKeyUsers = "all_users";
   async getUsers(): Promise<UsersDocument[]> {
-    const users: UsersDocument[] = await this.usersModel
-      .find()
-      // .populate('profilePic')
-      .exec();
-    if (!users || users.length < 1) {
-      throw new NotFoundException(["no users found"]);
+    const users_cache: UsersDocument[] | null = await this.cacheManager.get<
+      UsersDocument[]
+    >(this.cacheKeyUsers);
+    if (!users_cache) {
+      const users: UsersDocument[] = await this.usersModel
+        .find()
+        // .populate('profilePic')
+        .exec();
+      if (!users || users.length < 1) {
+        throw new NotFoundException(["no users found"]);
+      }
+      return this.cacheManager.set<UsersDocument[]>(this.cacheKeyUsers, users);
     }
-    return users;
+    return users_cache;
   }
   async getUserByID(_id: string): Promise<UsersDocument> {
     if (!isValidObjectId(_id)) {
       throw new NotFoundException(["user not found"]);
     }
-    const user = await this.usersModel
-      .findById(_id)
-      // .populate('profilePic')
-      .exec();
-    if (!user) {
-      throw new NotFoundException(["user not found"]);
+    const cacheKey = `user_${_id}`;
+    const users_cache: UsersDocument | null =
+      await this.cacheManager.get<UsersDocument>(cacheKey);
+    if (!users_cache) {
+      const user = await this.usersModel
+        .findById(_id)
+        // .populate('profilePic')
+        .exec();
+      if (!user) {
+        throw new NotFoundException(["user not found"]);
+      }
+      return await this.cacheManager.set<UsersDocument>(cacheKey, user);
     }
-    return user;
+    return users_cache;
   }
   async registerUser(body: Users): Promise<UsersDocument> {
     await this.emailExist(body.email);
@@ -46,19 +62,23 @@ export class UserService {
     const { password } = body;
     const encryptedPassowrd = await bcrypt.hash(password, 10);
     body.password = encryptedPassowrd;
+    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel.create(body);
   }
   async updateUser(
     body: UsersDto,
-    id: string,
+    _id: string,
   ): Promise<UsersDocument | unknown> {
-    const user = await this.getUserByID(id);
+    const cacheKey = `user_${_id}`;
+    const user = await this.getUserByID(_id);
     if (body?.email && body.email !== user.email) {
       await this.emailExist(body?.email);
     }
     if (body?.username && body.username !== user.username) {
       await this.userNameExist(body?.username);
     }
+    await this.cacheManager.del(cacheKey);
+    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel
       .findByIdAndUpdate(user._id, body, {
         new: true,
@@ -83,6 +103,9 @@ export class UserService {
 
   async deleteUser(userLogin: UserLogin, _id: string) {
     await this.loginUser(userLogin);
+    const cacheKey = `user_${_id}`;
+    await this.cacheManager.del(cacheKey);
+    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel.findOneAndDelete({ _id });
   }
   private async findUser(user: string): Promise<UsersDocument | null> {
