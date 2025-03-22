@@ -6,7 +6,9 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { UsersDto } from "@user/dto/users.dto";
@@ -15,6 +17,7 @@ import { UsersDocument } from "@user/schemas/user.schema";
 import { UserService } from "@user/services/user.service";
 
 @Controller("user")
+@UseGuards(AuthGuard("jwt"))
 @ApiTags("Users")
 export class UserController {
   constructor(private readonly users_service: UserService) {}

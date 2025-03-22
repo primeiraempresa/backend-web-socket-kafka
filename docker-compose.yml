@@ -26,6 +26,7 @@ services:
         - api
     environment:
         DBAAS_MONGODB_ENDPOINT: mongodb://mongodb:27017/backend-app-marcelo
+        AUTH_URL: "http://localhost:${PORT}/api/auth/"
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
 
