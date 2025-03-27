@@ -6,6 +6,7 @@ import winstonConfig from '@config/winston.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { configService } from '@config/configService';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     }),
     WinstonModule.forRoot(winstonConfig),
     UserModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
