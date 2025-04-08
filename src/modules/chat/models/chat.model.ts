@@ -1,6 +1,7 @@
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString } from "class-validator";
+import mongoose from "mongoose";
 
 @Schema()
 export class Chat {
@@ -14,8 +15,13 @@ export class Chat {
   @Prop({ required: true })
   @IsNotEmpty()
   @IsString()
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Chat.name,
+    required: true, 
+  })
   sender: string;
-  
+
   @Prop({ required: true, default: new Date().toISOString() })
   timestamp: string;
 }
