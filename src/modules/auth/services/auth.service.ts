@@ -7,8 +7,9 @@ export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
   private access_token: {
     access_token: string;
+    token_type: string;
   };
-  private async setAccessToken(token: { access_token: string }) {
+  private async setAccessToken(token: { access_token: string,   token_type: string; }) {
     this.access_token = token;
   }
   async getAccessToken() {
@@ -40,14 +41,16 @@ export class AuthService {
         (hex: string, c) => hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
         "",
       );
-      console.log(hash)
     return hash == userId;
   }
 
-  async generateToken(user: { id: string }): Promise<{ access_token: string }> {
+  async generateToken(user: {
+    id: string;
+  }): Promise<{ access_token: string; token_type: string }> {
     const payload = { sub: user.id };
     await this.setAccessToken({
       access_token: this.jwtService.sign(payload),
+      token_type: "bearer",
     });
     return await this.getAccessToken();
   }

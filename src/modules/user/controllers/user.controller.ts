@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOAuth2, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { UsersDto } from "@user/dto/users.dto";
 import { Users } from "@user/models/user.model";
@@ -18,6 +18,7 @@ import { UserService } from "@user/services/user.service";
 
 @Controller("user")
 @UseGuards(AuthGuard("jwt"))
+@ApiOAuth2(['read', 'write'], 'oauth2') 
 @ApiTags("Users")
 export class UserController {
   constructor(private readonly users_service: UserService) {}
