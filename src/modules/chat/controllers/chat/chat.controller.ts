@@ -1,8 +1,11 @@
-import { Controller, Get, Injectable, Param, Query } from "@nestjs/common";
+import { Controller, Get, Injectable, Param, Query, UseGuards } from "@nestjs/common";
 import { ChatService } from "../../services/chat/chat.service";
-import { ApiQuery, ApiTags } from "@nestjs/swagger";
+import { ApiOAuth2, ApiQuery, ApiTags } from "@nestjs/swagger";
+import { AuthGuard } from "@nestjs/passport";
 
 @Controller("chat")
+@UseGuards(AuthGuard("jwt"))
+@ApiOAuth2(['read', 'write'], 'oauth2') 
 @ApiTags("Chat")
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}

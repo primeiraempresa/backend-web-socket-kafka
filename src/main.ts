@@ -20,7 +20,10 @@ async function bootstrap() {
       flows: {
         password: {
           tokenUrl: configService.get<string>("AUTH_URL"),
-          scopes: {},
+          scopes: {
+            read: "read",
+            write: "write",
+          },
         },
       },
     })
