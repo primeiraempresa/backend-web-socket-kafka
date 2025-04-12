@@ -1,6 +1,6 @@
 import { SchemaFactory } from "@nestjs/mongoose";
-import { Chat } from "../models/chat.model";
 import { HydratedDocument } from "mongoose";
+import { Chats } from "../models/chat.model";
 
-export const Chat_schema = SchemaFactory.createForClass(Chat);
-export type ChatDocument = HydratedDocument<Chat>;
+export const Chat_schema = SchemaFactory.createForClass(Chats);
+export type ChatDocument = HydratedDocument<Chats>;

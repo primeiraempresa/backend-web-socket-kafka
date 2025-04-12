@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  mongodb:
+  mongodb-backend-app-marcelo:
     image: mongo
-    container_name: mongodb
+    container_name: mongodb-backend-app-marcelo
     ports:
       - "27017:27017"
     volumes:
@@ -16,7 +16,7 @@ services:
   app:
     build: .
     depends_on:
-      - mongodb
+      - mongodb-backend-app-marcelo
     entrypoint: .docker/entrypoint.sh
     ports:
       - "${PORT}:${PORT}"
@@ -25,7 +25,7 @@ services:
     networks:
         - api
     environment:
-        DBAAS_MONGODB_ENDPOINT: mongodb://mongodb:27017/backend-app-marcelo
+        DBAAS_MONGODB_ENDPOINT: mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
 
@@ -33,17 +33,21 @@ services:
     image: mongo
     container_name: mongodb-seed
     depends_on:
-      - mongodb
+      - mongodb-backend-app-marcelo
     volumes:
         - .:/home/node/app
     networks:
       - api
+    attach: true
     command:
       - sh
       - -c
       # password=Teste@1234, campo password encriptado para testes 
       - | 
-        mongoimport --uri mongodb://mongodb:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray &&
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray
+        
 
 
 networks:

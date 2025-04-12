@@ -1,27 +1,20 @@
 import { Prop, Schema } from "@nestjs/mongoose";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
 import mongoose from "mongoose";
+import { Users } from "@user/models/user.model";
+import { IsNotEmpty, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 @Schema()
-export class Chat {
-  @ApiProperty({ required: true, default: "Olá !" })
-  @Prop({ required: true })
-  @IsNotEmpty()
-  @IsString()
-  message: string;
-
-  @ApiProperty({ required: true, default: "_id of user" })
-  @Prop({ required: true })
-  @IsNotEmpty()
-  @IsString()
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: Chat.name,
-    required: true, 
+export class Chats {
+  @ApiProperty({
+    required: true,
+    default: ["67d21a67b5aed094d5c435e5", "67d21a67b5aed094d5c435e3"],
+    description: "Array of users ids",
   })
-  sender: string;
-
-  @Prop({ required: true, default: new Date().toISOString() })
-  timestamp: string;
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: Users.name }],
+    required: true,
+  })
+  @IsNotEmpty()
+  chatters: [string];
 }
