@@ -1,5 +1,4 @@
 import { HydratedDocument } from "mongoose";
-import { Chats } from "./chat.model";
 import { Chat_conversation } from "./chat_conversation.model";
 
 export class ChatPagination {

@@ -85,16 +85,18 @@ export class ChatService {
     if (userIds && !this.commonService.validateArryByMongoIDs(userIds)) {
       throw new BadRequestException(["invalid users ids"]);
     }
-    const newChat = await this.chatModel.findOne({
-      $or: [
-        {
-          chatters: {
-            $all: userIds,
+    const newChat = await this.chatModel
+      .findOne({
+        $or: [
+          {
+            chatters: {
+              $all: userIds,
+            },
           },
-        },
-        { _id },
-      ],
-    }).populate("chatters");
+          { _id },
+        ],
+      })
+      .populate("chatters");
     if (!newChat) {
       throw new NotFoundException(["chat not found"]);
     }
@@ -115,7 +117,9 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${chatId}`,
     );
-    const findById = await messageModel.findById(message_id).populate("sender");
+    const findById = await messageModel
+      .findOne({ _id: message_id })
+      .populate("sender");
     if (!findById) {
       throw new NotFoundException(["message not found"]);
     }
