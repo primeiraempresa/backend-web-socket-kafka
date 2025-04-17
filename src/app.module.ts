@@ -9,6 +9,7 @@ import { CacheModule } from "@nestjs/cache-manager";
 import { AuthModule } from "./modules/auth/auth.module";
 import { JwtModule } from "@nestjs/jwt";
 import { ChatModule } from "./modules/chat/chat.module";
+import { CommonModule } from './modules/common/common.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ChatModule } from "./modules/chat/chat.module";
     UserModule,
     AuthModule,
     ChatModule,
+    CommonModule,
   ],
 })
 export class AppModule {}

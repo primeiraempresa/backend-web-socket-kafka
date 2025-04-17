@@ -2,7 +2,8 @@ import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Users } from "@user/models/user.model";
 import { IsNotEmpty, IsString } from "class-validator";
-import mongoose, { HydratedDocument } from "mongoose";
+import mongoose from "mongoose";
+import { IsObjectId } from "src/modules/common/validations/IsObjctId.validation";
 
 @Schema()
 export class Chat_conversation {
@@ -19,9 +20,11 @@ export class Chat_conversation {
     type: mongoose.Schema.Types.ObjectId,
     ref: Users.name,
     required: true,
+    index: true,
   })
-  sender: string;
+  @IsObjectId()
+  sender: mongoose.Types.ObjectId;
 
-  @Prop({ required: true, default: new Date().toISOString() })
+  @Prop({ required: true, default: new Date().toISOString(), index: -1 })
   createdAt: Date;
 }

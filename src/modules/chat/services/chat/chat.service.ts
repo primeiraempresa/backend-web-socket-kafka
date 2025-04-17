@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { ChatDocument } from "../../schemas/chat.schema";
 import { Connection, Model } from "mongoose";
@@ -9,12 +13,14 @@ import {
   ChatConversationSchema,
 } from "../../schemas/chat_conversation.schema";
 import { Chat_conversation } from "../../models/chat_conversation.model";
+import { CommonService } from "src/modules/common/services/common.service";
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Chats.name) private readonly chatModel: Model<ChatDocument>,
     @InjectConnection() private readonly connection: Connection,
+    private readonly commonService: CommonService,
   ) {}
   async createChat(userIds: string[]): Promise<ChatDocument> {
     const newChat: ChatDocument = await this.chatModel.create({
@@ -68,5 +74,51 @@ export class ChatService {
       currentPage: page,
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
+  }
+  async getChatByUsersIds(
+    userIds?: string[],
+    _id?: string,
+  ): Promise<ChatDocument> {
+    if (_id && !this.commonService.validateMongoID(_id)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
+    if (userIds && !this.commonService.validateArryByMongoIDs(userIds)) {
+      throw new BadRequestException(["invalid users ids"]);
+    }
+    const newChat = await this.chatModel.findOne({
+      $or: [
+        {
+          chatters: {
+            $all: userIds,
+          },
+        },
+        { _id },
+      ],
+    }).populate("chatters");
+    if (!newChat) {
+      throw new NotFoundException(["chat not found"]);
+    }
+    return newChat;
+  }
+  async getMessageById(
+    chatId: string,
+    message_id: string,
+  ): Promise<ChatConversationDocument> {
+    if (!this.commonService.validateMongoID(message_id)) {
+      throw new BadRequestException(["invalid message id"]);
+    }
+    if (!this.commonService.validateMongoID(chatId)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
+    const messageModel: Model<Chat_conversation> = this.connection.model(
+      `ChatMessage_${chatId}`,
+      ChatConversationSchema,
+      `ChatMessage_${chatId}`,
+    );
+    const findById = await messageModel.findById(message_id).populate("sender");
+    if (!findById) {
+      throw new NotFoundException(["message not found"]);
+    }
+    return findById;
   }
 }

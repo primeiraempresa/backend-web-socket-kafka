@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { Users } from "@user/models/user.model";
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { StringsInArray } from "../validations/stringsInArray.validation";
+import { IsArryByObjectIds } from "src/modules/common/validations/IsArrayByObjectIds.validation";
 
 @Schema()
 export class Chats {
@@ -15,11 +15,11 @@ export class Chats {
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: Users.name }],
     required: true,
+    index: true,
   })
   @IsArray()
   @IsNotEmpty()
-  @IsNotEmpty()
   @ArrayNotEmpty()
-  @StringsInArray()
-  chatters: [string];
+  @IsArryByObjectIds()
+  chatters: mongoose.Types.ObjectId[];
 }
