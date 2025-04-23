@@ -13,7 +13,8 @@ import {
   ChatConversationSchema,
 } from "../../schemas/chat_conversation.schema";
 import { Chat_conversation } from "../../models/chat_conversation.model";
-import { CommonService } from "src/modules/common/services/common.service";
+import { CommonService } from "@common/services/common.service";
+import { Chat_conversation_DTO } from "../../dto/chat_conversation.dto";
 
 @Injectable()
 export class ChatService {
@@ -124,5 +125,68 @@ export class ChatService {
       throw new NotFoundException(["message not found"]);
     }
     return findById;
+  }
+  async updateMessageById(
+    chatId: string,
+    message_id: string,
+    body: Chat_conversation_DTO,
+  ): Promise<ChatConversationDocument> {
+    console.log(body);
+    if (!this.commonService.validateMongoID(message_id)) {
+      throw new BadRequestException(["invalid message id"]);
+    }
+    if (!this.commonService.validateMongoID(chatId)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
+    const messageModel: Model<Chat_conversation> = this.connection.model(
+      `ChatMessage_${chatId}`,
+      ChatConversationSchema,
+      `ChatMessage_${chatId}`,
+    );
+    const updateMessageById = await messageModel
+      .findByIdAndUpdate(message_id, body, {
+        new: true,
+        runValidators: true,
+      })
+      .exec();
+    if (!updateMessageById) {
+      throw new NotFoundException(["message not found"]);
+    }
+    return updateMessageById;
+  }
+  async deleteMessageById(
+    chatId: string,
+    message_id: string,
+  ): Promise<ChatConversationDocument> {
+    if (!this.commonService.validateMongoID(message_id)) {
+      throw new BadRequestException(["invalid message id"]);
+    }
+    if (!this.commonService.validateMongoID(chatId)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
+    const messageModel: Model<Chat_conversation> = this.connection.model(
+      `ChatMessage_${chatId}`,
+      ChatConversationSchema,
+      `ChatMessage_${chatId}`,
+    );
+    const deleteMessageById = await messageModel
+      .findByIdAndDelete(message_id)
+      .exec();
+    if (!deleteMessageById) {
+      throw new NotFoundException(["message not found"]);
+    }
+    return deleteMessageById;
+  }
+  async deleteChatById(_id: string): Promise<ChatDocument> {
+    if (!this.commonService.validateMongoID(_id)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
+    const deleteChatById = await this.chatModel.findByIdAndDelete(_id);
+    if (!deleteChatById) {
+      throw new NotFoundException(["chat not found"]);
+    }
+    const collectionName = deleteChatById._id.toString();
+    await this.connection.dropCollection(`ChatMessage_${collectionName}`);
+    return deleteChatById;
   }
 }

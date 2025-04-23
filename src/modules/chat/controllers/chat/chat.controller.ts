@@ -1,8 +1,11 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
   Injectable,
   Param,
+  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -10,6 +13,9 @@ import { ChatService } from "../../services/chat/chat.service";
 import { ApiOAuth2, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "@nestjs/passport";
 import { ChatConversationDocument } from "../../schemas/chat_conversation.schema";
+import { ChatDocument } from "../../schemas/chat.schema";
+import { Chat_conversation } from "../../models/chat_conversation.model";
+import { Chat_conversation_DTO } from "../../dto/chat_conversation.dto";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -68,5 +74,26 @@ export class ChatController {
     @Param("messageId") messageId: string,
   ): Promise<ChatConversationDocument> {
     return await this.chatService.getMessageById(chatId, messageId);
+  }
+  @Put(":chatId/messages/:messageId")
+  async updateMessage(
+    @Param("chatId") chatId: string,
+    @Param("messageId") messageId: string,
+    @Body() body: Chat_conversation_DTO,
+  ): Promise<ChatConversationDocument> {
+    return await this.chatService.updateMessageById(chatId, messageId, body);
+  }
+  @Delete(":chatId/messages/:messageId")
+  async deleteMessage(
+    @Param("chatId") chatId: string,
+    @Param("messageId") messageId: string,
+  ): Promise<ChatConversationDocument> {
+    return await this.chatService.deleteMessageById(chatId, messageId);
+  }
+  @Delete(":chatId")
+  async deleteChat(
+    @Param("chatId") chatId: string,
+  ): Promise<ChatDocument> {
+    return await this.chatService.deleteChatById(chatId);
   }
 }
