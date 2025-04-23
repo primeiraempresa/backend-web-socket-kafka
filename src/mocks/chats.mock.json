@@ -1,11 +1,10 @@
 [
     {
-        "_id": {
-            "$oid": "67f9f61c571627cad4f95818"
-        },
-        "chatters": [
-            "67d21a67b5aed094d5c435e5",
-            "67d21a67b5aed094d5c435e3"
-        ]
+      "_id": { "$oid": "67f9f61c571627cad4f95818" },
+      "chatters": [
+        { "$oid": "67d21a67b5aed094d5c435e5" },
+        { "$oid": "67d21a67b5aed094d5c435e3" }
+      ]
     }
-]
+  ]
+  

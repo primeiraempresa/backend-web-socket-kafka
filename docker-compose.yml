@@ -30,9 +30,9 @@ services:
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
 
-  mongodb-seed: # rodar esse container, importa os dados(json) no mongodb local
+  mongodb-seed-backend-app-marcelo: # rodar esse container, importa os dados(json) no mongodb local
     image: mongo
-    container_name: mongodb-seed
+    container_name: mongodb-seed-backend-app-marcelo
     depends_on:
       - mongodb-backend-app-marcelo
     volumes:
@@ -43,14 +43,11 @@ services:
     command:
       - sh
       - -c
-      # password=Teste@1234, campo password encriptado para testes 
       - | 
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray
         
-
-
 networks:
   api:
     driver: bridge

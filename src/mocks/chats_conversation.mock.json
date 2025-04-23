@@ -4,7 +4,9 @@
             "$oid": "67f9f62b1653f01929c20913"
         },
         "message": "Olá!!\n\nComo você está?\n\nEstou aqui para ajudar com qualquer dúvida ou questão que você tenha.\n\nAguardo seu retorno!\n",
-        "sender": "67d21a67b5aed094d5c435e5",
+        "sender": {
+            "$oid": "67d21a67b5aed094d5c435e5"
+        },
         "createdAt": "2022-08-26T03:00:00.000Z"
     },
     {
@@ -12,7 +14,9 @@
             "$oid": "67f9f63d94cbb60e81e35d30"
         },
         "message": "Olá!!sim e vc?",
-        "sender": "67d21a67b5aed094d5c435e3",
+        "sender": {
+            "$oid": "67d21a67b5aed094d5c435e3"
+        },
         "createdAt": "2022-08-27T03:00:00.000Z"
     }
 ]

@@ -11,25 +11,32 @@ async function bootstrap() {
   app.enableCors();
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
   app.setGlobalPrefix("/api");
-  console.log(configService.get<string>("AUTH_URL"))
   const configSwagger = new DocumentBuilder()
     .setTitle("API app Marcelo")
     .setDescription("API description")
     .setVersion(configService.get<string>("APP_VERSION") || "")
     .addOAuth2({
       type: "oauth2",
-      bearerFormat: "JWT",
       flows: {
         password: {
-          authorizationUrl: configService.get<string>("AUTH_URL"),
           tokenUrl: configService.get<string>("AUTH_URL"),
-          scopes: {},
+          scopes: {
+            read: "read",
+            write: "write",
+          },
         },
       },
     })
     .build();
   const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup("swagger", app, document);
+  SwaggerModule.setup("swagger", app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      initOAuth: {
+        appName: "API app Marcelo. ",
+      },
+    },
+  });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   await app.listen(configService.get<number>("PORT") ?? 3000);
   logger.debug(`sever on in ${await app.getUrl()}`);
