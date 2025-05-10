@@ -23,17 +23,16 @@ export class UserService {
   ) {}
   async getUsers(page: number, limit: number): Promise<UserPagination> {
     const skip = (page - 1) * limit;
-    const [items, totalItems] =
-      await Promise.all[
-        (await this.usersModel
-          .find()
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          // .populate("profilePic")
-          .exec(),
-        await this.usersModel.countDocuments())
-      ];
+    const [items, totalItems] = await Promise.all([
+      await this.usersModel
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        // .populate("profilePic")
+        .exec(),
+      await this.usersModel.countDocuments(),
+    ]);
     if (!items || items.length < 1) {
       throw new NotFoundException(["no users found"]);
     }

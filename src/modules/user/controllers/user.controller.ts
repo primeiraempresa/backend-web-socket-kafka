@@ -6,26 +6,52 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { ApiBearerAuth, ApiOAuth2, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOAuth2,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { UsersDto } from "@user/dto/users.dto";
 import { Users } from "@user/models/user.model";
+import { UserPagination } from "@user/models/userPagination.model";
 import { UsersDocument } from "@user/schemas/user.schema";
 import { UserService } from "@user/services/user.service";
 
 @Controller("user")
 @UseGuards(AuthGuard("jwt"))
-@ApiOAuth2(['read', 'write'], 'oauth2') 
+@ApiOAuth2(["read", "write"], "oauth2")
 @ApiTags("Users")
 export class UserController {
   constructor(private readonly users_service: UserService) {}
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number for pagination",
+  })
+  @ApiQuery({
+    name: "perPage",
+    required: false,
+    type: Number,
+    description: "Number of items per page",
+  })
   @Get()
   @ApiOperation({ summary: "list all users" })
-  async GetUsers(): Promise<UsersDocument[]> {
-    return await this.users_service.getUsers();
+  async GetUsers(
+    @Query("page") page?: number,
+    @Query("perPage") perPage?: number,
+  ): Promise<UserPagination> {
+    return await this.users_service.getUsers(
+      page ? parseInt(page.toString()) : 1,
+      perPage ? parseInt(perPage.toString()) : 10,
+    );
   }
 
   @Get("/:id")
