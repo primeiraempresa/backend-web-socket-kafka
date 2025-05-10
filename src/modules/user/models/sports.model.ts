@@ -1,30 +1,30 @@
-import { Prop } from '@nestjs/mongoose';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean } from 'class-validator';
+import { Prop } from "@nestjs/mongoose";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsBoolean } from "class-validator";
 
 export class Sports {
   @ApiProperty({ default: false })
-  @IsBoolean({ message: 'campo academia deve ser Boolean' })
-  @Prop({ required: true, default: false })
+  @IsBoolean({ message: "campo academia deve ser Boolean" })
+  @Prop({ required: true, default: false, index: true })
   academia: boolean;
 
   @ApiProperty({ default: false })
-  @IsBoolean({ message: 'campo caminhada deve ser Boolean' })
-  @Prop({ required: true, default: false })
+  @IsBoolean({ message: "campo caminhada deve ser Boolean" })
+  @Prop({ required: true, default: false, index: true })
   caminhada: boolean;
 
   @ApiProperty({ default: false })
-  @IsBoolean({ message: 'campo crossfit deve ser Boolean' })
-  @Prop({ required: true, default: false })
+  @IsBoolean({ message: "campo crossfit deve ser Boolean" })
+  @Prop({ required: true, default: false, index: true })
   crossfit: boolean;
 
   @ApiProperty({ default: false })
-  @IsBoolean({ message: 'campo futebol deve ser Boolean' })
-  @Prop({ required: true, default: false })
+  @IsBoolean({ message: "campo futebol deve ser Boolean" })
+  @Prop({ required: true, default: false, index: true })
   futebol: boolean;
 
   @ApiProperty({ default: false })
-  @IsBoolean({ message: 'campo futevolei deve ser Boolean' })
-  @Prop({ required: true, default: false })
+  @IsBoolean({ message: "campo futevolei deve ser Boolean" })
+  @Prop({ required: true, default: false, index: true })
   futevolei: boolean;
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -14,28 +15,35 @@ import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { Cache } from "cache-manager";
+import { UserPagination } from "@user/models/userPagination.model";
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(Users.name) private readonly usersModel: Model<UsersDocument>,
     @Inject("CACHE_MANAGER") private cacheManager: Cache,
   ) {}
-  private cacheKeyUsers = "all_users";
-  async getUsers(): Promise<UsersDocument[]> {
-    const users_cache: UsersDocument[] | null = await this.cacheManager.get<
-      UsersDocument[]
-    >(this.cacheKeyUsers);
-    if (!users_cache) {
-      const users: UsersDocument[] = await this.usersModel
+  async getUsers(page: number, limit: number): Promise<UserPagination> {
+    const skip = (page - 1) * limit;
+    const [items, totalItems] = await Promise.all([
+      await this.usersModel
         .find()
-        // .populate('profilePic')
-        .exec();
-      if (!users || users.length < 1) {
-        throw new NotFoundException(["no users found"]);
-      }
-      return this.cacheManager.set<UsersDocument[]>(this.cacheKeyUsers, users);
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        // .populate("profilePic")
+        .exec(),
+      await this.usersModel.countDocuments(),
+    ]);
+    if (!items || items.length < 1) {
+      throw new NotFoundException(["no users found"]);
     }
-    return users_cache;
+    return {
+      items,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+      nextPage: page * limit < totalItems ? page + 1 : null,
+    };
   }
   async getUserByID(_id: string): Promise<UsersDocument> {
     if (!isValidObjectId(_id)) {
@@ -62,7 +70,6 @@ export class UserService {
     const { password } = body;
     const encryptedPassowrd = await bcrypt.hash(password, 10);
     body.password = encryptedPassowrd;
-    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel.create(body);
   }
   async updateUser(
@@ -78,7 +85,6 @@ export class UserService {
       await this.userNameExist(body?.username);
     }
     await this.cacheManager.del(cacheKey);
-    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel
       .findByIdAndUpdate(user._id, body, {
         new: true,
@@ -105,7 +111,6 @@ export class UserService {
     await this.loginUser(userLogin);
     const cacheKey = `user_${_id}`;
     await this.cacheManager.del(cacheKey);
-    await this.cacheManager.del(this.cacheKeyUsers);
     return await this.usersModel.findOneAndDelete({ _id });
   }
   private async findUser(user: string): Promise<UsersDocument | null> {
@@ -120,7 +125,7 @@ export class UserService {
   private async emailExist(email: string): Promise<boolean> {
     const existingUserByEmail = await this.findUser(email);
     if (existingUserByEmail) {
-      throw new NotAcceptableException(["Email already registered. "]);
+      throw new BadRequestException(["Email already registered. "]);
     }
     return false;
   }
@@ -128,7 +133,7 @@ export class UserService {
   private async userNameExist(username: string): Promise<boolean> {
     const existingUser = await this.findUser(username);
     if (existingUser) {
-      throw new NotAcceptableException(["username already registered. "]);
+      throw new BadRequestException(["username already registered. "]);
     }
     return false;
   }

@@ -55,7 +55,7 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${chatId}`,
     );
-    const [conversation, totalItems] = await Promise.all([
+    const [items, totalItems] = await Promise.all([
       await messageModel
         .find()
         .sort({ createdAt: -1 })
@@ -65,11 +65,11 @@ export class ChatService {
         .exec(),
       await messageModel.countDocuments(),
     ]);
-    if (!conversation || conversation.length < 1) {
+    if (!items || items.length < 1) {
       throw new NotFoundException(["no messages found"]);
     }
     return {
-      conversation,
+      items,
       totalItems,
       totalPages: Math.ceil(totalItems / limit),
       currentPage: page,

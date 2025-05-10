@@ -1,8 +1,8 @@
 import { HydratedDocument } from "mongoose";
-import { Chat_conversation } from "./chat_conversation.model";
+import { Users } from "./user.model";
 
-export class ChatPagination {
-  items: HydratedDocument<Chat_conversation>[];
+export class UserPagination {
+  items: HydratedDocument<Users>[];
   totalItems: number;
   totalPages: number;
   currentPage: number;
