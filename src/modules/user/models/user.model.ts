@@ -10,14 +10,14 @@ import {
 } from "class-validator";
 @Schema()
 export class Users {
-  @ApiProperty({ required: true})
-  @Prop({ required: true })
+  @ApiProperty({ required: true })
+  @Prop({ required: true, index: true, unique: true })
   @IsNotEmpty()
   @IsString()
   username: string;
 
   @ApiProperty({ required: true })
-  @Prop({ required: true })
+  @Prop({ required: true, index: true, unique: true })
   @IsNotEmpty()
   @IsEmail({ allow_display_name: true }, { message: "Invalid email. " })
   @IsString()

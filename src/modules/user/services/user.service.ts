@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -124,7 +125,7 @@ export class UserService {
   private async emailExist(email: string): Promise<boolean> {
     const existingUserByEmail = await this.findUser(email);
     if (existingUserByEmail) {
-      throw new NotAcceptableException(["Email already registered. "]);
+      throw new BadRequestException(["Email already registered. "]);
     }
     return false;
   }
@@ -132,7 +133,7 @@ export class UserService {
   private async userNameExist(username: string): Promise<boolean> {
     const existingUser = await this.findUser(username);
     if (existingUser) {
-      throw new NotAcceptableException(["username already registered. "]);
+      throw new BadRequestException(["username already registered. "]);
     }
     return false;
   }
