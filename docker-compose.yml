@@ -68,7 +68,19 @@ services:
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray
 
-volumes:
+  minio-seed-backend-app-marcelo:
+    image: minio/mc
+    container_name: minio-seed-backend-app-marcelo
+    depends_on:
+      - minio-backend-app-marcelo
+    volumes:
+    - ./.docker/minio-seed.sh:/seed/minio-seed.sh
+    - ./src/mocks/imgs:/seed/images
+    entrypoint: ["/bin/sh", "-c", "/seed/minio-seed.sh"]
+    networks:
+      - api
+
+volumes: 
   minio_data:
 
 networks:

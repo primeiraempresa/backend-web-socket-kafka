@@ -5,11 +5,11 @@ export interface IUploadedFile extends Express.Multer.File {
   etag: string;
   acl?: string;
   contentType?: string;
-  encoding: "7bit";
-  mimetype: "image/jpeg";
-  size: 41275;
+  encoding: string;
+  mimetype: string;
+  size: number;
   contentDisposition: null;
   contentEncoding: null;
-  storageClass: "STANDARD";
+  storageClass: string;
   serverSideEncryption: null;
 }
