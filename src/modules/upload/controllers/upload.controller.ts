@@ -1,5 +1,6 @@
 import {
   Controller,
+  Param,
   Post,
   Query,
   Req,
@@ -25,13 +26,7 @@ const allowedMimes: string[] = [
 @Controller("upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
-  @Post()
-  @ApiQuery({
-    name: "bucket",
-    required: false,
-    type: String,
-    description: "Bucket name",
-  })
+  @Post(":bucket")
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     description: "Upload de imagem",
@@ -46,7 +41,7 @@ export class UploadController {
     },
   })
   @UseInterceptors(DynamicMulterInterceptor)
-  upload(@UploadedFile() file: IUploadedFile) {
+  upload(@UploadedFile() file: IUploadedFile, @Param("bucket") bucket: string) {
     return { file: file };
   }
 }

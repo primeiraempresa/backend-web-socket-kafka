@@ -19,7 +19,7 @@ export class DynamicMulterInterceptor implements NestInterceptor {
     const req = ctx.getRequest<Request>();
     const res = ctx.getResponse<Response>();
 
-    const bucket = req.query.bucket?.toString() || "files";
+    const bucket = req.params.bucket.toString();
     await this.ensureBucketExists(bucket);
     const allowedMimes = ["image/jpeg", "image/png"];
 
