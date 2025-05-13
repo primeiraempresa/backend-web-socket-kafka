@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.808.0",
     "@nestjs/cache-manager": "^3.0.0",
     "@nestjs/common": "^11.0.11",
     "@nestjs/config": "^4.0.1",
@@ -35,6 +36,8 @@
     "class-validator": "^0.14.1",
     "git-cz": "^4.9.0",
     "mongoose": "^8.12.1",
+    "multer": "1.4.5-lts.2",
+    "multer-s3": "^3.0.1",
     "nest-winston": "^1.10.2",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
@@ -51,6 +54,7 @@
     "@swc/core": "^1.11.9",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.13.10",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.22.0",

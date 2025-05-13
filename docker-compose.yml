@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   mongodb-backend-app-marcelo:
@@ -13,10 +13,26 @@ services:
       - api
     command: mongod --bind_ip_all
 
+  minio-backend-app-marcelo:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"   # Porta da API S3
+      - "9001:9001"   # Porta do console web
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    networks:
+      - api
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+      
   app:
     build: .
     depends_on:
       - mongodb-backend-app-marcelo
+      - minio-backend-app-marcelo
     entrypoint: .docker/entrypoint.sh
     ports:
       - "${PORT}:${PORT}"
@@ -27,6 +43,10 @@ services:
     environment:
         AUTH_URL: "http://localhost:${PORT}/api/auth/"
         DBAAS_MONGODB_ENDPOINT: mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo
+        AWS_ENDPOINT: http://minio-backend-app-marcelo:9000/
+        AWS_ACCESS_KEY_ID: minioadmin
+        AWS_SECRET_ACCESS_KEY: minioadmin123
+        REGIONAWS: us-east-1
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
 
@@ -47,7 +67,10 @@ services:
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray
-        
+
+volumes:
+  minio_data:
+
 networks:
   api:
     driver: bridge
