@@ -88,6 +88,39 @@ export class UploadService {
     }
     return file;
   }
+  async searchFile(
+    bucket?: string,
+    fieldname?: string,
+    originalname?: string,
+    key?: string,
+    location?: string,
+    contentType?: string,
+    mimetype?: string,
+  ): Promise<FilesDocument[]> {
+    const searchConditions: Partial<Files>[] = [];
+
+    if (bucket) searchConditions.push({ bucket });
+    if (fieldname) searchConditions.push({ fieldname });
+    if (originalname) searchConditions.push({ originalname });
+    if (key) searchConditions.push({ key });
+    if (location) searchConditions.push({ location });
+    if (contentType) searchConditions.push({ contentType });
+    if (mimetype) searchConditions.push({ mimetype });
+    if (searchConditions.length === 0) {
+      throw new BadRequestException([
+        "At least one search field must be provided",
+      ]);
+    }
+    const files: FilesDocument[] = await this.filesModel.find({
+      $or: searchConditions,
+    });
+
+    if (!files || files.length === 0) {
+      throw new NotFoundException(["File not found"]);
+    }
+
+    return files;
+  }
   async deleteFile(id: string) {
     const findAndDelete = await this.filesModel.findByIdAndDelete(id);
     if (!findAndDelete) {

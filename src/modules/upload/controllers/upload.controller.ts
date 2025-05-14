@@ -35,15 +35,81 @@ export class UploadController {
     Logger.debug(body);
     return await this.uploadService.CreateType(body.type);
   }
+
   @Get("type")
   async GetTypes() {
     return await this.uploadService.GetTypes();
   }
+
   @Delete("type/:type")
   @ApiOperation({ summary: "delete type of uploads" })
   async DeleteTypes(@Param("type") type: string) {
     return await this.uploadService.deleteType(type);
   }
+
+  @ApiQuery({
+    name: "bucket",
+    required: false,
+    description: "Bucket name",
+  })
+  @ApiQuery({
+    name: "fieldname",
+    required: false,
+    type: String,
+    description: "Field name",
+  })
+  @ApiQuery({
+    name: "originalname",
+    required: false,
+    type: String,
+    description: "Original file name",
+  })
+  @ApiQuery({
+    name: "key",
+    required: false,
+    type: String,
+    description: "Key name",
+  })
+  @ApiQuery({
+    name: "location",
+    required: false,
+    type: String,
+    description: "Location",
+  })
+  @ApiQuery({
+    name: "contentType",
+    required: false,
+    type: String,
+    description: "Content type",
+  })
+  @ApiQuery({
+    name: "mimetype",
+    required: false,
+    type: String,
+    description: "Mimetype",
+  })
+  @ApiOperation({ summary: "search files" })
+  @Get("search")
+  async searchFile(
+    @Query("bucket") bucket?: string,
+    @Query("fieldname") fieldname?: string,
+    @Query("originalname") originalname?: string,
+    @Query("key") key?: string,
+    @Query("location") location?: string,
+    @Query("contentType") contentType?: string,
+    @Query("mimetype") mimetype?: string,
+  ) {
+    return await this.uploadService.searchFile(
+      bucket,
+      fieldname,
+      originalname,
+      key,
+      location,
+      contentType,
+      mimetype,
+    );
+  }
+
   @ApiQuery({
     name: "page",
     required: false,
@@ -57,7 +123,7 @@ export class UploadController {
     description: "Number of items per page",
   })
   @Get()
-  @ApiOperation({ summary: "list all users" })
+  @ApiOperation({ summary: "list all Files" })
   async GetUsers(
     @Query("page") page?: number,
     @Query("perPage") perPage?: number,
@@ -67,16 +133,19 @@ export class UploadController {
       perPage ? parseInt(perPage.toString()) : 10,
     );
   }
+
   @Get(":id")
   @ApiOperation({ summary: "get file by id" })
   async GetFile(@Param("id") id: string) {
     return await this.uploadService.getFileByID(id);
   }
+
   @Delete(":id")
   @ApiOperation({ summary: "delete file" })
   async DeleteFile(@Param("id") id: string) {
     return await this.uploadService.deleteFile(id);
   }
+
   @Post(":bucket")
   @UseInterceptors(DynamicMulterInterceptor)
   @ApiConsumes("multipart/form-data")
