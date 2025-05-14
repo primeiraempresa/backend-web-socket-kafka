@@ -1,32 +1,60 @@
 import {
+  Body,
   Controller,
+  Delete,
+  Get,
+  Logger,
   Param,
   Post,
-  Query,
-  Req,
-  Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { configImage } from "../config/image.config";
-import { ApiBody, ApiConsumes, ApiQuery } from "@nestjs/swagger";
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOAuth2,
+  ApiOperation,
+  ApiQuery,
+} from "@nestjs/swagger";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
-import multer from "multer";
-import { multerS3Config } from "@config/multer.config";
 import { UploadService } from "../services/upload.service";
 import { DynamicMulterInterceptor } from "../interceptor/dynamic-multer.interceptor";
-const allowedMimes: string[] = [
-  "image/jpeg",
-  "image/pjpeg",
-  "image/png",
-  "image/gif",
-  "image/svg+xml",
-];
+import { Allowed_file_types } from "../models/allowed_file_types.models";
+import { AuthGuard } from "@nestjs/passport";
+
 @Controller("upload")
+@UseGuards(AuthGuard("jwt"))
+@ApiOAuth2(["read", "write"], "oauth2")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
+  @Post("type")
+  @ApiOperation({ summary: "register type of uploads" })
+  async PostTypes(@Body() body: Allowed_file_types) {
+    Logger.debug(body);
+    return await this.uploadService.CreateType(body.type);
+  }
+  @Get("type")
+  async GetTypes() {
+    return await this.uploadService.GetTypes();
+  }
+  @Delete("type/:type")
+  @ApiOperation({ summary: "delete type of uploads" })
+  async DeleteTypes(@Param("type") type: string) {
+    return await this.uploadService.deleteType(type);
+  }
+  @Get(":id")
+  @ApiOperation({ summary: "get file by id" })
+  async GetFile(@Param("id") id: string) {
+  return await this.uploadService.getFile(id);
+  }
+  @Delete(":id")
+  @ApiOperation({ summary: "delete file" })
+  async DeleteFile(@Param("id") id: string) {
+    return await this.uploadService.deleteFile(id);
+  }
   @Post(":bucket")
+  @UseInterceptors(DynamicMulterInterceptor)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     description: "Upload de imagem",
@@ -40,8 +68,8 @@ export class UploadController {
       },
     },
   })
-  @UseInterceptors(DynamicMulterInterceptor)
-  upload(@UploadedFile() file: IUploadedFile, @Param("bucket") bucket: string) {
-    return { file: file };
-  }
+  async upload(
+    @UploadedFile() file: IUploadedFile,
+    @Param("bucket") bucket: string,
+  ) {}
 }

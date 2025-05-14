@@ -10,7 +10,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { JwtModule } from "@nestjs/jwt";
 import { ChatModule } from "./modules/chat/chat.module";
 import { CommonModule } from './modules/common/common.module';
-import { ImageModule } from './modules/upload/image.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { ImageModule } from './modules/upload/image.module';
     AuthModule,
     ChatModule,
     CommonModule,
-    ImageModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

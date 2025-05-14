@@ -1,0 +1,17 @@
+[
+    {
+        "type": "image/jpeg"
+    },
+    {
+        "type": "image/pjpeg"
+    },
+    {
+        "type": "image/png"
+    },
+    {
+        "type": "image/gif"
+    },
+    {
+        "type": "image/svg+xml"
+    }
+]

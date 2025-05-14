@@ -9,11 +9,20 @@ import * as multer from "multer";
 import { Request, Response } from "express";
 import { Observable } from "rxjs";
 import { multerS3Config } from "@config/multer.config";
-import { HeadBucketCommand, CreateBucketCommand } from "@aws-sdk/client-s3";
+import {
+  HeadBucketCommand,
+  CreateBucketCommand,
+  HeadBucketCommandOutput,
+  PutBucketPolicyCommand,
+} from "@aws-sdk/client-s3";
 import { s3 } from "@config/s3.config";
+import { UploadService } from "../services/upload.service";
+import { Files } from "../models/files.models";
+import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 
 @Injectable()
 export class DynamicMulterInterceptor implements NestInterceptor {
+  constructor(private readonly uploadService: UploadService) {}
   async intercept(context: ExecutionContext, next: CallHandler) {
     const ctx = context.switchToHttp();
     const req = ctx.getRequest<Request>();
@@ -21,29 +30,50 @@ export class DynamicMulterInterceptor implements NestInterceptor {
 
     const bucket = req.params.bucket.toString();
     await this.ensureBucketExists(bucket);
-    const allowedMimes = ["image/jpeg", "image/png"];
+    const allowedMimes = await this.uploadService.GetTypes();
 
     return new Observable((observer) => {
       const upload = multer(multerS3Config(bucket, 10, allowedMimes)).single(
         "file",
       );
 
-      upload(req, res, (err) => {
+      upload(req, res, async (err) => {
         if (err) {
-          observer.error(err);
-        } else {
-          observer.next(req.file);
-          observer.complete();
+          return observer.error(err);
         }
+        const file = await this.uploadService.upload(req.file as IUploadedFile);
+        observer.next(file);
+        return observer.complete();
       });
     });
   }
-  async ensureBucketExists(bucketName: string): Promise<void> {
+  private async ensureBucketExists(bucketName: string): Promise<void> {
     try {
       await s3.send(new HeadBucketCommand({ Bucket: bucketName }));
     } catch (err: any) {
-      if (err.name === "NotFound" || err.$metadata?.httpStatusCode === 404) {
+      const isNotFound =
+        err.name === "NotFound" || err.$metadata?.httpStatusCode === 404;
+
+      if (isNotFound) {
         await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
+        const publicPolicy = {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Sid: "PublicReadGetObject",
+              Effect: "Allow",
+              Principal: "*",
+              Action: ["s3:GetObject"],
+              Resource: [`arn:aws:s3:::${bucketName}/*`],
+            },
+          ],
+        };
+        await s3.send(
+          new PutBucketPolicyCommand({
+            Bucket: bucketName,
+            Policy: JSON.stringify(publicPolicy),
+          }),
+        );
       } else {
         throw err;
       }
