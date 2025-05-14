@@ -1,8 +1,7 @@
-import { HydratedDocument } from "mongoose";
-import { Users } from "./user.model";
+import { UsersDocument } from "@user/schemas/user.schema";
 
 export class UserPagination {
-  items: HydratedDocument<Users>[];
+  items: UsersDocument[];
   totalItems: number;
   totalPages: number;
   currentPage: number;

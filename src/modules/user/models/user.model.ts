@@ -8,6 +8,7 @@ import {
   IsString,
   IsStrongPassword,
 } from "class-validator";
+import mongoose from "mongoose";
 @Schema()
 export class Users {
   @ApiProperty({ required: true })
@@ -37,6 +38,12 @@ export class Users {
 
   @ApiProperty({ default: null })
   @Prop({ required: false, default: null })
-  //   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: imagem.name, default: null, required: true })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: File.name,
+    default: null,
+    required: true,
+    index: true,
+  })
   profilePic: string;
 }

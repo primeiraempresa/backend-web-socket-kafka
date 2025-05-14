@@ -1,4 +1,3 @@
-// dynamic-multer.interceptor.ts
 import {
   CallHandler,
   ExecutionContext,
@@ -12,12 +11,10 @@ import { multerS3Config } from "@config/multer.config";
 import {
   HeadBucketCommand,
   CreateBucketCommand,
-  HeadBucketCommandOutput,
   PutBucketPolicyCommand,
 } from "@aws-sdk/client-s3";
 import { s3 } from "@config/s3.config";
 import { UploadService } from "../services/upload.service";
-import { Files } from "../models/files.models";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 
 @Injectable()
@@ -47,7 +44,7 @@ export class DynamicMulterInterceptor implements NestInterceptor {
       });
     });
   }
-  private async ensureBucketExists(bucketName: string): Promise<void> {
+  private async ensureBucketExists(bucketName: string) {
     try {
       await s3.send(new HeadBucketCommand({ Bucket: bucketName }));
     } catch (err: any) {
@@ -68,15 +65,14 @@ export class DynamicMulterInterceptor implements NestInterceptor {
             },
           ],
         };
-        await s3.send(
+        return await s3.send(
           new PutBucketPolicyCommand({
             Bucket: bucketName,
             Policy: JSON.stringify(publicPolicy),
           }),
         );
-      } else {
-        throw err;
       }
+      throw err;
     }
   }
 }

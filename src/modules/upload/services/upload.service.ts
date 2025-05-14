@@ -13,6 +13,7 @@ import { s3 } from "@config/s3.config";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { FilesDocument } from "../schemas/files.schema";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
+import { FilePagination } from "../models/file_pagination.models";
 
 @Injectable()
 export class UploadService {
@@ -51,6 +52,28 @@ export class UploadService {
     }
     return "type deleted";
   }
+  async getFileAll(page: number, limit: number): Promise<FilePagination> {
+    const skip = (page - 1) * limit;
+    const [items, totalItems] = await Promise.all([
+      await this.filesModel
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      await this.filesModel.countDocuments(),
+    ]);
+    if (!items || items.length < 1) {
+      throw new NotFoundException(["no files found"]);
+    }
+    return {
+      items,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+      nextPage: page * limit < totalItems ? page + 1 : null,
+    };
+  }
   async upload(file: IUploadedFile) {
     file.location = file.location.replace(
       "minio-backend-app-marcelo",
@@ -58,7 +81,7 @@ export class UploadService {
     );
     return await this.filesModel.create(file);
   }
-  async getFile(id: string) {
+  async getFileByID(id: string) {
     const file = await this.filesModel.findById(id);
     if (!file) {
       throw new NotFoundException(["File not found"]);
@@ -80,6 +103,7 @@ export class UploadService {
       this.logger.debug(
         `✅ Objeto "${findAndDelete.key}" removido com sucesso do bucket "${findAndDelete.bucket}".`,
       );
+      return "File deleted";
     } catch (error) {
       this.logger.error(
         `❌ Erro ao remover o objeto "${findAndDelete.key}" do bucket "${findAndDelete.bucket}":`,

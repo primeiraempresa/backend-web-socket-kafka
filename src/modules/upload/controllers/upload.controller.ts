@@ -6,6 +6,7 @@ import {
   Logger,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -43,10 +44,33 @@ export class UploadController {
   async DeleteTypes(@Param("type") type: string) {
     return await this.uploadService.deleteType(type);
   }
+  @ApiQuery({
+    name: "page",
+    required: false,
+    type: Number,
+    description: "Page number for pagination",
+  })
+  @ApiQuery({
+    name: "perPage",
+    required: false,
+    type: Number,
+    description: "Number of items per page",
+  })
+  @Get()
+  @ApiOperation({ summary: "list all users" })
+  async GetUsers(
+    @Query("page") page?: number,
+    @Query("perPage") perPage?: number,
+  ) {
+    return await this.uploadService.getFileAll(
+      page ? parseInt(page.toString()) : 1,
+      perPage ? parseInt(perPage.toString()) : 10,
+    );
+  }
   @Get(":id")
   @ApiOperation({ summary: "get file by id" })
   async GetFile(@Param("id") id: string) {
-  return await this.uploadService.getFile(id);
+    return await this.uploadService.getFileByID(id);
   }
   @Delete(":id")
   @ApiOperation({ summary: "delete file" })
