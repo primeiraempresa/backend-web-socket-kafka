@@ -21,7 +21,7 @@ import {
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 import { UploadService } from "../services/upload.service";
 import { DynamicMulterInterceptor } from "../interceptor/dynamic-multer.interceptor";
-import { Allowed_file_types } from "../models/allowed_file_types.models";
+import { Allowed_file_types } from "../models/allowed_file_types.model";
 import { AuthGuard } from "@nestjs/passport";
 
 @Controller("upload")
@@ -164,5 +164,8 @@ export class UploadController {
   async upload(
     @UploadedFile() file: IUploadedFile,
     @Param("bucket") bucket: string,
-  ) {}
+  ) {
+    file.bucket = bucket;
+    return await this.uploadService.upload(file);
+  }
 }

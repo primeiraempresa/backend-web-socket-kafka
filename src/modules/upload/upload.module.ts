@@ -2,9 +2,9 @@ import { Module } from "@nestjs/common";
 import { UploadService } from "./services/upload.service";
 import { UploadController } from "./controllers/upload.controller";
 import { MongooseModule } from "@nestjs/mongoose";
-import { Allowed_file_types } from "./models/allowed_file_types.models";
+import { Allowed_file_types } from "./models/allowed_file_types.model";
 import { Allowed_file_typesSchema } from "./schemas/allowed_file_types.schema";
-import { Files } from "./models/files.models";
+import { Files } from "./models/files.model";
 import { FilesSchema } from "./schemas/files.schema";
 
 @Module({

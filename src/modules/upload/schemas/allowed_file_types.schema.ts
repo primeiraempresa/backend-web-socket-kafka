@@ -1,5 +1,5 @@
 import { SchemaFactory } from "@nestjs/mongoose";
-import { Allowed_file_types } from "../models/allowed_file_types.models";
+import { Allowed_file_types } from "../models/allowed_file_types.model";
 import { HydratedDocument } from "mongoose";
 
 export const Allowed_file_typesSchema =

@@ -5,15 +5,15 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Allowed_file_types } from "../models/allowed_file_types.models";
+import { Allowed_file_types } from "../models/allowed_file_types.model";
 import { Model } from "mongoose";
 import { Allowed_file_typesDocument } from "../schemas/allowed_file_types.schema";
-import { Files } from "../models/files.models";
+import { Files } from "../models/files.model";
 import { s3 } from "@config/s3.config";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { FilesDocument } from "../schemas/files.schema";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
-import { FilePagination } from "../models/file_pagination.models";
+import { FilePagination } from "../models/file_pagination.model";
 
 @Injectable()
 export class UploadService {
