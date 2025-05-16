@@ -30,7 +30,7 @@ export class UserService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        // .populate("profilePic")
+        .populate("profilePic")
         .exec(),
       await this.usersModel.countDocuments(),
     ]);

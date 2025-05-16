@@ -1,0 +1,52 @@
+import type { Config } from "jest";
+
+const config: Config = {
+  moduleFileExtensions: ["js", "json", "ts"],
+  rootDir: ".",
+  testRegex: ".*\\.spec\\.ts$",
+  transform: {
+    "^.+\\.(t|j)s$": "ts-jest",
+  },
+  collectCoverageFrom: ["src/**/*.(t|j)s"],
+  coverageDirectory: "./coverage",
+  testEnvironment: "node",
+  moduleNameMapper: {
+    "^@config/(.*)$": "<rootDir>/src/configs/$1",
+    "^@user/(.*)$": "<rootDir>/src/modules/user/$1",
+    "^@auth/(.*)$": "<rootDir>/src/modules/auth/$1",
+    "^@common/(.*)$": "<rootDir>/src/modules/common/$1",
+  },
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+    ".*model\\.ts$",
+    ".*schema\\.ts$",
+    ".*config\\.ts$",
+    ".*module\\.ts$",
+    ".*main\\.ts$",
+    ".*dto\\.ts$",
+    "/dto/",
+    "\\.dto\\.ts$",
+    "/Schema/",
+    "\\.schema\\.ts$",
+    ".*jwt-auth.guard\\.ts",
+    ".*local-auth.guard\\.ts",
+    "/.vercel/",
+    ".*tmp\\.ts$",
+    "/validator/",
+    "/test/",
+    "/mock/",
+    "/mocks/",
+    "/configs/",
+    "/config/",
+    "/interfaces/",
+    ".eslintrc.js",
+    "commitlint.config.js",
+    "/coverage/",
+    "sonar-project.ts",
+    "/enums/",
+    ".changelog.config.js",
+  ],
+};
+
+export default config;

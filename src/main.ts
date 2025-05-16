@@ -41,5 +41,6 @@ async function bootstrap() {
   await app.listen(configService.get<number>("PORT") ?? 3000);
   logger.debug(`sever on in ${await app.getUrl()}`);
   logger.debug(`swagger on in ${await app.getUrl()}/swagger`);
+  logger.debug(`S3 Local on in http://localhost:9000`);
 }
 bootstrap();
