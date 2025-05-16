@@ -15,6 +15,7 @@ const config: Config = {
     "^@user/(.*)$": "<rootDir>/src/modules/user/$1",
     "^@auth/(.*)$": "<rootDir>/src/modules/auth/$1",
     "^@common/(.*)$": "<rootDir>/src/modules/common/$1",
+    "^@chat/(.*)$": "<rootDir>/src/modules/chat/$1",
   },
   coveragePathIgnorePatterns: [
     "/node_modules/",
@@ -27,7 +28,8 @@ const config: Config = {
     ".*dto\\.ts$",
     "/dto/",
     "\\.dto\\.ts$",
-    "/Schema/",
+    "/schemas/",
+    "/models/",
     "\\.schema\\.ts$",
     ".*jwt-auth.guard\\.ts",
     ".*local-auth.guard\\.ts",

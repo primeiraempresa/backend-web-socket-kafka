@@ -1,9 +1,9 @@
 import { Prop, Schema } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 import { Users } from "@user/models/user.model";
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsString } from "class-validator";
+import { ArrayNotEmpty, IsArray, IsNotEmpty } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArryByObjectIds } from "src/modules/common/validations/IsArrayByObjectIds.validation";
+import { IsArryByObjectIds } from "@common/validations/IsArrayByObjectIds.validation";
 
 @Schema()
 export class Chats {

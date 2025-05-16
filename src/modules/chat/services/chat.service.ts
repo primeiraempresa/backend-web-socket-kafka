@@ -4,17 +4,17 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
-import { ChatDocument } from "../../schemas/chat.schema";
+import { ChatDocument } from "../schemas/chat.schema";
 import { Connection, Model } from "mongoose";
-import { ChatPagination } from "../../models/chatPagination.model";
-import { Chats } from "../../models/chat.model";
+import { ChatPagination } from "../models/chatPagination.model";
+import { Chats } from "../models/chat.model";
 import {
   ChatConversationDocument,
   ChatConversationSchema,
-} from "../../schemas/chat_conversation.schema";
-import { Chat_conversation } from "../../models/chat_conversation.model";
+} from "../schemas/chat_conversation.schema";
+import { Chat_conversation } from "../models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
-import { Chat_conversation_DTO } from "../../dto/chat_conversation.dto";
+import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
 
 @Injectable()
 export class ChatService {
