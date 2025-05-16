@@ -67,7 +67,8 @@ services:
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray &&
-        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Allowed_file_types --file home/node/app/src/mocks/upload.mock.json --jsonArray
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Allowed_file_types --file home/node/app/src/mocks/upload-type.mock.json --jsonArray &&
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo --collection Files --file home/node/app/src/mocks/upload-files.mock.json --jsonArray
 
   minio-seed-backend-app-marcelo:
     image: minio/mc

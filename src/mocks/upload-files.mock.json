@@ -1,0 +1,28 @@
+[
+    {
+        "_id": "6827c9a89e0d01809777024f",
+        "fieldname": "file",
+        "originalname": "rick.jpg",
+        "mimetype": "image/jpeg",
+        "size": 41275,
+        "bucket": "images",
+        "key": "rick.jpg",
+        "acl": "public-read",
+        "contentType": "image/jpeg",
+        "location": "http://localhost:9000/images/rick.jpg",
+        "__v": 0
+    },
+    {
+        "_id": "6827cae522d916cc77735cff",
+        "fieldname": "file",
+        "originalname": "procfile.jpg",
+        "mimetype": "image/jpeg",
+        "size": 41275,
+        "bucket": "images",
+        "key": "procfile.jpg",
+        "acl": "public-read",
+        "contentType": "image/jpeg",
+        "location": "http://localhost:9000/images/procfile.jpg",
+        "__v": 0
+    }
+]
