@@ -9,7 +9,10 @@ export class AuthService {
     access_token: string;
     token_type: string;
   };
-  private async setAccessToken(token: { access_token: string,   token_type: string; }) {
+  private async setAccessToken(token: {
+    access_token: string;
+    token_type: string;
+  }) {
     this.access_token = token;
   }
   async getAccessToken() {
@@ -22,26 +25,33 @@ export class AuthService {
     ) {
       throw new UnauthorizedException();
     }
-    const id = `${new Date().getUTCDate()}-${configService.get<string>("client_id")}`;
-    const hash = id
-      .split("")
-      .reduce(
-        (hex: string, c) => hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
-        "",
-      );
-    return await this.generateToken({
-      id: hash,
-    });
+    const id = configService.get<string>("client_id")?.toString();
+    if (id) {
+      const hash = id
+        .split("")
+        .reduce(
+          (hex: string, c) =>
+            hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
+          "",
+        );
+      return await this.generateToken({
+        id: hash,
+      });
+    }
   }
   async validateUserById(userId: string): Promise<boolean> {
-    const id = `${new Date().getUTCDate()}-${configService.get<string>("client_id")}`;
-    const hash = id
-      .split("")
-      .reduce(
-        (hex: string, c) => hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
-        "",
-      );
-    return hash == userId;
+    const id = configService.get<string>("client_id")?.toString();
+    if (id) {
+      const hash = id
+        .split("")
+        .reduce(
+          (hex: string, c) =>
+            hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
+          "",
+        );
+      return hash == userId;
+    }
+    return false;
   }
 
   async generateToken(user: {

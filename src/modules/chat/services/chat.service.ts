@@ -131,7 +131,6 @@ export class ChatService {
     message_id: string,
     body: Chat_conversation_DTO,
   ): Promise<ChatConversationDocument> {
-    console.log(body);
     if (!this.commonService.validateMongoID(message_id)) {
       throw new BadRequestException(["invalid message id"]);
     }
