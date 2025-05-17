@@ -2,15 +2,13 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  Logger,
-  NotAcceptableException,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Users } from "@user/models/user.model";
 import { UsersDocument } from "@user/schemas/user.schema";
-import { Model, isValidObjectId } from "mongoose";
+import { Model, ObjectId, isValidObjectId } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
@@ -45,24 +43,23 @@ export class UserService {
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
   }
-  async getUserByID(_id: string): Promise<UsersDocument> {
+  async getUserByID(_id: ObjectId| string): Promise<UsersDocument> {
     if (!isValidObjectId(_id)) {
       throw new NotFoundException(["user not found"]);
     }
     const cacheKey = `user_${_id}`;
-    const users_cache: UsersDocument | null =
+    const cachedUser: UsersDocument | null =
       await this.cacheManager.get<UsersDocument>(cacheKey);
-    if (!users_cache) {
-      const user = await this.usersModel
-        .findById(_id)
-        // .populate('profilePic')
-        .exec();
-      if (!user) {
-        throw new NotFoundException(["user not found"]);
-      }
-      return await this.cacheManager.set<UsersDocument>(cacheKey, user);
+    if (cachedUser) return cachedUser;
+    const user = await this.usersModel
+      .findById(_id)
+      .populate("profilePic")
+      .exec();
+    if (!user) {
+      throw new NotFoundException(["user not found"]);
     }
-    return users_cache;
+    await this.cacheManager.set(cacheKey, user);
+    return user;
   }
   async registerUser(body: Users): Promise<UsersDocument> {
     await this.emailExist(body.email);
@@ -74,8 +71,8 @@ export class UserService {
   }
   async updateUser(
     body: UsersDto,
-    _id: string,
-  ): Promise<UsersDocument | unknown> {
+    _id: ObjectId | string,
+  ): Promise<UsersDocument> {
     const cacheKey = `user_${_id}`;
     const user = await this.getUserByID(_id);
     if (body?.email && body.email !== user.email) {
@@ -85,24 +82,29 @@ export class UserService {
       await this.userNameExist(body?.username);
     }
     await this.cacheManager.del(cacheKey);
-    return await this.usersModel
+    const updatedUser = await this.usersModel
       .findByIdAndUpdate(user._id, body, {
         new: true,
         runValidators: true,
       })
       .exec();
+    if (!updatedUser) {
+      throw new NotFoundException(["user not found"]);
+    }
+    return updatedUser;
   }
   async loginUser(userLogin: UserLogin): Promise<UsersDocument> {
     const user = await this.findUser(userLogin.user);
+    const message = "username/email ou senha incorreto. ";
     if (!user) {
-      throw new UnauthorizedException(["username/email ou senha incorreto. "]);
+      throw new UnauthorizedException([message]);
     }
-    const isPasswordValid = bcrypt.compareSync(
+    const isPasswordValid = await bcrypt.compare(
       userLogin.password,
       user.password,
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException(["username/email ou senha incorreto."]);
+      throw new UnauthorizedException([message]);
     }
     return user;
   }

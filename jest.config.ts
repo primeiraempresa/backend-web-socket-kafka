@@ -16,6 +16,7 @@ const config: Config = {
     "^@auth/(.*)$": "<rootDir>/src/modules/auth/$1",
     "^@common/(.*)$": "<rootDir>/src/modules/common/$1",
     "^@chat/(.*)$": "<rootDir>/src/modules/chat/$1",
+    "^@upload/(.*)$": "<rootDir>/src/modules/upload/$1",
   },
   coveragePathIgnorePatterns: [
     "/node_modules/",

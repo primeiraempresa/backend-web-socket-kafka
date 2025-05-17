@@ -22,7 +22,8 @@
       "@user/*": ["src/modules/user/*"],
       "@auth/*": ["src/modules/auth/*"],
       "@common/*": ["src/modules/common/*"],
-      "@chat/*": ["src/modules/chat/*"]
+      "@chat/*": ["src/modules/chat/*"],
+      "@upload/*": ["src/modules/upload/*"]
     }
   }
 }
