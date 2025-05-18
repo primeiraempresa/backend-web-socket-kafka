@@ -1,9 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from "@nestjs/common";
+import { ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import * as multer from "multer";
 import { Request, Response } from "express";
 import { Observable } from "rxjs";
@@ -20,7 +15,7 @@ import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 @Injectable()
 export class DynamicMulterInterceptor implements NestInterceptor {
   constructor(private readonly uploadService: UploadService) {}
-  async intercept(context: ExecutionContext, next: CallHandler) {
+  async intercept(context: ExecutionContext) {
     const ctx = context.switchToHttp();
     const req = ctx.getRequest<Request>();
     const res = ctx.getResponse<Response>();

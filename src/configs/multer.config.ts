@@ -3,7 +3,6 @@ import { randomBytes } from "crypto";
 import { StorageEngine } from "multer";
 import { s3 } from "./s3.config";
 import { PayloadTooLargeException } from "@nestjs/common";
-import path from "path";
 import * as multerS3 from "multer-s3";
 /**
  * Gera a configuração do Multer usando S3 para upload de arquivos.
