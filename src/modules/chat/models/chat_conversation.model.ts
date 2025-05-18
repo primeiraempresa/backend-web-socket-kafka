@@ -1,9 +1,9 @@
+import { IsObjectId } from "@common/validations/IsObjctId.validation";
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Users } from "@user/models/user.model";
 import { IsNotEmpty, IsString } from "class-validator";
 import mongoose from "mongoose";
-import { IsObjectId } from "src/modules/common/validations/IsObjctId.validation";
 
 @Schema()
 export class Chat_conversation {

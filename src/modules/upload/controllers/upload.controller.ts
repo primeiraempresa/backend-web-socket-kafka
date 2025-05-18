@@ -32,7 +32,6 @@ export class UploadController {
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
   async PostTypes(@Body() body: Allowed_file_types) {
-    Logger.debug(body);
     return await this.uploadService.CreateType(body.type);
   }
 

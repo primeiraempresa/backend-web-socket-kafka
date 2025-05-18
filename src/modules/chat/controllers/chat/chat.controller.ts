@@ -3,19 +3,18 @@ import {
   Controller,
   Delete,
   Get,
-  Injectable,
   Param,
   Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { ChatService } from "../../services/chat/chat.service";
+import { ChatService } from "../../services/chat.service";
 import { ApiOAuth2, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "@nestjs/passport";
 import { ChatConversationDocument } from "../../schemas/chat_conversation.schema";
 import { ChatDocument } from "../../schemas/chat.schema";
-import { Chat_conversation } from "../../models/chat_conversation.model";
 import { Chat_conversation_DTO } from "../../dto/chat_conversation.dto";
+import { ChatPagination } from "@chat/models/chatPagination.model";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -40,7 +39,7 @@ export class ChatController {
     @Param("chatId") chatId: string,
     @Query("page") page?: number,
     @Query("perPage") perPage?: number,
-  ) {
+  ): Promise<ChatPagination> {
     return await this.chatService.getMessages(
       chatId,
       page ? parseInt(page.toString()) : 1,
@@ -64,7 +63,7 @@ export class ChatController {
   async getChatByUsersIdsOrById(
     @Query("userIds") userIds?: string[],
     @Query("chat_id") chat_id?: string,
-  ) {
+  ): Promise<ChatDocument> {
     return await this.chatService.getChatByUsersIds(userIds, chat_id);
   }
 
@@ -91,9 +90,7 @@ export class ChatController {
     return await this.chatService.deleteMessageById(chatId, messageId);
   }
   @Delete(":chatId")
-  async deleteChat(
-    @Param("chatId") chatId: string,
-  ): Promise<ChatDocument> {
+  async deleteChat(@Param("chatId") chatId: string): Promise<ChatDocument> {
     return await this.chatService.deleteChatById(chatId);
   }
 }

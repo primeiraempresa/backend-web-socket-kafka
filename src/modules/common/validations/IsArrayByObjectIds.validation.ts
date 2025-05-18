@@ -17,7 +17,7 @@ export class IsArryByObjectIdsValidation
     return `${validationArguments?.property} is not a valid Array of ObjectIds`;
   }
 
-  validate(value: [string]): boolean {
+  validate(value: string[]): boolean {
     return this.commonService.validateArryByMongoIDs(value);
   }
 }

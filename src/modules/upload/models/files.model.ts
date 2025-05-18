@@ -1,5 +1,4 @@
 import { Prop, Schema } from "@nestjs/mongoose";
-import { Readable } from "stream";
 
 @Schema()
 export class Files {
