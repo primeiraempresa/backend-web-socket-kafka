@@ -14,7 +14,7 @@ export default {
         utilities.format.nestLike("backend-app-marcelo", {
           colors: true,
           prettyPrint: true,
-        })
+        }),
       ),
     }),
   ],

@@ -9,7 +9,6 @@ import { getModelToken } from "@nestjs/mongoose";
 
 describe("UserController", () => {
   let controller: UserController;
-  let service: UserService;
   const mockUserService = {
     getUsers: jest.fn(),
     getUserByID: jest.fn(),
@@ -33,7 +32,6 @@ describe("UserController", () => {
       ],
     }).compile();
     controller = module.get<UserController>(UserController);
-    service = module.get<UserService>(UserService);
   });
 
   describe("GetUsers", () => {
@@ -49,7 +47,7 @@ describe("UserController", () => {
 
   describe("getUserByID", () => {
     it("should return a user by ID", async () => {
-      const mockUser: UsersDocument = { _id: "1", username: "test" } as any;
+      const mockUser = { _id: "1", username: "test" };
       mockUserService.getUserByID.mockResolvedValue(mockUser);
 
       const response = await controller.getUserByID("1");

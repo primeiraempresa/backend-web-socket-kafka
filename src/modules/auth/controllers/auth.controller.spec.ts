@@ -1,50 +1,43 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { AuthController } from "@auth/controllers/auth.controller";
+import { AuthController } from "./auth.controller";
 import { AuthService } from "@auth/services/auth.service";
-import { JwtService } from "@nestjs/jwt";
-import { ConfigService } from "@nestjs/config";
-class MockConfigService {
-  get(key: string): string {
-    if (key === "client_id") return "correct_client_id";
-    if (key === "client_secret") return "correct_client_secret";
-    return "";
-  }
-}
+import { IToken } from "@common/interface/acessToken.interface";
+
 describe("AuthController", () => {
-  let controller: AuthController;
+  let authController: AuthController;
+  let authService: AuthService;
+
+  const mockAuthService: Partial<AuthService> = {
+    validate: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        AuthService,
-        JwtService,
-        {
-          provide: ConfigService,
-          useClass: MockConfigService, // Usando a classe mockada
-        },
-      ],
+      providers: [{ provide: AuthService, useValue: mockAuthService }],
     }).compile();
 
-    controller = module.get<AuthController>(AuthController);
+    authController = module.get<AuthController>(AuthController);
+    authService = module.get<AuthService>(AuthService);
   });
 
-  it("should be defined", () => {
-    expect(controller).toBeDefined();
-  });
-  describe("", () => {
-    it("should return authentication result when valid credentials are provided", async () => {
-      const mockAuthService = {
-        validate: jest.fn().mockResolvedValue({ token: "valid-token" }),
+  describe("auth", () => {
+    it("deve retornar um token válido ao receber credenciais válidas", () => {
+      const body = { client_id: "valid-client", client_secret: "valid-secret" };
+      const expectedToken: IToken = {
+        access_token: "mock_token",
+        token_type: "Bearer",
       };
-      const authController = new AuthController(mockAuthService as any);
-      const body = { client_id: "test-client", client_secret: "test-secret" };
-      const result = await authController.auth(body);
-      expect(mockAuthService.validate).toHaveBeenCalledWith(
-        "test-client",
-        "test-secret",
+
+      jest.spyOn(authService, "validate").mockReturnValue(expectedToken);
+
+      const result = authController.auth(body);
+
+      expect(result).toEqual(expectedToken);
+      expect(authService.validate).toHaveBeenCalledWith(
+        "valid-client",
+        "valid-secret",
       );
-      expect(result).toEqual({ token: "valid-token" });
     });
   });
 });

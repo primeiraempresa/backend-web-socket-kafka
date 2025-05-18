@@ -16,4 +16,4 @@ import { CommonModule } from "@common/common.module";
   controllers: [ChatController],
   providers: [ChatService],
 })
-export class ChatModule {} 
+export class ChatModule {}

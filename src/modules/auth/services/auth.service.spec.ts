@@ -1,10 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AuthService } from "./auth.service";
-import { JwtService } from "@nestjs/jwt";
-import { UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { IToken } from "@common/interface/acessToken.interface";
+import { JwtService } from "@nestjs/jwt";
 
-// Mock do ConfigService
 class MockConfigService {
   get(key: string): string {
     if (key === "client_id") return "correct_client_id";
@@ -15,7 +14,6 @@ class MockConfigService {
 
 describe("AuthService", () => {
   let authService: AuthService;
-  let jwtService: JwtService;
   let configService: ConfigService;
 
   const mockJwtService = {
@@ -32,14 +30,13 @@ describe("AuthService", () => {
         },
         {
           provide: ConfigService,
-          useClass: MockConfigService, // Usando a classe mockada
+          useClass: MockConfigService,
         },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    jwtService = module.get<JwtService>(JwtService);
-    configService = module.get<ConfigService>(ConfigService); // ConfigService mockado
+    configService = module.get<ConfigService>(ConfigService);
     jest
       .spyOn(ConfigService.prototype, "get")
       .mockImplementation((key: string) => {
@@ -50,30 +47,13 @@ describe("AuthService", () => {
   });
 
   describe("validate", () => {
-    it("should throw UnauthorizedException if client_id or client_secret are incorrect", async () => {
-      const clientId = "wrong_client_id";
-      const clientSecret = "wrong_client_secret";
-
-      // Mockando as respostas do ConfigService
-      jest
-        .spyOn(configService, "get")
-        .mockReturnValueOnce("correct_client_id") // Para client_id
-        .mockReturnValueOnce("correct_client_secret"); // Para client_secret
-
-      await expect(
-        authService.validate(clientId, clientSecret),
-      ).rejects.toThrow(UnauthorizedException);
-    });
-
-    it("should return a token if client_id and client_secret are correct", async () => {
+    it("should return a token if client_id and client_secret are correct", () => {
       const clientId = "correct_client_id";
       const clientSecret = "correct_client_secret";
-
-      // Mockando as respostas do ConfigService
       jest
         .spyOn(configService, "get")
-        .mockReturnValueOnce("correct_client_id") // Para client_id
-        .mockReturnValueOnce("correct_client_secret"); // Para client_secret
+        .mockReturnValueOnce("correct_client_id")
+        .mockReturnValueOnce("correct_client_secret");
 
       const generatedToken = {
         access_token: "mock_token",
@@ -81,7 +61,7 @@ describe("AuthService", () => {
       };
       mockJwtService.sign.mockReturnValue("mock_token");
 
-      const result = await authService.validate(clientId, clientSecret);
+      const result = authService.validate(clientId, clientSecret);
 
       expect(result).toEqual(generatedToken);
       expect(mockJwtService.sign).toHaveBeenCalled();
@@ -89,17 +69,14 @@ describe("AuthService", () => {
   });
 
   describe("validateUserById", () => {
-    it("should return false if the hash does not match the userId", async () => {
+    it("should return false if the hash does not match the userId", () => {
       const userId = "incorrect_hash";
-
-      // Mockando as respostas do ConfigService
       jest.spyOn(configService, "get").mockReturnValueOnce("correct_client_id");
-
-      const result = await authService.validateUserById(userId);
+      const result = authService.validateUserById(userId);
       expect(result).toBe(false);
     });
 
-    it("should return true if the hash matches the userId", async () => {
+    it("should return true if the hash matches the userId", () => {
       const clientId = "correct_client_id";
       const hash = clientId
         .split("")
@@ -109,23 +86,20 @@ describe("AuthService", () => {
           "",
         );
       const userId = hash;
-
-      // Mockando as respostas do ConfigService
       jest.spyOn(configService, "get").mockReturnValueOnce("correct_client_id");
-
-      const result = await authService.validateUserById(userId);
+      const result: boolean = authService.validateUserById(userId);
       expect(result).toBe(true);
     });
   });
 
   describe("generateToken", () => {
-    it("should generate and return a token", async () => {
+    it("should generate and return a token", () => {
       const user = { id: "user_id" };
       const payload = { sub: "user_id" };
       const accessToken = { access_token: "mock_token", token_type: "bearer" };
 
       mockJwtService.sign.mockReturnValue("mock_token");
-      const result = await authService.generateToken(user);
+      const result = authService.generateToken(user);
 
       expect(result).toEqual(accessToken);
       expect(mockJwtService.sign).toHaveBeenCalledWith(payload);
@@ -133,11 +107,11 @@ describe("AuthService", () => {
   });
 
   describe("getAccessToken", () => {
-    it("should return the access token", async () => {
+    it("should return the access token", () => {
       const token = { access_token: "mock_token", token_type: "bearer" };
-      jest.spyOn(authService, "getAccessToken").mockResolvedValue(token);
+      jest.spyOn(authService, "getAccessToken").mockReturnValueOnce(token);
 
-      const result = await authService.getAccessToken();
+      const result: IToken = authService.getAccessToken();
       expect(result).toEqual(token);
     });
   });

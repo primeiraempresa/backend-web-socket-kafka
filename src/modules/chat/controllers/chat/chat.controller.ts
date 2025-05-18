@@ -50,7 +50,7 @@ export class ChatController {
   @ApiQuery({
     name: "userIds",
     required: false,
-    type: Array<String>,
+    type: Array<string>,
     description: "array of user IDs",
   })
   @ApiQuery({

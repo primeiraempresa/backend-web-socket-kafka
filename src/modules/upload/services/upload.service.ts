@@ -74,7 +74,7 @@ export class UploadService {
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
   }
-  async upload(file: IUploadedFile) {
+  async upload(file: IUploadedFile): Promise<FilesDocument> {
     file.location = file.location.replace(
       "minio-backend-app-marcelo",
       "localhost",
