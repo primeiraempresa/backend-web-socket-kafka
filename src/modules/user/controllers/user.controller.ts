@@ -10,13 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import {
-  ApiBearerAuth,
-  ApiOAuth2,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-} from "@nestjs/swagger";
+import { ApiOAuth2, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { UsersDto } from "@user/dto/users.dto";
 import { Users } from "@user/models/user.model";
@@ -71,7 +65,7 @@ export class UserController {
   async updateUser(
     @Body() body: UsersDto,
     @Param("id") id: string,
-  ): Promise<UsersDocument | unknown> {
+  ): Promise<UsersDocument> {
     return await this.users_service.updateUser(body, id);
   }
 

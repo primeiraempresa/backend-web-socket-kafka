@@ -43,4 +43,8 @@ async function bootstrap() {
   logger.debug(`swagger on in ${await app.getUrl()}/swagger`);
   logger.debug(`S3 Local on in http://localhost:9000`);
 }
-bootstrap();
+bootstrap().catch((err: Error) => {
+  const logger = new Logger();
+  logger.error("Error starting the application", err);
+  process.exit(1);
+});

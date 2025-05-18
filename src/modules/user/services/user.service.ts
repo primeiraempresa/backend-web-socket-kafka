@@ -43,11 +43,11 @@ export class UserService {
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
   }
-  async getUserByID(_id: ObjectId| string): Promise<UsersDocument> {
+  async getUserByID(_id: ObjectId | string): Promise<UsersDocument> {
     if (!isValidObjectId(_id)) {
       throw new NotFoundException(["user not found"]);
     }
-    const cacheKey = `user_${_id}`;
+    const cacheKey = `user_${_id.toString()}`;
     const cachedUser: UsersDocument | null =
       await this.cacheManager.get<UsersDocument>(cacheKey);
     if (cachedUser) return cachedUser;
@@ -73,7 +73,7 @@ export class UserService {
     body: UsersDto,
     _id: ObjectId | string,
   ): Promise<UsersDocument> {
-    const cacheKey = `user_${_id}`;
+    const cacheKey = `user_${_id.toString()}`;
     const user = await this.getUserByID(_id);
     if (body?.email && body.email !== user.email) {
       await this.emailExist(body?.email);
