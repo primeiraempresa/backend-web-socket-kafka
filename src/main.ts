@@ -42,6 +42,7 @@ async function bootstrap() {
   logger.debug(`sever on in ${await app.getUrl()}`);
   logger.debug(`swagger on in ${await app.getUrl()}/swagger`);
   logger.debug(`S3 Local on in http://localhost:9000`);
+  logger.debug(`UI of Kafka on in http://localhost:8080`);
 }
 bootstrap().catch((err: Error) => {
   const logger = new Logger();

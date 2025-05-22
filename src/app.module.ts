@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Inject, Module, OnModuleInit } from "@nestjs/common";
 import { UserModule } from "./modules/user/user.module";
 import { ConfigModule } from "@nestjs/config";
 import { WinstonModule } from "nest-winston";
@@ -11,6 +11,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { ChatModule } from "./modules/chat/chat.module";
 import { CommonModule } from "./modules/common/common.module";
 import { UploadModule } from "./modules/upload/upload.module";
+import { ClientKafka, ClientsModule, Transport } from "@nestjs/microservices";
 
 @Module({
   imports: [
@@ -30,6 +31,20 @@ import { UploadModule } from "./modules/upload/upload.module";
       secret: configService.get<string>("client_secret"),
       signOptions: { expiresIn: "48h" },
     }),
+    ClientsModule.register([
+      {
+        name: "KAFKA_SERVICE",
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            brokers: [configService.get<string>("KAFKA_BROKER") as string],
+          },
+          consumer: {
+            groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+          },
+        },
+      },
+    ]),
     UserModule,
     AuthModule,
     ChatModule,
@@ -37,4 +52,11 @@ import { UploadModule } from "./modules/upload/upload.module";
     UploadModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(
+    @Inject("KAFKA_SERVICE") private readonly kafkaClient: ClientKafka,
+  ) {}
+  async onModuleInit() {
+    await this.kafkaClient.connect();
+  }
+}

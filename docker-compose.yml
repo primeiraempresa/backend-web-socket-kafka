@@ -27,12 +27,63 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+
+  kafka-ui-backend-app-marcelo:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    attach: false 
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-backend-app-marcelo:9093
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper-backend-app-marcelo:2181
+    depends_on:
+      - kafka-backend-app-marcelo
+    networks:
+      - api
+
+  zookeeper-backend-app-marcelo:
+    image: wurstmeister/zookeeper:latest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_LISTENER_PORT: 2181
+      ZOOKEEPER_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+    ports:
+      - "2181:2181"
+    networks:
+      - api
       
+  kafka-backend-app-marcelo:
+    image: wurstmeister/kafka:latest
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka-backend-app-marcelo:9093
+      KAFKA_LISTENERS: INSIDE://kafka-backend-app-marcelo:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT
+      KAFKA_LISTENER_NAME_INSIDE: INSIDE
+      KAFKA_LISTENER_PORT: 9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      KAFKA_LISTENER_INTERFACES: INSIDE
+      KAFKA_LISTENER_NAMES: INSIDE
+      KAFKA_LISTENER_INTERNAL: INSIDE://kafka-backend-app-marcelo:9093
+      KAFKA_LISTENER_MODE: BROKER
+      KAFKA_ADVERTISED_LISTENER: INSIDE://kafka-backend-app-marcelo:9093
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-backend-app-marcelo:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE 
+    ports:
+      - "9093:9093"
+    networks:
+      - api
+    depends_on:
+      - zookeeper-backend-app-marcelo
+
   app:
     build: .
     depends_on:
       - mongodb-backend-app-marcelo
       - minio-backend-app-marcelo
+      - kafka-backend-app-marcelo
+      - zookeeper-backend-app-marcelo
     entrypoint: .docker/entrypoint.sh
     ports:
       - "${PORT}:${PORT}"
@@ -49,6 +100,8 @@ services:
         REGIONAWS: us-east-1
         ENV_AMB: LOCAL
         APP_VERSION: Local version  
+        KAFKA_BROKER: kafka-backend-app-marcelo:9093
+        KAFKA_GROUP_ID: nestjs-consumer-group
 
   mongodb-seed-backend-app-marcelo: # rodar esse container, importa os dados(json) no mongodb local
     image: mongo
