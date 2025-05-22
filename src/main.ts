@@ -4,6 +4,7 @@ import { configService } from "@config/configService";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { Logger, ValidationPipe } from "@nestjs/common";
+import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 
 async function bootstrap() {
   const logger = new Logger();
@@ -37,6 +38,20 @@ async function bootstrap() {
       },
     },
   });
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.KAFKA,
+    options: {
+      client: {
+        brokers: [configService.get<string>("KAFKA_BROKER") as string],
+        clientId: configService.get<string>("KAFKA_CLIENT_ID") as string,
+      },
+      consumer: {
+        groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+        allowAutoTopicCreation: true,
+      },
+    },
+  });
+  await app.startAllMicroservices();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   await app.listen(configService.get<number>("PORT") ?? 3000);
   logger.debug(`sever on in ${await app.getUrl()}`);
