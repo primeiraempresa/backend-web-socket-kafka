@@ -30,12 +30,12 @@ import { UploadProducerService } from "@upload/services/upload.producer.service"
 export class UploadController {
   constructor(
     private readonly uploadService: UploadService,
-    private readonly uploadProducerService: UploadProducerService,
+    private readonly uploadProducerService: UploadProducerService<Allowed_file_types>,
   ) {}
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
   PostTypes(@Body() body: Allowed_file_types) {
-    return this.uploadProducerService.sendMessage("type.create.reply", body);
+    return this.uploadProducerService.sendMessage("type.create", body);
   }
 
   @Get("type")

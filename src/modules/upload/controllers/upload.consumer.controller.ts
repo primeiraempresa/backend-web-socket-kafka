@@ -1,24 +1,15 @@
 import { Controller } from "@nestjs/common";
-import {
-  Ctx,
-  KafkaContext,
-  MessagePattern,
-  Payload,
-} from "@nestjs/microservices";
+import { MessagePattern, Payload } from "@nestjs/microservices";
+import { Allowed_file_types } from "@upload/models/allowed_file_types.model";
 import { UploadService } from "@upload/services/upload.service";
 
 @Controller()
 export class UploadConsumerController {
   constructor(private readonly uploadService: UploadService) {}
-  @MessagePattern("type.create.reply")
-  async handleTextCreate(
-    @Payload() message: any,
-    @Ctx() context: KafkaContext,
-  ) {
-    const originalMessage = message.type.toString();
-    console.log("Received:", originalMessage);
-
+  @MessagePattern("type.create")
+  async handleTextCreate(@Payload() message: Allowed_file_types) {
+    console.log("Received:", message);
     console.log("Received from Kafka:", message);
-    await this.uploadService.CreateType(originalMessage);
+    return await this.uploadService.CreateType(message.type);
   }
 }

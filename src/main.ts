@@ -43,7 +43,7 @@ async function bootstrap() {
     options: {
       client: {
         brokers: [configService.get<string>("KAFKA_BROKER") as string],
-        clientId: configService.get<string>("KAFKA_CLIENT_ID") as string,
+        // clientId: configService.get<string>("KAFKA_CLIENT_ID") as string,
       },
       consumer: {
         groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
