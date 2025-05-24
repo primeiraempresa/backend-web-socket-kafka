@@ -32,7 +32,6 @@ import { UploadConsumerController } from "./controllers/upload.consumer.controll
         options: {
           client: {
             brokers: [configService.get<string>("KAFKA_BROKER") as string],
-            // clientId: configService.get<string>("KAFKA_CLIENT_ID") as string,
             retry: {
               retries: 10,
               initialRetryTime: 3000, // 3s entre tentativas

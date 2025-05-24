@@ -33,8 +33,7 @@ export class ChatService {
   }
   async addMessage(
     chatId: string,
-    senderId: string,
-    message: string,
+    chat_conversation: Chat_conversation,
   ): Promise<ChatConversationDocument> {
     const collectionName = chatId;
     const messageModel: Model<Chat_conversation> = this.connection.model(
@@ -42,7 +41,7 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${collectionName}`,
     );
-    return await messageModel.create({ sender: senderId, message });
+    return await messageModel.create(chat_conversation);
   }
   async getMessages(
     chatId: string,
