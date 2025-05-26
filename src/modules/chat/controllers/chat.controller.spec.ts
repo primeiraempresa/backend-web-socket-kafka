@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatController } from "./chat.controller";
-import { ChatService } from "../../services/chat.service";
-import { ChatDocument } from "../../schemas/chat.schema";
-import { ChatConversationDocument } from "../../schemas/chat_conversation.schema";
-import { ChatPagination } from "../../models/chatPagination.model";
-import { Chat_conversation_DTO } from "../../dto/chat_conversation.dto";
+import { ChatService } from "../services/chat.service";
+import { ChatDocument } from "../schemas/chat.schema";
+import { ChatConversationDocument } from "../schemas/chat_conversation.schema";
+import { ChatPagination } from "../models/chatPagination.model";
+import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
 
 describe("ChatController", () => {
   let controller: ChatController;
@@ -103,13 +103,13 @@ describe("ChatController", () => {
   });
 
   describe("deleteMessage", () => {
-    it("should delete a message", async () => {
+    it("should delete a message", () => {
       const mockDeletedMessage = {} as ChatConversationDocument;
       jest
         .spyOn(service, "deleteMessageById")
         .mockResolvedValue(mockDeletedMessage);
 
-      const result = await controller.deleteMessage("chat123", "msg456");
+      const result = controller.deleteMessage("chat123", "msg456");
       expect(result).toBe(mockDeletedMessage);
       expect(service.deleteMessageById).toHaveBeenCalledWith(
         "chat123",

@@ -29,7 +29,6 @@ import { Chats } from "@chat/models/chat.model";
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
-    private readonly chatProducerService_chat: ChatProducerService<ChatDocument>,
     private readonly chatProducerService_createChat: ChatProducerService<Chats>,
     private readonly chatProducerService_createMessage: ChatProducerService<{
       chatId: string;
@@ -93,6 +92,7 @@ export class ChatController {
   ): Promise<ChatDocument> {
     return await this.chatService.getChatByUsersIds(userIds, chat_id);
   }
+
   @Get(":chatId/messages/:messageId")
   async getMessages(
     @Param("chatId") chatId: string,
@@ -107,6 +107,7 @@ export class ChatController {
     }
     return this.chatProducerService_createChat.sendMessage("chat.create", body);
   }
+
   @Post("/:chatId/messages")
   createMessage(
     @Param("chatId") chatId: string,
@@ -123,6 +124,7 @@ export class ChatController {
       },
     );
   }
+
   @Put(":chatId/messages/:messageId")
   async updateMessage(
     @Param("chatId") chatId: string,
@@ -139,6 +141,7 @@ export class ChatController {
       },
     );
   }
+
   @Delete(":chatId/messages/:messageId")
   deleteMessage(
     @Param("chatId") chatId: string,
@@ -158,6 +161,7 @@ export class ChatController {
       },
     );
   }
+
   @Delete(":chatId")
   async deleteChat(@Param("chatId") chatId: string) {
     await this.chatService.getChatByUsersIds([], chatId);

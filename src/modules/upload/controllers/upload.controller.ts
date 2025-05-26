@@ -22,20 +22,16 @@ import { UploadService } from "../services/upload.service";
 import { DynamicMulterInterceptor } from "../interceptor/dynamic-multer.interceptor";
 import { Allowed_file_types } from "../models/allowed_file_types.model";
 import { AuthGuard } from "@nestjs/passport";
-import { UploadProducerService } from "@upload/services/upload.producer.service";
 
 @Controller("upload")
 @UseGuards(AuthGuard("jwt"))
 @ApiOAuth2(["read", "write"], "oauth2")
 export class UploadController {
-  constructor(
-    private readonly uploadService: UploadService,
-    private readonly uploadProducerService: UploadProducerService<Allowed_file_types>,
-  ) {}
+  constructor(private readonly uploadService: UploadService) {}
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
   PostTypes(@Body() body: Allowed_file_types) {
-    return this.uploadProducerService.sendMessage("type.create", body);
+    return this.uploadService.CreateType(body.type);
   }
 
   @Get("type")
