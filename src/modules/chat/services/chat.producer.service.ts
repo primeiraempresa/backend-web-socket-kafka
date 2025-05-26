@@ -23,7 +23,6 @@ export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
   }
 
   sendMessage(topic: string, message: T) {
-    console.log(message);
     return this.client.emit(topic, message);
   }
 }

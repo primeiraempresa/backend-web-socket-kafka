@@ -20,6 +20,7 @@ import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
+import { Chats } from "@chat/models/chat.model";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -29,9 +30,7 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly chatProducerService_chat: ChatProducerService<ChatDocument>,
-    private readonly chatProducerService_createChat: ChatProducerService<{
-      userIds: string[];
-    }>,
+    private readonly chatProducerService_createChat: ChatProducerService<Chats>,
     private readonly chatProducerService_createMessage: ChatProducerService<{
       chatId: string;
       chat_conversation: Chat_conversation;
@@ -102,8 +101,8 @@ export class ChatController {
     return await this.chatService.getMessageById(chatId, messageId);
   }
   @Post()
-  createChat(@Body() body: { userIds: string[] }) {
-    if (!this.commonService.validateArryByMongoIDs(body.userIds)) {
+  createChat(@Body() body: Chats) {
+    if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       throw new BadRequestException(["invalid userIds"]);
     }
     return this.chatProducerService_createChat.sendMessage("chat.create", body);
@@ -125,17 +124,12 @@ export class ChatController {
     );
   }
   @Put(":chatId/messages/:messageId")
-  updateMessage(
+  async updateMessage(
     @Param("chatId") chatId: string,
     @Param("messageId") messageId: string,
     @Body() body: Chat_conversation_DTO,
   ) {
-    if (
-      !this.commonService.validateMongoID(chatId) ||
-      !this.commonService.validateMongoID(messageId)
-    ) {
-      throw new BadRequestException(["invalid chat_id or message_id"]);
-    }
+    await this.chatService.getMessageById(chatId, messageId);
     return this.chatProducerService_updateMessage.sendMessage(
       "chat.message.update",
       {
@@ -165,10 +159,8 @@ export class ChatController {
     );
   }
   @Delete(":chatId")
-  deleteChat(@Param("chatId") chatId: string) {
-    if (!this.commonService.validateMongoID(chatId)) {
-      throw new BadRequestException(["invalid chat id"]);
-    }
+  async deleteChat(@Param("chatId") chatId: string) {
+    await this.chatService.getChatByUsersIds([], chatId);
     return this.chatProducerService_deleteChat.sendMessage("chat.delete", {
       chatId,
     });

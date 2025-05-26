@@ -1,11 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { ChatDocument } from "../schemas/chat.schema";
-import { Connection, Model } from "mongoose";
+import mongoose, { Connection, Model } from "mongoose";
 import { ChatPagination } from "../models/chatPagination.model";
 import { Chats } from "../models/chat.model";
 import {
@@ -23,7 +24,9 @@ export class ChatService {
     @InjectConnection() private readonly connection: Connection,
     private readonly commonService: CommonService,
   ) {}
-  async createChat(userIds: string[]): Promise<ChatDocument> {
+  async createChat(
+    userIds: string[] | mongoose.Types.ObjectId[],
+  ): Promise<ChatDocument> {
     const newChat: ChatDocument = await this.chatModel.create({
       chatters: userIds,
     });
@@ -123,6 +126,7 @@ export class ChatService {
     if (!findById) {
       throw new NotFoundException(["message not found"]);
     }
+    console.log(findById);
     return findById;
   }
   async updateMessageById(
@@ -130,6 +134,7 @@ export class ChatService {
     message_id: string,
     body: Chat_conversation_DTO,
   ): Promise<ChatConversationDocument> {
+    console.log(body);
     if (!this.commonService.validateMongoID(message_id)) {
       throw new BadRequestException(["invalid message id"]);
     }
@@ -141,6 +146,7 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${chatId}`,
     );
+    console.log(messageModel);
     const updateMessageById = await messageModel
       .findByIdAndUpdate(message_id, body, {
         new: true,
@@ -162,18 +168,23 @@ export class ChatService {
     if (!this.commonService.validateMongoID(chatId)) {
       throw new BadRequestException(["invalid chat id"]);
     }
-    const messageModel: Model<Chat_conversation> = this.connection.model(
-      `ChatMessage_${chatId}`,
-      ChatConversationSchema,
-      `ChatMessage_${chatId}`,
-    );
-    const deleteMessageById = await messageModel
-      .findByIdAndDelete(message_id)
-      .exec();
-    if (!deleteMessageById) {
-      throw new NotFoundException(["message not found"]);
+    try {
+      const messageModel: Model<Chat_conversation> = this.connection.model(
+        `ChatMessage_${chatId}`,
+        ChatConversationSchema,
+        `ChatMessage_${chatId}`,
+      );
+      const deleteMessageById = await messageModel
+        .findByIdAndDelete(message_id)
+        .exec();
+      if (!deleteMessageById) {
+        throw new NotFoundException(["message not found"]);
+      }
+      return deleteMessageById;
+    } catch (error) {
+      console.error("MongoDB Update Error:", error);
+      throw new InternalServerErrorException(error.message);
     }
-    return deleteMessageById;
   }
   async deleteChatById(_id: string): Promise<ChatDocument> {
     if (!this.commonService.validateMongoID(_id)) {

@@ -1,9 +1,8 @@
 import { Prop, Schema } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 import { Users } from "@user/models/user.model";
-import { ArrayNotEmpty, IsArray, IsNotEmpty } from "class-validator";
+import { ArrayNotEmpty, IsArray, IsMongoId, IsNotEmpty } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArryByObjectIds } from "@common/validations/IsArrayByObjectIds.validation";
 
 @Schema()
 export class Chats {
@@ -11,6 +10,9 @@ export class Chats {
     required: true,
     default: ["67d21a67b5aed094d5c435e5", "67d21a67b5aed094d5c435e3"],
     description: "Array of users ids",
+    minItems: 2,
+    type: [String],
+    example: ["67d21a67b5aed094d5c435e5", "67d21a67b5aed094d5c435e3"],
   })
   @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: Users.name }],
@@ -20,6 +22,6 @@ export class Chats {
   @IsArray()
   @IsNotEmpty()
   @ArrayNotEmpty()
-  @IsArryByObjectIds()
-  chatters: mongoose.Types.ObjectId[];
+  @IsMongoId({ each: true })
+  chatters: string[];
 }
