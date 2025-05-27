@@ -22,8 +22,8 @@ export class Chat_conversation {
     index: true,
   })
   @IsMongoId({ each: true })
-  sender: mongoose.Types.ObjectId;
+  sender: string;
 
   @Prop({ required: true, default: new Date().toISOString(), index: -1 })
-  createdAt: Date;
+  createdAt?: Date;
 }

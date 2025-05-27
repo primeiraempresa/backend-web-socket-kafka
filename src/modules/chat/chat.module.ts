@@ -9,6 +9,7 @@ import { ChatConsumerController } from "./controllers/chat.consumer.controller";
 import { ClientsModule, Transport } from "@nestjs/microservices";
 import { configService } from "@config/configService";
 import { ChatProducerService } from "./services/chat.producer.service";
+import { ChatGateway } from "./gateway/chat.gateway";
 
 @Module({
   imports: [
@@ -37,6 +38,6 @@ import { ChatProducerService } from "./services/chat.producer.service";
     CommonModule,
   ],
   controllers: [ChatController, ChatConsumerController],
-  providers: [ChatService, ChatProducerService],
+  providers: [ChatService, ChatProducerService, ChatGateway],
 })
 export class ChatModule {}
