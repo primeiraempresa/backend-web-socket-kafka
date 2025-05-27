@@ -5,12 +5,12 @@ import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { MicroserviceOptions, Transport } from "@nestjs/microservices";
-import { IoAdapter } from "@nestjs/platform-socket.io";
 import { WsAdapter } from "@nestjs/platform-ws";
 
 async function bootstrap() {
   const logger = new Logger();
   const app = await NestFactory.create(AppModule);
+  // app.useGlobalInterceptors(new DateInterceptor());
   app.useWebSocketAdapter(new WsAdapter(app));
   app.enableCors();
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));

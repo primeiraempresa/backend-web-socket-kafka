@@ -94,6 +94,7 @@ services:
         - api
     environment:
         AUTH_URL: "http://localhost:${PORT}/api/auth/"
+        TZ: America/Sao_Paulo
         DBAAS_MONGODB_ENDPOINT: mongodb://mongodb-backend-app-marcelo:27017/backend-app-marcelo
         AWS_ENDPOINT: http://minio-backend-app-marcelo:9000/
         AWS_ACCESS_KEY_ID: minioadmin

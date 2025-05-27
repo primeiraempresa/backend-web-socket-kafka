@@ -60,7 +60,7 @@ export class ChatService {
     const [items, totalItems] = await Promise.all([
       await messageModel
         .find()
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: 1 })
         .skip(skip)
         .limit(limit)
         .populate("sender")

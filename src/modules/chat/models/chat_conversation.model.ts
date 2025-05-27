@@ -1,3 +1,4 @@
+import { DateService } from "@common/services/date.service";
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Users } from "@user/models/user.model";
@@ -24,6 +25,11 @@ export class Chat_conversation {
   @IsMongoId({ each: true })
   sender: string;
 
-  @Prop({ required: true, default: new Date().toISOString(), index: -1 })
+  @Prop({
+    required: true,
+    default: new DateService().now(),
+    index: 1,
+    type: Date,
+  })
   createdAt?: Date;
 }
