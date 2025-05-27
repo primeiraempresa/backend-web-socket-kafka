@@ -1,6 +1,7 @@
 import { Chat_conversation_DTO } from "@chat/dto/chat_conversation.dto";
 import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
+import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
@@ -9,11 +10,12 @@ import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
-  ConnectedSocket,
+  // ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
 } from "@nestjs/websockets";
+import { UserService } from "@user/services/user.service";
 import { Server, WebSocket } from "ws";
 @WebSocketGateway({
   path: "/chat",
@@ -44,25 +46,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chatId: string;
     }>,
     private readonly commonService: CommonService,
+    private readonly chatWebSocketService: ChatWebSocketService,
+    private readonly userService: UserService,
   ) {}
   private usersOnline = new Map<string, WebSocket>();
   private logger = new Logger(ChatGateway.name);
-  handleConnection(client: WebSocket, req: Request) {
-    const url = new URL(req.url!, `http://localhost:3000`);
-    const userId = url.searchParams.get("userId");
-
+  async handleConnection(client: WebSocket, req: Request) {
+    const url = new URL(req.url, `http://localhost:3000`);
+    const userId = url.searchParams.get("userId") as string;
     if (!userId) {
-      client.close();
-      this.logger.warn(`Client disconnected for missing userId`);
-      return;
+      return client.close(1008, "param userId not found");
+    }
+    try {
+      await this.userService.getUserByID(userId);
+    } catch {
+      return client.close(1008, "user not found");
     }
 
-    this.usersOnline.set(userId, client);
-    this.logger.log(`User ${userId} connected`);
+    this.chatWebSocketService.addClient(userId, client);
+    this.chatWebSocketService.setServer(this.server);
 
-    this.broadcast({
-      event: "user.online",
-      data: { userId, status: "online" },
+    this.chatWebSocketService.broadcast("user.online", {
+      userId,
+      status: "online",
     });
 
     client.on("message", (message) => {
@@ -71,22 +77,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: WebSocket) {
-    const userId = [...this.usersOnline.entries()].find(
+    const userId = [...this.chatWebSocketService.usersOnline.entries()].find(
       ([, socket]) => socket === client,
     )?.[0];
-    console.log(userId);
-    if (userId) {
-      this.usersOnline.delete(userId);
-      this.logger.log(`User ${userId} disconnected`);
 
-      this.broadcast({
-        event: "user.offline",
-        data: { userId, status: "offline" },
+    if (userId) {
+      this.chatWebSocketService.removeClient(userId);
+
+      this.chatWebSocketService.broadcast("user.offline", {
+        userId,
+        status: "offline",
       });
     }
   }
   @SubscribeMessage("chat.create")
-  createChat(@MessageBody() body: Chats, @ConnectedSocket() client: WebSocket) {
+  createChat(
+    @MessageBody() body: Chats /* @ConnectedSocket() client: WebSocket */,
+  ) {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       return { error: "Invalid userIds" };
     }
@@ -100,7 +107,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chatId: string;
       chat_conversation: Chat_conversation;
     },
-    @ConnectedSocket() client: WebSocket,
+    /* @ConnectedSocket() client: WebSocket */
   ) {
     const { chatId, chat_conversation } = message;
     if (!this.commonService.validateMongoID(chat_conversation.sender)) {

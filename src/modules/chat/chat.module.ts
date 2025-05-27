@@ -10,6 +10,8 @@ import { ClientsModule, Transport } from "@nestjs/microservices";
 import { configService } from "@config/configService";
 import { ChatProducerService } from "./services/chat.producer.service";
 import { ChatGateway } from "./gateway/chat.gateway";
+import { ChatWebSocketService } from "./services/chat-webSocket.service";
+import { UserModule } from "@user/user.module";
 
 @Module({
   imports: [
@@ -36,8 +38,14 @@ import { ChatGateway } from "./gateway/chat.gateway";
       },
     ]),
     CommonModule,
+    UserModule,
   ],
   controllers: [ChatController, ChatConsumerController],
-  providers: [ChatService, ChatProducerService, ChatGateway],
+  providers: [
+    ChatService,
+    ChatProducerService,
+    ChatGateway,
+    ChatWebSocketService,
+  ],
 })
 export class ChatModule {}

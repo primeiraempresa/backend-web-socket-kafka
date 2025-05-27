@@ -3,13 +3,17 @@ import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { ChatDocument } from "@chat/schemas/chat.schema";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
+import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
 import { ChatService } from "@chat/services/chat.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 
 @Controller()
 export class ChatConsumerController {
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly chatWebSocketService: ChatWebSocketService,
+  ) {}
   @MessagePattern("chat.create")
   async handleChatCreate(@Payload() message: Chats): Promise<ChatDocument> {
     return await this.chatService.createChat(message.chatters);
@@ -28,10 +32,16 @@ export class ChatConsumerController {
       chat_conversation: Chat_conversation;
     },
   ): Promise<ChatConversationDocument> {
-    return await this.chatService.addMessage(
+    const result = await this.chatService.addMessage(
       message.chatId,
       message.chat_conversation,
     );
+    this.chatWebSocketService.sendToUser(
+      message.chat_conversation.sender,
+      "chat.message.created",
+      result,
+    );
+    return result;
   }
   @MessagePattern("chat.message.update")
   async handleMessageUpdate(
