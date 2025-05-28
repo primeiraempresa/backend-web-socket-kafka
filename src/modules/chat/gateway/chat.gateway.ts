@@ -7,6 +7,7 @@ import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
+import { configService } from "@config/configService";
 import { Logger } from "@nestjs/common";
 import {
   WebSocketGateway,
@@ -19,6 +20,9 @@ import {
 } from "@nestjs/websockets";
 import { UserService } from "@user/services/user.service";
 import { Observable } from "rxjs";
+import { Chat_T_WS } from "src/modules/interfaces/chat-T.interface";
+import { Chat_conversationT_WS } from "src/modules/interfaces/chat_conversation-T.interface";
+import { Chat_conversation_messageT_Ws } from "src/modules/interfaces/chat_conversation_message-T.interface";
 import { Server, WebSocket } from "ws";
 @WebSocketGateway({
   path: "/chat",
@@ -35,22 +39,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId: string;
       chats: Chats;
     }>,
-    private readonly chatProducerService_createMessage: ChatProducerService<{
-      userId: string;
-      chatId: string;
-      chat_conversation: Chat_conversation;
-    }>,
-    private readonly chatProducerService_updateMessage: ChatProducerService<{
-      userId: string;
-      chatId: string;
-      messageId: string;
-      chat_conversation: Chat_conversation_DTO;
-    }>,
-    private readonly chatProducerService_deleteMessage: ChatProducerService<{
-      userId: string;
-      chatId: string;
-      messageId: string;
-    }>,
+    private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT_WS>,
+    private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT_Ws>,
+    private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T_WS>,
     private readonly chatProducerService_deleteChat: ChatProducerService<{
       userId: string;
       chatId: string;
@@ -62,7 +53,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
   private logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
-    const url = new URL(req.url, `http://localhost:3000`);
+    const url = new URL(req.url, configService.get<string>("URL"));
     const userId = url.searchParams.get("userId") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");

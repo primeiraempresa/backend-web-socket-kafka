@@ -1,23 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ChatController } from "./chat.controller";
+import { ChatController } from "../controllers/chat.controller";
 import { ChatService } from "../services/chat.service";
-import { ChatDocument } from "../schemas/chat.schema";
-import { ChatConversationDocument } from "../schemas/chat_conversation.schema";
-import { ChatPagination } from "../models/chatPagination.model";
-import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
+import { ChatProducerService } from "../services/chat.producer.service";
+import { CommonService } from "@common/services/common.service";
+import { BadRequestException } from "@nestjs/common";
 
 describe("ChatController", () => {
   let controller: ChatController;
-  let service: ChatService;
-
-  const mockChatService = {
-    getMessages: jest.fn(),
-    getChatByUsersIds: jest.fn(),
-    getMessageById: jest.fn(),
-    updateMessageById: jest.fn(),
-    deleteMessageById: jest.fn(),
-    deleteChatById: jest.fn(),
-  };
+  let chatService: jest.Mocked<ChatService>;
+  let chatProducer: jest.Mocked<ChatProducerService<any>>;
+  let commonService: jest.Mocked<CommonService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,107 +17,179 @@ describe("ChatController", () => {
       providers: [
         {
           provide: ChatService,
-          useValue: mockChatService,
+          useValue: {
+            getMessages: jest.fn(),
+            getChatByUsersIds: jest.fn(),
+            getMessageById: jest.fn(),
+          },
+        },
+        {
+          provide: CommonService,
+          useValue: {
+            validateArryByMongoIDs: jest.fn(),
+            validateMongoID: jest.fn(),
+          },
+        },
+        {
+          provide: "ChatProducerService_createChat",
+          useValue: { sendMessage: jest.fn() },
+        },
+        {
+          provide: "ChatProducerService_createMessage",
+          useValue: { sendMessage: jest.fn() },
+        },
+        {
+          provide: "ChatProducerService_updateMessage",
+          useValue: { sendMessage: jest.fn() },
+        },
+        {
+          provide: "ChatProducerService_deleteMessage",
+          useValue: { sendMessage: jest.fn() },
+        },
+        {
+          provide: "ChatProducerService_deleteChat",
+          useValue: { sendMessage: jest.fn() },
         },
       ],
     }).compile();
 
     controller = module.get<ChatController>(ChatController);
-    service = module.get<ChatService>(ChatService);
-  });
-
-  it("should be defined", () => {
-    expect(controller).toBeDefined();
+    chatService = module.get(ChatService);
+    chatProducer = module.get("ChatProducerService_createChat");
+    commonService = module.get(CommonService);
   });
 
   describe("getAllChats", () => {
-    it("should return paginated messages", async () => {
-      const result = {
-        items: [],
-        totalItems: 0,
-        totalPages: 0,
-        currentPage: 1,
-        nextPage: null,
-      } as ChatPagination;
+    it("should return paginated chats", async () => {
+      const result = { items: [], total: 0 };
+      chatService.getMessages.mockResolvedValue(result as any);
 
-      jest.spyOn(service, "getMessages").mockResolvedValue(result);
-      expect(await controller.getAllChats("chat123", 1, 10)).toEqual(result);
-      expect(service.getMessages).toHaveBeenCalledWith("chat123", 1, 10);
+      expect(await controller.getAllChats("chatId", 1, 10)).toEqual(result);
+      expect(chatService.getMessages).toHaveBeenCalledWith("chatId", 1, 10);
     });
   });
 
   describe("getChatByUsersIdsOrById", () => {
-    it("should return chat by users or ID", async () => {
-      const mockChat = {} as ChatDocument;
-      jest.spyOn(service, "getChatByUsersIds").mockResolvedValue(mockChat);
+    it("should return a chat document", async () => {
+      const chat = { _id: "chatId" };
+      chatService.getChatByUsersIds.mockResolvedValue(chat as any);
 
-      const result = await controller.getChatByUsersIdsOrById(
+      expect(
+        await controller.getChatByUsersIdsOrById(["user1", "user2"], undefined),
+      ).toEqual(chat);
+      expect(chatService.getChatByUsersIds).toHaveBeenCalledWith(
         ["user1", "user2"],
-        "chat_id",
-      );
-      expect(result).toBe(mockChat);
-      expect(service.getChatByUsersIds).toHaveBeenCalledWith(
-        ["user1", "user2"],
-        "chat_id",
+        undefined,
       );
     });
   });
 
   describe("getMessages", () => {
-    it("should return a message by ID", async () => {
-      const mockMessage = {} as ChatConversationDocument;
-      jest.spyOn(service, "getMessageById").mockResolvedValue(mockMessage);
+    it("should return a message document", async () => {
+      const message = { _id: "msgId" };
+      chatService.getMessageById.mockResolvedValue(message as any);
 
-      const result = await controller.getMessages("chat123", "msg456");
-      expect(result).toBe(mockMessage);
-      expect(service.getMessageById).toHaveBeenCalledWith("chat123", "msg456");
+      expect(await controller.getMessages("chatId", "msgId")).toEqual(message);
+      expect(chatService.getMessageById).toHaveBeenCalledWith(
+        "chatId",
+        "msgId",
+      );
+    });
+  });
+
+  describe("createChat", () => {
+    it("should throw BadRequestException if userIds are invalid", () => {
+      commonService.validateArryByMongoIDs.mockReturnValue(false);
+
+      expect(() =>
+        controller.createChat({ chatters: ["invalidId"] } as any),
+      ).toThrow(BadRequestException);
+    });
+
+    it("should create chat", () => {
+      commonService.validateArryByMongoIDs.mockReturnValue(true);
+      chatProducer.sendMessage.mockReturnValue("created");
+
+      expect(
+        controller.createChat({ chatters: ["userId1", "userId2"] } as any),
+      ).toEqual("created");
+      expect(chatProducer.sendMessage).toHaveBeenCalledWith("chat.create", {
+        chatters: ["userId1", "userId2"],
+      });
+    });
+  });
+
+  describe("createMessage", () => {
+    it("should throw BadRequestException if chatId is invalid", () => {
+      commonService.validateMongoID.mockReturnValue(false);
+
+      expect(() =>
+        controller.createMessage("invalidChatId", { message: "Hello" } as any),
+      ).toThrow(BadRequestException);
+    });
+
+    it("should create a message", () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      const producer = module.get("ChatProducerService_createMessage");
+      producer.sendMessage.mockReturnValue("message created");
+
+      expect(
+        controller.createMessage("chatId", { message: "Hello" } as any),
+      ).toEqual("message created");
     });
   });
 
   describe("updateMessage", () => {
     it("should update a message", async () => {
-      const dto: Chat_conversation_DTO = { message: "Updated" };
-      const mockUpdatedMessage = {
-        message: "Updated",
-      } as ChatConversationDocument;
-      jest
-        .spyOn(service, "updateMessageById")
-        .mockResolvedValue(mockUpdatedMessage);
+      chatService.getMessageById.mockResolvedValue({ _id: "msgId" } as any);
+      const producer = module.get("ChatProducerService_updateMessage");
+      producer.sendMessage.mockResolvedValue("updated");
 
-      const result = await controller.updateMessage("chat123", "msg456", dto);
-      expect(result).toBe(mockUpdatedMessage);
-      expect(service.updateMessageById).toHaveBeenCalledWith(
-        "chat123",
-        "msg456",
-        dto,
+      const result = await controller.updateMessage("chatId", "msgId", {
+        content: "Updated",
+      } as any);
+
+      expect(result).toBe("updated");
+      expect(chatService.getMessageById).toHaveBeenCalledWith(
+        "chatId",
+        "msgId",
       );
+      expect(producer.sendMessage).toHaveBeenCalledWith("chat.message.update", {
+        chatId: "chatId",
+        messageId: "msgId",
+        body: { content: "Updated" },
+      });
     });
   });
 
   describe("deleteMessage", () => {
-    it("should delete a message", () => {
-      const mockDeletedMessage = {} as ChatConversationDocument;
-      jest
-        .spyOn(service, "deleteMessageById")
-        .mockResolvedValue(mockDeletedMessage);
+    it("should throw BadRequestException if chatId or messageId are invalid", () => {
+      commonService.validateMongoID.mockReturnValue(false);
 
-      const result = controller.deleteMessage("chat123", "msg456");
-      expect(result).toBe(mockDeletedMessage);
-      expect(service.deleteMessageById).toHaveBeenCalledWith(
-        "chat123",
-        "msg456",
+      expect(() => controller.deleteMessage("invalid", "invalid")).toThrow(
+        BadRequestException,
       );
+    });
+
+    it("should delete a message", () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      const producer = module.get("ChatProducerService_deleteMessage");
+      producer.sendMessage.mockReturnValue("deleted");
+
+      const result = controller.deleteMessage("chatId", "msgId");
+      expect(result).toBe("deleted");
     });
   });
 
   describe("deleteChat", () => {
     it("should delete a chat", async () => {
-      const mockDeletedChat = {} as ChatDocument;
-      jest.spyOn(service, "deleteChatById").mockResolvedValue(mockDeletedChat);
+      chatService.getChatByUsersIds.mockResolvedValue({ _id: "chatId" } as any);
+      const producer = module.get("ChatProducerService_deleteChat");
+      producer.sendMessage.mockResolvedValue("deleted");
 
-      const result = await controller.deleteChat("chat123");
-      expect(result).toBe(mockDeletedChat);
-      expect(service.deleteChatById).toHaveBeenCalledWith("chat123");
+      const result = await controller.deleteChat("chatId");
+      expect(result).toBe("deleted");
+      expect(chatService.getChatByUsersIds).toHaveBeenCalledWith([], "chatId");
     });
   });
 });

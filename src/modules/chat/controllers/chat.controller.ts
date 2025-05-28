@@ -21,6 +21,10 @@ import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
 import { Chats } from "@chat/models/chat.model";
+import { Observable } from "rxjs";
+import { Chat_conversationT } from "src/modules/interfaces/chat_conversation-T.interface";
+import { Chat_conversation_messageT } from "src/modules/interfaces/chat_conversation_message-T.interface";
+import { Chat_T } from "src/modules/interfaces/chat-T.interface";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -30,19 +34,9 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly chatProducerService_createChat: ChatProducerService<Chats>,
-    private readonly chatProducerService_createMessage: ChatProducerService<{
-      chatId: string;
-      chat_conversation: Chat_conversation;
-    }>,
-    private readonly chatProducerService_updateMessage: ChatProducerService<{
-      chatId: string;
-      body: Chat_conversation_DTO;
-      messageId: string;
-    }>,
-    private readonly chatProducerService_deleteMessage: ChatProducerService<{
-      chatId: string;
-      messageId: string;
-    }>,
+    private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT>,
+    private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT>,
+    private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T>,
     private readonly chatProducerService_deleteChat: ChatProducerService<{
       chatId: string;
     }>,
@@ -101,7 +95,7 @@ export class ChatController {
     return await this.chatService.getMessageById(chatId, messageId);
   }
   @Post()
-  createChat(@Body() body: Chats) {
+  createChat(@Body() body: Chats): Observable<Chats> {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       throw new BadRequestException(["invalid userIds"]);
     }
@@ -112,7 +106,7 @@ export class ChatController {
   createMessage(
     @Param("chatId") chatId: string,
     @Body() body: Chat_conversation,
-  ) {
+  ): Observable<Chat_conversationT> {
     if (!this.commonService.validateMongoID(chatId)) {
       throw new BadRequestException(["invalid chat id"]);
     }
@@ -130,14 +124,14 @@ export class ChatController {
     @Param("chatId") chatId: string,
     @Param("messageId") messageId: string,
     @Body() body: Chat_conversation_DTO,
-  ) {
+  ): Promise<Observable<Chat_conversation_messageT>> {
     await this.chatService.getMessageById(chatId, messageId);
     return this.chatProducerService_updateMessage.sendMessage(
       "chat.message.update",
       {
         chatId,
         messageId,
-        body,
+        chat_conversation: body,
       },
     );
   }
@@ -146,7 +140,7 @@ export class ChatController {
   deleteMessage(
     @Param("chatId") chatId: string,
     @Param("messageId") messageId: string,
-  ) {
+  ): Observable<Chat_T> {
     if (
       !this.commonService.validateMongoID(chatId) ||
       !this.commonService.validateMongoID(messageId)
@@ -163,7 +157,11 @@ export class ChatController {
   }
 
   @Delete(":chatId")
-  async deleteChat(@Param("chatId") chatId: string) {
+  async deleteChat(@Param("chatId") chatId: string): Promise<
+    Observable<{
+      chatId: string;
+    }>
+  > {
     await this.chatService.getChatByUsersIds([], chatId);
     return this.chatProducerService_deleteChat.sendMessage("chat.delete", {
       chatId,
