@@ -5,6 +5,7 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ClientKafka } from "@nestjs/microservices";
+import { Observable } from "rxjs";
 
 @Injectable()
 export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
@@ -22,7 +23,7 @@ export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
     await this.client.close();
   }
 
-  sendMessage(topic: string, message: T) {
-    return this.client.emit(topic, message);
+  sendMessage(topic: string, message: T): Observable<T> {
+    return this.client.emit<T>(topic, message);
   }
 }

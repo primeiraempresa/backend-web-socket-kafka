@@ -1,6 +1,8 @@
 import { Chat_conversation_DTO } from "@chat/dto/chat_conversation.dto";
 import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
+import { ChatPagination } from "@chat/models/chatPagination.model";
+import { ChatDocument } from "@chat/schemas/chat.schema";
 import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
@@ -16,6 +18,7 @@ import {
   ConnectedSocket,
 } from "@nestjs/websockets";
 import { UserService } from "@user/services/user.service";
+import { Observable } from "rxjs";
 import { Server, WebSocket } from "ws";
 @WebSocketGateway({
   path: "/chat",
@@ -97,8 +100,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     }
   }
+
+  @SubscribeMessage("chat")
+  async getAllChats(
+    @MessageBody() body: { userIds?: string[]; chatId?: string },
+  ): Promise<ChatDocument> {
+    try {
+      return await this.chatService.getChatByUsersIds(
+        body?.userIds,
+        body?.chatId,
+      );
+    } catch (error) {
+      return error?.response || error;
+    }
+  }
+
+  @SubscribeMessage("chat.message")
+  async getMessagens(
+    @MessageBody() body: { chatId: string; page?: number; perPage?: number },
+  ): Promise<ChatPagination> {
+    try {
+      return await this.chatService.getMessages(
+        body.chatId,
+        body?.page ? parseInt(body?.page.toString()) : 1,
+        body?.perPage ? parseInt(body?.perPage.toString()) : 10,
+      );
+    } catch (error) {
+      return error?.response || error;
+    }
+  }
+
+  @SubscribeMessage("chat.message.id")
+  async getMessageById(
+    @MessageBody() body: { chatId: string; messageId: string },
+  ) {
+    try {
+      return await this.chatService.getMessageById(body.chatId, body.messageId);
+    } catch (error) {
+      return error?.response || error;
+    }
+  }
   @SubscribeMessage("chat.create")
-  createChat(@MessageBody() body: Chats, @ConnectedSocket() client: WebSocket) {
+  createChat(
+    @MessageBody() body: Chats,
+    @ConnectedSocket() client: WebSocket,
+  ): Observable<{ userId: string; chats: Chats }> | { error: string } {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       return { error: "Invalid userIds" };
     }
@@ -115,12 +161,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   createMessage(
     @MessageBody()
     message: {
-      userId: string;
       chatId: string;
       chat_conversation: Chat_conversation;
     },
     @ConnectedSocket() client: WebSocket,
-  ) {
+  ):
+    | Observable<{
+        userId: string;
+        chatId: string;
+        chat_conversation: Chat_conversation;
+      }>
+    | { error: string } {
     const userId = this.chatWebSocketService.getUserIdBySocket(
       client,
     ) as string;
@@ -137,6 +188,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     );
   }
+
   @SubscribeMessage("chat.message.update")
   async updateMessage(
     @MessageBody()
@@ -146,7 +198,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chat_conversation: Chat_conversation_DTO;
     },
     @ConnectedSocket() client: WebSocket,
-  ) {
+  ): Promise<
+    | Observable<{
+        chatId: string;
+        messageId: string;
+        chat_conversation: Chat_conversation_DTO;
+      }>
+    | {
+        error: string;
+      }
+  > {
     const userId = this.chatWebSocketService.getUserIdBySocket(
       client,
     ) as string;
@@ -172,7 +233,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   deleteMessage(
     @MessageBody() data: { chatId: string; messageId: string },
     @ConnectedSocket() client: WebSocket,
-  ) {
+  ):
+    | Observable<{
+        userId: string;
+        chatId: string;
+        messageId: string;
+      }>
+    | {
+        error: string;
+      } {
     const userId = this.chatWebSocketService.getUserIdBySocket(
       client,
     ) as string;
@@ -197,7 +266,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async deleteChat(
     @MessageBody() data: { chatId: string },
     @ConnectedSocket() client: WebSocket,
-  ) {
+  ): Promise<
+    Observable<{
+      userId: string;
+      chatId: string;
+    }>
+  > {
     const { chatId } = data;
     const userId = this.chatWebSocketService.getUserIdBySocket(
       client,

@@ -53,6 +53,9 @@ export class ChatService {
     page: number,
     limit: number,
   ): Promise<ChatPagination> {
+    if (!this.commonService.validateMongoID(chatId)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
     const skip = (page - 1) * limit;
     const messageModel: Model<Chat_conversation> = this.connection.model(
       `ChatMessage_${chatId}`,
@@ -87,7 +90,11 @@ export class ChatService {
     if (_id && !this.commonService.validateMongoID(_id)) {
       throw new BadRequestException(["invalid chat id"]);
     }
-    if (userIds && !this.commonService.validateArryByMongoIDs(userIds)) {
+    if (
+      userIds &&
+      Array.isArray(userIds) &&
+      !this.commonService.validateArryByMongoIDs(userIds)
+    ) {
       throw new BadRequestException(["invalid users ids"]);
     }
     const newChat = await this.chatModel

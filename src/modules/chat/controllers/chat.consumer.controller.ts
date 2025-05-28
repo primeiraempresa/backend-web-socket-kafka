@@ -27,8 +27,12 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
-      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
-      return error;
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.error",
+        error?.response || error,
+      );
+      return error?.response || error;
     }
   }
   @MessagePattern("chat.delete")
@@ -44,8 +48,12 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
-      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
-      return error;
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.error",
+        error?.response || error,
+      );
+      return error?.response || error;
     }
   }
   @MessagePattern("chat.message.create")
@@ -69,8 +77,12 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
-      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
-      return error;
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.error",
+        error?.response || error,
+      );
+      return error?.response || error;
     }
   }
   @MessagePattern("chat.message.update")
@@ -96,8 +108,12 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
-      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
-      return error;
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.error",
+        error?.response || error,
+      );
+      return error?.response || error;
     }
   }
   @MessagePattern("chat.message.delete")
@@ -116,8 +132,12 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
-      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
-      return error;
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.error",
+        error?.response || error,
+      );
+      return error?.response || error;
     }
   }
 }
