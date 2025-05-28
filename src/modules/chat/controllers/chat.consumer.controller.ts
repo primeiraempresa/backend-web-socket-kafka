@@ -22,14 +22,14 @@ export class ChatConsumerController {
       const result = await this.chatService.createChat(message.chats.chatters);
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.created",
+        "chat.create",
         result,
       );
       return result;
     } catch (error) {
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.error",
+        "error",
         error?.response || error,
       );
       return error?.response || error;
@@ -43,14 +43,14 @@ export class ChatConsumerController {
       const result = await this.chatService.deleteChatById(message.chatId);
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.deleted",
+        "chat.delete",
         result,
       );
       return result;
     } catch (error) {
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.error",
+        "error",
         error?.response || error,
       );
       return error?.response || error;
@@ -72,14 +72,14 @@ export class ChatConsumerController {
       );
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.message.created",
+        "chat.message.create",
         result,
       );
       return result;
     } catch (error) {
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.error",
+        "error",
         error?.response || error,
       );
       return error?.response || error;
@@ -103,14 +103,14 @@ export class ChatConsumerController {
       );
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.message.updated",
+        "chat.message.update",
         result,
       );
       return result;
     } catch (error) {
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.error",
+        "error",
         error?.response || error,
       );
       return error?.response || error;
@@ -127,14 +127,14 @@ export class ChatConsumerController {
       );
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.message.deleted",
+        "chat.message.delete",
         result,
       );
       return result;
     } catch (error) {
       this.chatWebSocketService.sendToUser(
         message.userId,
-        "chat.error",
+        "error",
         error?.response || error,
       );
       return error?.response || error;

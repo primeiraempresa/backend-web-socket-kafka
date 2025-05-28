@@ -59,7 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatWebSocketService: ChatWebSocketService,
     private readonly userService: UserService,
   ) {}
-  private usersOnline = new Map<string, WebSocket>();
+  private usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
   private logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
     const url = new URL(req.url, `http://localhost:3000`);
@@ -104,40 +104,73 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat")
   async getAllChats(
     @MessageBody() body: { userIds?: string[]; chatId?: string },
-  ): Promise<ChatDocument> {
+  ): Promise<{
+    event: string;
+    data: ChatDocument | Error;
+  }> {
     try {
-      return await this.chatService.getChatByUsersIds(
+      const result = await this.chatService.getChatByUsersIds(
         body?.userIds,
         body?.chatId,
       );
+      return {
+        event: "chat",
+        data: result,
+      };
     } catch (error) {
-      return error?.response || error;
+      return {
+        event: "error",
+        data: error?.response || error,
+      };
     }
   }
 
   @SubscribeMessage("chat.message")
   async getMessagens(
     @MessageBody() body: { chatId: string; page?: number; perPage?: number },
-  ): Promise<ChatPagination> {
+  ): Promise<{
+    event: string;
+    data: ChatPagination | Error;
+  }> {
     try {
-      return await this.chatService.getMessages(
+      const result = await this.chatService.getMessages(
         body.chatId,
         body?.page ? parseInt(body?.page.toString()) : 1,
         body?.perPage ? parseInt(body?.perPage.toString()) : 10,
       );
+      return {
+        event: "chat.message",
+        data: result,
+      };
     } catch (error) {
-      return error?.response || error;
+      return {
+        event: "error",
+        data: error?.response || error,
+      };
     }
   }
 
   @SubscribeMessage("chat.message.id")
   async getMessageById(
     @MessageBody() body: { chatId: string; messageId: string },
-  ) {
+  ): Promise<{
+    event: string;
+    data: Chat_conversation | Error;
+  }> {
     try {
-      return await this.chatService.getMessageById(body.chatId, body.messageId);
+      const result: Chat_conversation = await this.chatService.getMessageById(
+        body.chatId,
+        body.messageId,
+      );
+      return {
+        event: "chat.message.id",
+        data: result,
+      };
     } catch (error) {
-      return error?.response || error;
+      return {
+        event: "error",
+        data: error?.response || error,
+      };
     }
   }
   @SubscribeMessage("chat.create")
@@ -205,7 +238,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         chat_conversation: Chat_conversation_DTO;
       }>
     | {
-        error: string;
+        event: string;
+        data: string;
       }
   > {
     const userId = this.chatWebSocketService.getUserIdBySocket(
@@ -225,7 +259,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
     } catch (error) {
       this.logger.error(error);
-      return { error: "Message not found" };
+      return {
+        event: "error",
+        data: "Message not found",
+      };
     }
   }
 
@@ -323,14 +360,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             data,
           });
           break;
-
-        default:
-          client.send(
-            JSON.stringify({
-              event: "error",
-              data: "Unknown event",
-            }),
-          );
       }
     } catch {
       client.send(
