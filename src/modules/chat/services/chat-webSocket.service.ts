@@ -6,7 +6,7 @@ export class ChatWebSocketService {
   private readonly logger = new Logger(ChatWebSocketService.name);
 
   server: Server;
-  usersOnline = new Map<string, WebSocket>();
+  usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
 
   setServer(server: Server) {
     this.server = server;
@@ -22,14 +22,14 @@ export class ChatWebSocketService {
     this.logger.debug(`User ${userId} disconnected`);
   }
 
-  sendToUser(userId: string, event: string, data: any) {
+  sendToUser(userId: string, event: string, data: object) {
     const client = this.usersOnline.get(userId);
     if (client && client.readyState === client.OPEN) {
       client.send(JSON.stringify({ event, data }));
     }
   }
 
-  broadcast(event: string, data: any) {
+  broadcast(event: string, data: object) {
     const message = JSON.stringify({ event, data });
     this.usersOnline.forEach((client) => {
       if (client.readyState === client.OPEN) {
