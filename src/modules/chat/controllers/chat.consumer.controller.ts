@@ -15,56 +15,109 @@ export class ChatConsumerController {
     private readonly chatWebSocketService: ChatWebSocketService,
   ) {}
   @MessagePattern("chat.create")
-  async handleChatCreate(@Payload() message: Chats): Promise<ChatDocument> {
-    return await this.chatService.createChat(message.chatters);
+  async handleChatCreate(
+    @Payload() message: { userId: string; chats: Chats },
+  ): Promise<ChatDocument> {
+    try {
+      const result = await this.chatService.createChat(message.chats.chatters);
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.created",
+        result,
+      );
+      return result;
+    } catch (error) {
+      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
+      return error;
+    }
   }
   @MessagePattern("chat.delete")
   async handleChatDelete(
-    @Payload() message: { chatId: string },
+    @Payload() message: { userId: string; chatId: string },
   ): Promise<ChatDocument> {
-    return await this.chatService.deleteChatById(message.chatId);
+    try {
+      const result = await this.chatService.deleteChatById(message.chatId);
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.deleted",
+        result,
+      );
+      return result;
+    } catch (error) {
+      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
+      return error;
+    }
   }
   @MessagePattern("chat.message.create")
   async handleMessageCreate(
     @Payload()
     message: {
+      userId: string;
       chatId: string;
       chat_conversation: Chat_conversation;
     },
   ): Promise<ChatConversationDocument> {
-    const result = await this.chatService.addMessage(
-      message.chatId,
-      message.chat_conversation,
-    );
-    this.chatWebSocketService.sendToUser(
-      message.chat_conversation.sender,
-      "chat.message.created",
-      result,
-    );
-    return result;
+    try {
+      const result = await this.chatService.addMessage(
+        message.chatId,
+        message.chat_conversation,
+      );
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.message.created",
+        result,
+      );
+      return result;
+    } catch (error) {
+      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
+      return error;
+    }
   }
   @MessagePattern("chat.message.update")
   async handleMessageUpdate(
     @Payload()
     message: {
+      userId: string;
       chatId: string;
       messageId: string;
-      body: Chat_conversation_DTO;
+      chat_conversation: Chat_conversation_DTO;
     },
   ): Promise<ChatConversationDocument> {
-    return await this.chatService.updateMessageById(
-      message.chatId,
-      message.messageId,
-      message.body,
-    );
+    try {
+      const result = await this.chatService.updateMessageById(
+        message.chatId,
+        message.messageId,
+        message.chat_conversation,
+      );
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.message.updated",
+        result,
+      );
+      return result;
+    } catch (error) {
+      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
+      return error;
+    }
   }
   @MessagePattern("chat.message.delete")
   async handleMessageDelete(
-    @Payload() message: { chatId: string; messageId: string },
+    @Payload() message: { userId: string; chatId: string; messageId: string },
   ): Promise<ChatConversationDocument> {
-    return await this.chatService.deleteMessageById(
-      message.chatId,
-      message.messageId,
-    );
+    try {
+      const result = await this.chatService.deleteMessageById(
+        message.chatId,
+        message.messageId,
+      );
+      this.chatWebSocketService.sendToUser(
+        message.userId,
+        "chat.message.deleted",
+        result,
+      );
+      return result;
+    } catch (error) {
+      this.chatWebSocketService.sendToUser(message.userId, "chat.error", error);
+      return error;
+    }
   }
 }

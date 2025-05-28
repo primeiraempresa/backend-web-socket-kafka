@@ -10,10 +10,10 @@ import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
-  // ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
+  ConnectedSocket,
 } from "@nestjs/websockets";
 import { UserService } from "@user/services/user.service";
 import { Server, WebSocket } from "ws";
@@ -28,21 +28,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly chatService: ChatService,
-    private readonly chatProducerService_createChat: ChatProducerService<Chats>,
+    private readonly chatProducerService_createChat: ChatProducerService<{
+      userId: string;
+      chats: Chats;
+    }>,
     private readonly chatProducerService_createMessage: ChatProducerService<{
+      userId: string;
       chatId: string;
       chat_conversation: Chat_conversation;
     }>,
     private readonly chatProducerService_updateMessage: ChatProducerService<{
+      userId: string;
       chatId: string;
-      body: Chat_conversation_DTO;
       messageId: string;
+      chat_conversation: Chat_conversation_DTO;
     }>,
     private readonly chatProducerService_deleteMessage: ChatProducerService<{
+      userId: string;
       chatId: string;
       messageId: string;
     }>,
     private readonly chatProducerService_deleteChat: ChatProducerService<{
+      userId: string;
       chatId: string;
     }>,
     private readonly commonService: CommonService,
@@ -91,24 +98,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
   @SubscribeMessage("chat.create")
-  createChat(
-    @MessageBody() body: Chats /* @ConnectedSocket() client: WebSocket */,
-  ) {
+  createChat(@MessageBody() body: Chats, @ConnectedSocket() client: WebSocket) {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       return { error: "Invalid userIds" };
     }
-    return this.chatProducerService_createChat.sendMessage("chat.create", body);
+    const userId = this.chatWebSocketService.getUserIdBySocket(
+      client,
+    ) as string;
+    return this.chatProducerService_createChat.sendMessage("chat.create", {
+      userId,
+      chats: body,
+    });
   }
 
   @SubscribeMessage("chat.message.create")
   createMessage(
     @MessageBody()
     message: {
+      userId: string;
       chatId: string;
       chat_conversation: Chat_conversation;
     },
-    /* @ConnectedSocket() client: WebSocket */
+    @ConnectedSocket() client: WebSocket,
   ) {
+    const userId = this.chatWebSocketService.getUserIdBySocket(
+      client,
+    ) as string;
     const { chatId, chat_conversation } = message;
     if (!this.commonService.validateMongoID(chat_conversation.sender)) {
       return { error: "Invalid chatId" };
@@ -116,35 +131,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.chatProducerService_createMessage.sendMessage(
       "chat.message.create",
       {
+        userId,
         chatId,
         chat_conversation,
       },
     );
   }
-
   @SubscribeMessage("chat.message.update")
   async updateMessage(
     @MessageBody()
     data: {
       chatId: string;
       messageId: string;
-      body: Chat_conversation_DTO;
+      chat_conversation: Chat_conversation_DTO;
     },
+    @ConnectedSocket() client: WebSocket,
   ) {
-    const { chatId, messageId, body } = data;
-    await this.chatService.getMessageById(chatId, messageId);
-    return this.chatProducerService_updateMessage.sendMessage(
-      "chat.message.update",
-      {
-        chatId,
-        messageId,
-        body,
-      },
-    );
+    const userId = this.chatWebSocketService.getUserIdBySocket(
+      client,
+    ) as string;
+    const { chatId, messageId, chat_conversation } = data;
+    try {
+      await this.chatService.getMessageById(chatId, messageId);
+      return this.chatProducerService_updateMessage.sendMessage(
+        "chat.message.update",
+        {
+          userId,
+          chatId,
+          messageId,
+          chat_conversation,
+        },
+      );
+    } catch (error) {
+      this.logger.error(error);
+      return { error: "Message not found" };
+    }
   }
 
   @SubscribeMessage("chat.message.delete")
-  deleteMessage(@MessageBody() data: { chatId: string; messageId: string }) {
+  deleteMessage(
+    @MessageBody() data: { chatId: string; messageId: string },
+    @ConnectedSocket() client: WebSocket,
+  ) {
+    const userId = this.chatWebSocketService.getUserIdBySocket(
+      client,
+    ) as string;
     const { chatId, messageId } = data;
     if (
       !this.commonService.validateMongoID(chatId) ||
@@ -155,6 +186,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return this.chatProducerService_deleteMessage.sendMessage(
       "chat.message.delete",
       {
+        userId,
         chatId,
         messageId,
       },
@@ -162,10 +194,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("chat.delete")
-  async deleteChat(@MessageBody() data: { chatId: string }) {
+  async deleteChat(
+    @MessageBody() data: { chatId: string },
+    @ConnectedSocket() client: WebSocket,
+  ) {
     const { chatId } = data;
+    const userId = this.chatWebSocketService.getUserIdBySocket(
+      client,
+    ) as string;
     await this.chatService.getChatByUsersIds([], chatId);
     return this.chatProducerService_deleteChat.sendMessage("chat.delete", {
+      userId,
       chatId,
     });
   }

@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { ChatDocument } from "../schemas/chat.schema";
-import mongoose, { Connection, Model } from "mongoose";
+import { Connection, Model } from "mongoose";
 import { ChatPagination } from "../models/chatPagination.model";
 import { Chats } from "../models/chat.model";
 import {
@@ -24,9 +24,11 @@ export class ChatService {
     @InjectConnection() private readonly connection: Connection,
     private readonly commonService: CommonService,
   ) {}
-  async createChat(
-    userIds: string[] | mongoose.Types.ObjectId[],
-  ): Promise<ChatDocument> {
+  async createChat(userIds: string[]): Promise<ChatDocument> {
+    const chatExists = await this.getChatByUsersIds(userIds);
+    if (chatExists) {
+      return chatExists;
+    }
     const newChat: ChatDocument = await this.chatModel.create({
       chatters: userIds,
     });
@@ -126,7 +128,6 @@ export class ChatService {
     if (!findById) {
       throw new NotFoundException(["message not found"]);
     }
-    console.log(findById);
     return findById;
   }
   async updateMessageById(
@@ -134,7 +135,6 @@ export class ChatService {
     message_id: string,
     body: Chat_conversation_DTO,
   ): Promise<ChatConversationDocument> {
-    console.log(body);
     if (!this.commonService.validateMongoID(message_id)) {
       throw new BadRequestException(["invalid message id"]);
     }
@@ -146,7 +146,6 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${chatId}`,
     );
-    console.log(messageModel);
     const updateMessageById = await messageModel
       .findByIdAndUpdate(message_id, body, {
         new: true,

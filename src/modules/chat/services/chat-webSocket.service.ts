@@ -37,4 +37,9 @@ export class ChatWebSocketService {
       }
     });
   }
+  getUserIdBySocket(client: WebSocket): string | undefined {
+    return [...this.usersOnline.entries()].find(
+      ([, socket]) => socket === client,
+    )?.[0];
+  }
 }
