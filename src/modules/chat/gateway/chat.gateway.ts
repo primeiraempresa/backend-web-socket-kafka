@@ -1,4 +1,3 @@
-import { Chat_conversation_DTO } from "@chat/dto/chat_conversation.dto";
 import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { ChatPagination } from "@chat/models/chatPagination.model";
@@ -20,9 +19,15 @@ import {
 } from "@nestjs/websockets";
 import { UserService } from "@user/services/user.service";
 import { Observable } from "rxjs";
-import { Chat_T_WS } from "src/modules/interfaces/chat-T.interface";
-import { Chat_conversationT_WS } from "src/modules/interfaces/chat_conversation-T.interface";
-import { Chat_conversation_messageT_Ws } from "src/modules/interfaces/chat_conversation_message-T.interface";
+import { Chat_T, Chat_T_WS } from "@chat/interfaces/chat-T.interface";
+import {
+  Chat_conversationT,
+  Chat_conversationT_WS,
+} from "@chat/interfaces/chat_conversation-T.interface";
+import {
+  Chat_conversation_messageT,
+  Chat_conversation_messageT_Ws,
+} from "@chat/interfaces/chat_conversation_message-T.interface";
 import { Server, WebSocket } from "ws";
 @WebSocketGateway({
   path: "/chat",
@@ -142,9 +147,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("chat.message.id")
-  async getMessageById(
-    @MessageBody() body: { chatId: string; messageId: string },
-  ): Promise<{
+  async getMessageById(@MessageBody() body: Chat_T): Promise<{
     event: string;
     data: Chat_conversation | Error;
   }> {
@@ -184,18 +187,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat.message.create")
   createMessage(
     @MessageBody()
-    message: {
-      chatId: string;
-      chat_conversation: Chat_conversation;
-    },
+    message: Chat_conversationT,
     @ConnectedSocket() client: WebSocket,
-  ):
-    | Observable<{
-        userId: string;
-        chatId: string;
-        chat_conversation: Chat_conversation;
-      }>
-    | { error: string } {
+  ): Observable<Chat_conversationT_WS> | { error: string } {
     const userId = this.chatWebSocketService.getUserIdBySocket(
       client,
     ) as string;
@@ -216,18 +210,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat.message.update")
   async updateMessage(
     @MessageBody()
-    data: {
-      chatId: string;
-      messageId: string;
-      chat_conversation: Chat_conversation_DTO;
-    },
+    data: Chat_conversation_messageT,
     @ConnectedSocket() client: WebSocket,
   ): Promise<
-    | Observable<{
-        chatId: string;
-        messageId: string;
-        chat_conversation: Chat_conversation_DTO;
-      }>
+    | Observable<Chat_conversation_messageT>
     | {
         event: string;
         data: string;

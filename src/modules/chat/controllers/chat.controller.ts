@@ -22,9 +22,9 @@ import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
 import { Chats } from "@chat/models/chat.model";
 import { Observable } from "rxjs";
-import { Chat_conversationT } from "src/modules/interfaces/chat_conversation-T.interface";
-import { Chat_conversation_messageT } from "src/modules/interfaces/chat_conversation_message-T.interface";
-import { Chat_T } from "src/modules/interfaces/chat-T.interface";
+import { Chat_conversationT } from "@chat/interfaces/chat_conversation-T.interface";
+import { Chat_conversation_messageT } from "@chat/interfaces/chat_conversation_message-T.interface";
+import { Chat_T } from "@chat/interfaces/chat-T.interface";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
