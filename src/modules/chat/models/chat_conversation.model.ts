@@ -25,7 +25,7 @@ export class Chat_conversation {
   sender: string;
 
   @Prop({
-    index: 1,
+    index: -1,
     type: Date,
   })
   createdAt?: Date;
