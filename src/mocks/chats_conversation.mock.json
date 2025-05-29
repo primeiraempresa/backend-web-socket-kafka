@@ -7,7 +7,7 @@
     },
     {
       "_id": { "$oid": "67f9f63d94cbb60e81e35d30" },
-      "message": "Olá!!sim e vc?",
+      "message": "Olá!! tudo bem ? blz !!!! já te retorno",
       "sender": { "$oid": "67d21a67b5aed094d5c435e3" },
       "createdAt": { "$date": "2025-05-27T23:29:36.000Z" }
     }
