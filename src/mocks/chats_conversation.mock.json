@@ -11,6 +11,6 @@
         "message": "Olá!!\n\nComo você está?\n\nEstou aqui para ajudar com qualquer dúvida ou questão que você tenha.\n\nAguardo seu retorno!\n",
         "sender": { "$oid": "67d21a67b5aed094d5c435e5" },
         "createdAt": { "$date": "2025-05-27T23:29:36.000Z" }
-      },
+      }
   ]
   
