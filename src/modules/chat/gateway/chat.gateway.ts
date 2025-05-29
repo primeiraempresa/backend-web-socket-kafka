@@ -330,13 +330,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             }),
           );
           break;
-
-        case "chat.message":
-          this.broadcast({
-            event: "chat.message",
-            data,
-          });
-          break;
       }
     } catch {
       client.send(

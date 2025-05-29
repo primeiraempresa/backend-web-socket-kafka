@@ -1,22 +1,15 @@
 [
     {
-        "_id": {
-            "$oid": "67f9f62b1653f01929c20913"
-        },
-        "message": "Olá!!\n\nComo você está?\n\nEstou aqui para ajudar com qualquer dúvida ou questão que você tenha.\n\nAguardo seu retorno!\n",
-        "sender": {
-            "$oid": "67d21a67b5aed094d5c435e5"
-        },
-        "createdAt": "2025-05-27T23:29:36.000Z"
+      "_id": { "$oid": "67f9f62b1653f01929c20913" },
+      "message": "Olá!!\n\nComo você está?\n\nEstou aqui para ajudar com qualquer dúvida ou questão que você tenha.\n\nAguardo seu retorno!\n",
+      "sender": { "$oid": "67d21a67b5aed094d5c435e5" },
+      "createdAt": { "$date": "2025-05-27T23:29:36.000Z" }
     },
     {
-        "_id": {
-            "$oid": "67f9f63d94cbb60e81e35d30"
-        },
-        "message": "Olá!!sim e vc?",
-        "sender": {
-            "$oid": "67d21a67b5aed094d5c435e3"
-        },
-        "createdAt": "2025-05-27T23:29:36.000Z"
+      "_id": { "$oid": "67f9f63d94cbb60e81e35d30" },
+      "message": "Olá!!sim e vc?",
+      "sender": { "$oid": "67d21a67b5aed094d5c435e3" },
+      "createdAt": { "$date": "2025-05-27T23:29:36.000Z" }
     }
-]
+  ]
+  

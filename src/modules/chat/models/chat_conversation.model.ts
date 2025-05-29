@@ -1,4 +1,3 @@
-import { DateService } from "@common/services/date.service";
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Users } from "@user/models/user.model";
@@ -26,8 +25,6 @@ export class Chat_conversation {
   sender: string;
 
   @Prop({
-    required: true,
-    default: new DateService().now(),
     index: 1,
     type: Date,
   })
