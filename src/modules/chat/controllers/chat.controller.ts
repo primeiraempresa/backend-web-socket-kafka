@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Post,
   Put,
@@ -33,10 +34,15 @@ import { Chat_T } from "@chat/interfaces/chat-T.interface";
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
+    @Inject("ChatProducerService_createChat")
     private readonly chatProducerService_createChat: ChatProducerService<Chats>,
+    @Inject("ChatProducerService_createMessage")
     private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT>,
+    @Inject("ChatProducerService_updateMessage")
     private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT>,
+    @Inject("ChatProducerService_deleteMessage")
     private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T>,
+    @Inject("ChatProducerService_deleteChat")
     private readonly chatProducerService_deleteChat: ChatProducerService<{
       chatId: string;
     }>,

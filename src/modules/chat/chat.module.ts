@@ -43,9 +43,29 @@ import { UserModule } from "@user/user.module";
   controllers: [ChatController, ChatConsumerController],
   providers: [
     ChatService,
-    ChatProducerService,
     ChatGateway,
     ChatWebSocketService,
+    ChatProducerService,
+    {
+      provide: "ChatProducerService_createChat",
+      useValue: ChatProducerService,
+    },
+    {
+      provide: "ChatProducerService_createMessage",
+      useValue: ChatProducerService,
+    },
+    {
+      provide: "ChatProducerService_updateMessage",
+      useValue: ChatProducerService,
+    },
+    {
+      provide: "ChatProducerService_deleteMessage",
+      useValue: ChatProducerService,
+    },
+    {
+      provide: "ChatProducerService_deleteChat",
+      useValue: ChatProducerService,
+    },
   ],
 })
 export class ChatModule {}
