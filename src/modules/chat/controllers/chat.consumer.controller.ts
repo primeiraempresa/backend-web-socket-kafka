@@ -5,7 +5,7 @@ import { ChatDocument } from "@chat/schemas/chat.schema";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
 import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
 import { ChatService } from "@chat/services/chat.service";
-import { Controller } from "@nestjs/common";
+import { Controller, Logger } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
 
 @Controller()
@@ -14,12 +14,15 @@ export class ChatConsumerController {
     private readonly chatService: ChatService,
     private readonly chatWebSocketService: ChatWebSocketService,
   ) {}
+  private logger: Logger = new Logger(ChatConsumerController.name);
   @MessagePattern("chat.create")
   async handleChatCreate(
     @Payload() message: { userId: string; chats: Chats },
   ): Promise<ChatDocument> {
     try {
-      const result = await this.chatService.createChat(message.chats.chatters);
+      const result: ChatDocument = await this.chatService.createChat(
+        message.chats.chatters,
+      );
       this.chatWebSocketService.sendToUser(
         message.userId,
         "chat.create",
@@ -27,6 +30,7 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
+      this.logger.error(error);
       this.chatWebSocketService.sendToUser(
         message.userId,
         "error",
@@ -48,6 +52,7 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
+      this.logger.error(error);
       this.chatWebSocketService.sendToUser(
         message.userId,
         "error",
@@ -77,6 +82,7 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
+      this.logger.error(error);
       this.chatWebSocketService.sendToUser(
         message.userId,
         "error",
@@ -108,6 +114,7 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
+      this.logger.error(error);
       this.chatWebSocketService.sendToUser(
         message.userId,
         "error",
@@ -132,6 +139,7 @@ export class ChatConsumerController {
       );
       return result;
     } catch (error) {
+      this.logger.error(error);
       this.chatWebSocketService.sendToUser(
         message.userId,
         "error",

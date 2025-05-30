@@ -7,7 +7,7 @@ import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
 import { configService } from "@config/configService";
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -29,6 +29,13 @@ import {
   Chat_conversation_messageT_Ws,
 } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { Server, WebSocket } from "ws";
+import {
+  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
+  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
+  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
+} from "@chat/tokens/chat.tokens";
 @WebSocketGateway({
   path: "/chat",
   transports: ["websocket"],
@@ -40,13 +47,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly chatService: ChatService,
+    @Inject(CHAT_PRODUCER_SERVICE_CREATE_CHAT)
     private readonly chatProducerService_createChat: ChatProducerService<{
       userId: string;
       chats: Chats;
     }>,
+    @Inject(CHAT_PRODUCER_SERVICE_CREATE_MESSAGE)
     private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT_WS>,
+    @Inject(CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE)
     private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT_Ws>,
+    @Inject(CHAT_PRODUCER_SERVICE_DELETE_MESSAGE)
     private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T_WS>,
+    @Inject(CHAT_PRODUCER_SERVICE_DELETE_CHAT)
     private readonly chatProducerService_deleteChat: ChatProducerService<{
       userId: string;
       chatId: string;

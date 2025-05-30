@@ -25,16 +25,17 @@ export class ChatService {
     private readonly commonService: CommonService,
   ) {}
   async createChat(userIds: string[]): Promise<ChatDocument> {
-    const chatExists = await this.getChatByUsersIds(userIds);
-    if (chatExists) {
+    try {
+      const chatExists = await this.getChatByUsersIds(userIds);
       return chatExists;
+    } catch {
+      const newChat: ChatDocument = await this.chatModel.create({
+        chatters: userIds,
+      });
+      const collectionName = newChat._id.toString();
+      await this.connection.createCollection(`ChatMessage_${collectionName}`);
+      return newChat.populate("chatters");
     }
-    const newChat: ChatDocument = await this.chatModel.create({
-      chatters: userIds,
-    });
-    const collectionName = newChat._id.toString();
-    await this.connection.createCollection(`ChatMessage_${collectionName}`);
-    return newChat;
   }
   async addMessage(
     chatId: string,
@@ -46,7 +47,7 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${collectionName}`,
     );
-    return await messageModel.create(chat_conversation);
+    return (await messageModel.create(chat_conversation)).populate("sender");
   }
   async getMessages(
     chatId: string,
@@ -158,6 +159,7 @@ export class ChatService {
         new: true,
         runValidators: true,
       })
+      .populate("sender")
       .exec();
     if (!updateMessageById) {
       throw new NotFoundException(["message not found"]);
@@ -182,6 +184,7 @@ export class ChatService {
       );
       const deleteMessageById = await messageModel
         .findByIdAndDelete(message_id)
+        .populate("sender")
         .exec();
       if (!deleteMessageById) {
         throw new NotFoundException(["message not found"]);
@@ -202,6 +205,6 @@ export class ChatService {
     }
     const collectionName = deleteChatById._id.toString();
     await this.connection.dropCollection(`ChatMessage_${collectionName}`);
-    return deleteChatById;
+    return deleteChatById.populate("chatters");
   }
 }

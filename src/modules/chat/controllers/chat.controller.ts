@@ -26,6 +26,13 @@ import { Observable } from "rxjs";
 import { Chat_conversationT } from "@chat/interfaces/chat_conversation-T.interface";
 import { Chat_conversation_messageT } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { Chat_T } from "@chat/interfaces/chat-T.interface";
+import {
+  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
+  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
+  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
+} from "@chat/tokens/chat.tokens";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -34,15 +41,15 @@ import { Chat_T } from "@chat/interfaces/chat-T.interface";
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
-    @Inject("ChatProducerService_createChat")
+    @Inject(CHAT_PRODUCER_SERVICE_CREATE_CHAT)
     private readonly chatProducerService_createChat: ChatProducerService<Chats>,
-    @Inject("ChatProducerService_createMessage")
+    @Inject(CHAT_PRODUCER_SERVICE_CREATE_MESSAGE)
     private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT>,
-    @Inject("ChatProducerService_updateMessage")
+    @Inject(CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE)
     private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT>,
-    @Inject("ChatProducerService_deleteMessage")
+    @Inject(CHAT_PRODUCER_SERVICE_DELETE_MESSAGE)
     private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T>,
-    @Inject("ChatProducerService_deleteChat")
+    @Inject(CHAT_PRODUCER_SERVICE_DELETE_CHAT)
     private readonly chatProducerService_deleteChat: ChatProducerService<{
       chatId: string;
     }>,

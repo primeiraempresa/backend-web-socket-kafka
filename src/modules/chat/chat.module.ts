@@ -12,6 +12,13 @@ import { ChatProducerService } from "./services/chat.producer.service";
 import { ChatGateway } from "./gateway/chat.gateway";
 import { ChatWebSocketService } from "./services/chat-webSocket.service";
 import { UserModule } from "@user/user.module";
+import {
+  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
+  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
+  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
+  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
+} from "./tokens/chat.tokens";
 
 @Module({
   imports: [
@@ -45,26 +52,25 @@ import { UserModule } from "@user/user.module";
     ChatService,
     ChatGateway,
     ChatWebSocketService,
-    ChatProducerService,
     {
-      provide: "ChatProducerService_createChat",
-      useValue: ChatProducerService,
+      provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
+      useClass: ChatProducerService,
     },
     {
-      provide: "ChatProducerService_createMessage",
-      useValue: ChatProducerService,
+      provide: CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
+      useClass: ChatProducerService,
     },
     {
-      provide: "ChatProducerService_updateMessage",
-      useValue: ChatProducerService,
+      provide: CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
+      useClass: ChatProducerService,
     },
     {
-      provide: "ChatProducerService_deleteMessage",
-      useValue: ChatProducerService,
+      provide: CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
+      useClass: ChatProducerService,
     },
     {
-      provide: "ChatProducerService_deleteChat",
-      useValue: ChatProducerService,
+      provide: CHAT_PRODUCER_SERVICE_DELETE_CHAT,
+      useClass: ChatProducerService,
     },
   ],
 })
