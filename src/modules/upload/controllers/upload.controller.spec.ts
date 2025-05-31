@@ -38,9 +38,9 @@ describe("UploadController", () => {
   });
 
   describe("PostTypes", () => {
-    it("should call CreateType with the correct value", async () => {
+    it("should call CreateType with the correct value", () => {
       mockUploadService.CreateType.mockResolvedValue({ type: "image/png" });
-      const result = await controller.PostTypes({ type: "image/png" });
+      const result = controller.PostTypes({ type: "image/png" });
       expect(service.CreateType).toHaveBeenCalledWith("image/png");
       expect(result).toEqual({ type: "image/png" });
     });

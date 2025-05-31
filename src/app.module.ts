@@ -19,7 +19,7 @@ import { UploadModule } from "./modules/upload/upload.module";
       envFilePath: ".env",
     }),
     MongooseModule.forRoot(
-      configService.get<string>("DBAAS_MONGODB_ENDPOINT") || "",
+      configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string,
     ),
     CacheModule.register({
       isGlobal: true,

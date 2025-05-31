@@ -30,8 +30,8 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
-  async PostTypes(@Body() body: Allowed_file_types) {
-    return await this.uploadService.CreateType(body.type);
+  PostTypes(@Body() body: Allowed_file_types) {
+    return this.uploadService.CreateType(body.type);
   }
 
   @Get("type")
