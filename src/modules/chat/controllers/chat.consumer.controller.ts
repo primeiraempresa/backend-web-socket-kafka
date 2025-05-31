@@ -3,7 +3,7 @@ import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { ChatDocument } from "@chat/schemas/chat.schema";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
-import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
+import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatService } from "@chat/services/chat.service";
 import { Controller, Logger } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
@@ -12,7 +12,7 @@ import { MessagePattern, Payload } from "@nestjs/microservices";
 export class ChatConsumerController {
   constructor(
     private readonly chatService: ChatService,
-    private readonly chatWebSocketService: ChatWebSocketService,
+    private readonly chatWebSocketService: WebSocketService,
   ) {}
   private logger: Logger = new Logger(ChatConsumerController.name);
   @MessagePattern("chat.create")

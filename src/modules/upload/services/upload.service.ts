@@ -81,8 +81,10 @@ export class UploadService {
     );
     return await this.filesModel.create(file);
   }
-  async getFileByID(id: string) {
-    const file = await this.filesModel.findById(id);
+  async getFileByID(_id: string): Promise<FilesDocument> {
+    const file: FilesDocument | null = await this.filesModel.findOne({
+      _id: _id,
+    });
     if (!file) {
       throw new NotFoundException(["File not found"]);
     }
