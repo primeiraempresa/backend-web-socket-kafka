@@ -70,7 +70,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
   private logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
-    const url = new URL(req.url, configService.get<string>("URL"));
+    const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
+    const url = new URL(req.url, baseUrl);
     const userId = url.searchParams.get("userId") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");
