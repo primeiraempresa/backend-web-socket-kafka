@@ -163,7 +163,6 @@ export class UploadController {
     @UploadedFile("file") file: IUploadedFile,
     @Param("bucket") bucket: string,
   ) {
-    console.log(file);
     const base64: Base64URLString = file.buffer.toString("base64");
     return await this.uploadService.upload(bucket, base64);
   }

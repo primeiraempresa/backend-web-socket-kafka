@@ -59,26 +59,43 @@ describe("ChatService", () => {
 
   it("createChat - should create chat and collection", async () => {
     const mockChat = { _id: "chat123", chatters: ["u1", "u2"] };
-    chatModel.create.mockResolvedValue(mockChat);
+    const populate = jest.fn().mockResolvedValue({
+      ...mockChat,
+      chatters: [{ _id: "u1" }, { _id: "u2" }],
+    });
+
+    chatModel.create.mockResolvedValue({ ...mockChat, populate });
 
     const result = await service.createChat(["u1", "u2"]);
-    expect(result).toEqual(mockChat);
+
+    expect(result).toEqual({
+      ...mockChat,
+      chatters: [{ _id: "u1" }, { _id: "u2" }],
+    });
     expect(chatModel.create).toHaveBeenCalled();
     expect(connection.createCollection).toHaveBeenCalledWith(
       "ChatMessage_chat123",
     );
+    expect(populate).toHaveBeenCalledWith("chatters");
   });
 
   it("addMessage - should add a message", async () => {
-    const message = { sender: "u1", message: "hello" };
-    messageModel.create.mockResolvedValue(message);
+    const message = { _id: "msg1", sender: "u1", message: "hello" };
+    const populate = jest.fn().mockResolvedValue(message);
 
-    const result = await service.addMessage("chat1", "u1", "hello");
+    messageModel.create.mockResolvedValue({ ...message, populate });
+
+    const result = await service.addMessage("chat1", {
+      sender: "u1",
+      message: "hello",
+    });
+
     expect(result).toEqual(message);
     expect(messageModel.create).toHaveBeenCalledWith({
       sender: "u1",
       message: "hello",
     });
+    expect(populate).toHaveBeenCalledWith("sender");
   });
 
   it("getMessages - should return paginated messages", async () => {
@@ -145,12 +162,21 @@ describe("ChatService", () => {
 
   it("deleteChatById - should delete chat and drop collection", async () => {
     const chat = { _id: "chat123" };
-    chatModel.findByIdAndDelete.mockResolvedValue(chat);
+    const populate = jest.fn().mockResolvedValue({
+      _id: "chat123",
+      chatters: [{ _id: "u1" }, { _id: "u2" }],
+    });
+
+    chatModel.findByIdAndDelete.mockResolvedValue({ ...chat, populate });
 
     const result = await service.deleteChatById("chat123");
-    expect(result).toEqual(chat);
+    expect(result).toEqual({
+      _id: "chat123",
+      chatters: [{ _id: "u1" }, { _id: "u2" }],
+    });
     expect(connection.dropCollection).toHaveBeenCalledWith(
       "ChatMessage_chat123",
     );
+    expect(populate).toHaveBeenCalledWith("chatters");
   });
 });

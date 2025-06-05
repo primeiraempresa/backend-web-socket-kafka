@@ -97,7 +97,6 @@ export class UploadService {
       });
       const fileBuffer = Buffer.from(file, "base64");
       await this.ensureBucketExists(buket);
-      console.log(img);
       const command = new PutObjectCommand({
         Bucket: buket,
         Key: img.key,
@@ -106,7 +105,6 @@ export class UploadService {
         ContentType: img.contentType,
       });
       await s3.send(command);
-      console.log("Imagem carregada com sucesso!");
       return await this.filesModel.create(img);
     } catch (error) {
       this.logger.error(error);
