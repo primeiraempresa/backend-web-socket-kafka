@@ -1,12 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatConsumerController } from "./chat.consumer.controller";
 import { ChatService } from "@chat/services/chat.service";
-import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
+import { WebSocketService } from "@common/services/webSocket.service";
 
 describe("ChatConsumerController", () => {
   let controller: ChatConsumerController;
   let chatService: jest.Mocked<ChatService>;
-  let chatWebSocketService: jest.Mocked<ChatWebSocketService>;
+  let chatWebSocketService: jest.Mocked<WebSocketService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,7 +23,7 @@ describe("ChatConsumerController", () => {
           },
         },
         {
-          provide: ChatWebSocketService,
+          provide: WebSocketService,
           useValue: {
             sendToUser: jest.fn(),
           },
@@ -33,7 +33,7 @@ describe("ChatConsumerController", () => {
 
     controller = module.get<ChatConsumerController>(ChatConsumerController);
     chatService = module.get(ChatService);
-    chatWebSocketService = module.get(ChatWebSocketService);
+    chatWebSocketService = module.get(WebSocketService);
   });
 
   it("should be defined", () => {

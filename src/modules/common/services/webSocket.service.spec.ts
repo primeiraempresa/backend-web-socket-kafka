@@ -1,9 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ChatWebSocketService } from "./chat-webSocket.service";
+import { WebSocketService } from "./webSocket.service";
 import { WebSocket, Server } from "ws";
 
 describe("ChatWebSocketService", () => {
-  let service: ChatWebSocketService;
+  let service: WebSocketService;
 
   const mockClient = {
     send: jest.fn(),
@@ -13,10 +13,10 @@ describe("ChatWebSocketService", () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ChatWebSocketService],
+      providers: [WebSocketService],
     }).compile();
 
-    service = module.get<ChatWebSocketService>(ChatWebSocketService);
+    service = module.get<WebSocketService>(WebSocketService);
   });
 
   afterEach(() => {

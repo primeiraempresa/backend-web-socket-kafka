@@ -42,4 +42,24 @@ describe("CommonService", () => {
       expect(result).toBe(false);
     });
   });
+  describe("isBase64()", () => {
+    it("should return true for a valid base64 string", () => {
+      const str = btoa("Hello World");
+      expect(service.isBase64(str)).toBe(true);
+    });
+
+    it("should return false for string with invalid characters", () => {
+      const str = "##@@invalid$$";
+      expect(service.isBase64(str)).toBe(false);
+    });
+
+    it("should return false for string with invalid length (not multiple of 4)", () => {
+      const str = "abcd1";
+      expect(service.isBase64(str)).toBe(false);
+    });
+
+    it("should return false for empty string", () => {
+      expect(service.isBase64("")).toBe(false);
+    });
+  });
 });

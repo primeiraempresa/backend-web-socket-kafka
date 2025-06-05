@@ -3,7 +3,7 @@ import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { ChatDocument } from "@chat/schemas/chat.schema";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
-import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
+import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatService } from "@chat/services/chat.service";
 import { Controller, Logger } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
@@ -12,7 +12,7 @@ import { MessagePattern, Payload } from "@nestjs/microservices";
 export class ChatConsumerController {
   constructor(
     private readonly chatService: ChatService,
-    private readonly chatWebSocketService: ChatWebSocketService,
+    private readonly webSocketService: WebSocketService,
   ) {}
   private logger: Logger = new Logger(ChatConsumerController.name);
   @MessagePattern("chat.create")
@@ -23,15 +23,11 @@ export class ChatConsumerController {
       const result: ChatDocument = await this.chatService.createChat(
         message.chats.chatters,
       );
-      this.chatWebSocketService.sendToUser(
-        message.userId,
-        "chat.create",
-        result,
-      );
+      this.webSocketService.sendToUser(message.userId, "chat.create", result);
       return result;
     } catch (error) {
       this.logger.error(error);
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "error",
         error?.response || error,
@@ -45,15 +41,11 @@ export class ChatConsumerController {
   ): Promise<ChatDocument> {
     try {
       const result = await this.chatService.deleteChatById(message.chatId);
-      this.chatWebSocketService.sendToUser(
-        message.userId,
-        "chat.delete",
-        result,
-      );
+      this.webSocketService.sendToUser(message.userId, "chat.delete", result);
       return result;
     } catch (error) {
       this.logger.error(error);
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "error",
         error?.response || error,
@@ -75,7 +67,7 @@ export class ChatConsumerController {
         message.chatId,
         message.chat_conversation,
       );
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "chat.message.create",
         result,
@@ -83,7 +75,7 @@ export class ChatConsumerController {
       return result;
     } catch (error) {
       this.logger.error(error);
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "error",
         error?.response || error,
@@ -107,7 +99,7 @@ export class ChatConsumerController {
         message.messageId,
         message.chat_conversation,
       );
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "chat.message.update",
         result,
@@ -115,7 +107,7 @@ export class ChatConsumerController {
       return result;
     } catch (error) {
       this.logger.error(error);
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "error",
         error?.response || error,
@@ -132,7 +124,7 @@ export class ChatConsumerController {
         message.chatId,
         message.messageId,
       );
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "chat.message.delete",
         result,
@@ -140,7 +132,7 @@ export class ChatConsumerController {
       return result;
     } catch (error) {
       this.logger.error(error);
-      this.chatWebSocketService.sendToUser(
+      this.webSocketService.sendToUser(
         message.userId,
         "error",
         error?.response || error,

@@ -2,8 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Server, WebSocket } from "ws";
 
 @Injectable()
-export class ChatWebSocketService {
-  private readonly logger = new Logger(ChatWebSocketService.name);
+export class WebSocketService {
+  private readonly logger = new Logger(WebSocketService.name);
 
   server: Server;
   usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
@@ -41,5 +41,41 @@ export class ChatWebSocketService {
     return [...this.usersOnline.entries()].find(
       ([, socket]) => socket === client,
     )?.[0];
+  }
+  handleMessage(client: WebSocket, rawMessage: string) {
+    try {
+      const { event, data } = JSON.parse(rawMessage);
+
+      switch (event) {
+        case "users.online":
+          client.send(
+            JSON.stringify({
+              event: "users.online",
+              data: {
+                users: Array.from(this.usersOnline.keys()),
+              },
+            }),
+          );
+          break;
+
+        case "user.isOnline":
+          const { userId } = data;
+          const isOnline = this.usersOnline.has(userId);
+          client.send(
+            JSON.stringify({
+              event: "user.isOnline",
+              data: { userId, isOnline },
+            }),
+          );
+          break;
+      }
+    } catch {
+      client.send(
+        JSON.stringify({
+          event: "error",
+          data: "Invalid message format",
+        }),
+      );
+    }
   }
 }

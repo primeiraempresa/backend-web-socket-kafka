@@ -10,7 +10,6 @@ import { ClientsModule, Transport } from "@nestjs/microservices";
 import { configService } from "@config/configService";
 import { ChatProducerService } from "./services/chat.producer.service";
 import { ChatGateway } from "./gateway/chat.gateway";
-import { ChatWebSocketService } from "./services/chat-webSocket.service";
 import { UserModule } from "@user/user.module";
 import {
   CHAT_PRODUCER_SERVICE_CREATE_CHAT,
@@ -18,7 +17,7 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_CHAT,
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "./tokens/chat.tokens";
+} from "../common/tokens/chat.tokens";
 
 @Module({
   imports: [
@@ -51,7 +50,6 @@ import {
   providers: [
     ChatService,
     ChatGateway,
-    ChatWebSocketService,
     {
       provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
       useClass: ChatProducerService,

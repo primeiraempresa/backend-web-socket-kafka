@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatGateway } from "./chat.gateway";
 import { ChatService } from "@chat/services/chat.service";
-import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
+import { WebSocketService } from "@common/services/webSocket.service";
 import { CommonService } from "@common/services/common.service";
 import { UserService } from "@user/services/user.service";
 import {
@@ -10,7 +10,7 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_CHAT,
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "@chat/tokens/chat.tokens";
+} from "@common/tokens/chat.tokens";
 import { ConfigService } from "@nestjs/config";
 
 const mockChatService = {
@@ -80,7 +80,7 @@ describe("ChatGateway", () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
-        { provide: ChatWebSocketService, useValue: mockChatWebSocketService },
+        { provide: WebSocketService, useValue: mockChatWebSocketService },
         { provide: CommonService, useValue: mockCommonService },
         { provide: UserService, useValue: mockUserService },
       ],

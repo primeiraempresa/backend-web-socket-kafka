@@ -32,7 +32,7 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_CHAT,
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "@chat/tokens/chat.tokens";
+} from "@common/tokens/chat.tokens";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))

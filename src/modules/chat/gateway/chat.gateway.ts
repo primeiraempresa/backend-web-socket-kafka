@@ -2,7 +2,7 @@ import { Chats } from "@chat/models/chat.model";
 import { Chat_conversation } from "@chat/models/chat_conversation.model";
 import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatDocument } from "@chat/schemas/chat.schema";
-import { ChatWebSocketService } from "@chat/services/chat-webSocket.service";
+import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
@@ -35,7 +35,7 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_CHAT,
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "@chat/tokens/chat.tokens";
+} from "@common/tokens/chat.tokens";
 @WebSocketGateway({
   path: "/chat",
   transports: ["websocket"],
@@ -64,7 +64,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chatId: string;
     }>,
     private readonly commonService: CommonService,
-    private readonly chatWebSocketService: ChatWebSocketService,
+    private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
   ) {}
   private usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
@@ -82,28 +82,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return client.close(1008, "user not found");
     }
 
-    this.chatWebSocketService.addClient(userId, client);
-    this.chatWebSocketService.setServer(this.server);
+    this.webSocketService.addClient(userId, client);
+    this.webSocketService.setServer(this.server);
 
-    this.chatWebSocketService.broadcast("user.online", {
+    this.webSocketService.broadcast("user.online", {
       userId,
       status: "online",
     });
 
     client.on("message", (message) => {
-      this.handleMessage(client, message.toString());
+      this.webSocketService.handleMessage(client, message.toString());
     });
   }
 
   handleDisconnect(client: WebSocket) {
-    const userId = [...this.chatWebSocketService.usersOnline.entries()].find(
+    const userId = [...this.webSocketService.usersOnline.entries()].find(
       ([, socket]) => socket === client,
     )?.[0];
 
     if (userId) {
-      this.chatWebSocketService.removeClient(userId);
+      this.webSocketService.removeClient(userId);
 
-      this.chatWebSocketService.broadcast("user.offline", {
+      this.webSocketService.broadcast("user.offline", {
         userId,
         status: "offline",
       });
@@ -188,9 +188,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {
       return { error: "Invalid userIds" };
     }
-    const userId = this.chatWebSocketService.getUserIdBySocket(
-      client,
-    ) as string;
+    const userId = this.webSocketService.getUserIdBySocket(client) as string;
     return this.chatProducerService_createChat.sendMessage("chat.create", {
       userId,
       chats: body,
@@ -203,9 +201,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     message: Chat_conversationT,
     @ConnectedSocket() client: WebSocket,
   ): Observable<Chat_conversationT_WS> | { error: string } {
-    const userId = this.chatWebSocketService.getUserIdBySocket(
-      client,
-    ) as string;
+    const userId = this.webSocketService.getUserIdBySocket(client) as string;
     const { chatId, chat_conversation } = message;
     if (!this.commonService.validateMongoID(chat_conversation.sender)) {
       return { error: "Invalid chatId" };
@@ -232,9 +228,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data: string;
       }
   > {
-    const userId = this.chatWebSocketService.getUserIdBySocket(
-      client,
-    ) as string;
+    const userId = this.webSocketService.getUserIdBySocket(client) as string;
     const { chatId, messageId, chat_conversation } = data;
     try {
       await this.chatService.getMessageById(chatId, messageId);
@@ -269,9 +263,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     | {
         error: string;
       } {
-    const userId = this.chatWebSocketService.getUserIdBySocket(
-      client,
-    ) as string;
+    const userId = this.webSocketService.getUserIdBySocket(client) as string;
     const { chatId, messageId } = data;
     if (
       !this.commonService.validateMongoID(chatId) ||
@@ -300,57 +292,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }>
   > {
     const { chatId } = data;
-    const userId = this.chatWebSocketService.getUserIdBySocket(
-      client,
-    ) as string;
+    const userId = this.webSocketService.getUserIdBySocket(client) as string;
     await this.chatService.getChatByUsersIds([], chatId);
     return this.chatProducerService_deleteChat.sendMessage("chat.delete", {
       userId,
       chatId,
     });
-  }
-  private broadcast(message: any) {
-    const str = JSON.stringify(message);
-    this.usersOnline.forEach((client: WebSocket) => {
-      if (client.readyState === client.OPEN) {
-        return client.send(str);
-      }
-    });
-  }
-  private handleMessage(client: WebSocket, rawMessage: string) {
-    try {
-      const { event, data } = JSON.parse(rawMessage);
-
-      switch (event) {
-        case "users.online":
-          client.send(
-            JSON.stringify({
-              event: "users.online",
-              data: {
-                users: Array.from(this.usersOnline.keys()),
-              },
-            }),
-          );
-          break;
-
-        case "user.isOnline":
-          const { userId } = data;
-          const isOnline = this.usersOnline.has(userId);
-          client.send(
-            JSON.stringify({
-              event: "user.isOnline",
-              data: { userId, isOnline },
-            }),
-          );
-          break;
-      }
-    } catch {
-      client.send(
-        JSON.stringify({
-          event: "error",
-          data: "Invalid message format",
-        }),
-      );
-    }
   }
 }

@@ -1,90 +1,110 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { UploadService } from "./upload.service";
 import { getModelToken } from "@nestjs/mongoose";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { Model } from "mongoose";
-import { Allowed_file_typesDocument } from "../schemas/allowed_file_types.schema";
-import { FilesDocument } from "../schemas/files.schema";
+import { Files } from "../models/files.model";
+import { Allowed_file_types } from "../models/allowed_file_types.model";
+import { CommonService } from "@common/services/common.service";
+import {
+  BadRequestException,
+  NotAcceptableException,
+  NotFoundException,
+} from "@nestjs/common";
 
-const mockAllowedFileTypes = [
-  { type: "image/png" },
-  { type: "application/pdf" },
-];
+jest.mock("file-type", () => ({
+  fileTypeFromBuffer: jest.fn(() =>
+    Promise.resolve({ mime: "image/png", ext: "png" }),
+  ),
+}));
 
-const mockFileDoc = {
-  _id: "fileId123",
-  bucket: "test-bucket",
-  key: "test-key",
-  location: "http://localhost/test-key",
-  save: jest.fn(),
-};
+jest.mock("@config/s3.config", () => ({
+  s3: {
+    send: jest.fn(),
+  },
+}));
+
+jest.mock("@config/configService", () => ({
+  configService: {
+    get: jest.fn((key: string) => {
+      const values = {
+        REGIONAWS: "us-east-1",
+        ENV_AMB: "PROD",
+      };
+      return values[key];
+    }),
+  },
+}));
 
 describe("UploadService", () => {
   let service: UploadService;
-  let allowedFileTypesModel: Model<Allowed_file_typesDocument>;
-  let filesModel: Model<FilesDocument>;
+  let allowedFileTypesModel: any;
+  let filesModel: any;
+  let commonService: any;
 
   beforeEach(async () => {
+    allowedFileTypesModel = {
+      find: jest.fn(),
+      create: jest.fn(),
+      findOne: jest.fn(),
+      deleteOne: jest.fn(),
+    };
+
+    filesModel = {
+      find: jest.fn(),
+      create: jest.fn(),
+      countDocuments: jest.fn(),
+      findByIdAndDelete: jest.fn(),
+      findOne: jest.fn(),
+    };
+
+    commonService = {
+      isBase64: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UploadService,
         {
-          provide: getModelToken("Allowed_file_types"),
-          useValue: {
-            find: jest.fn().mockResolvedValue(mockAllowedFileTypes),
-            findOne: jest.fn(),
-            create: jest.fn(),
-            deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
-          },
+          provide: getModelToken(Allowed_file_types.name),
+          useValue: allowedFileTypesModel,
         },
         {
-          provide: getModelToken("Files"),
-          useValue: {
-            create: jest.fn().mockResolvedValue(mockFileDoc),
-            findById: jest.fn().mockResolvedValue(mockFileDoc),
-            findByIdAndDelete: jest.fn().mockResolvedValue(mockFileDoc),
-            find: jest.fn().mockResolvedValue([mockFileDoc]),
-            countDocuments: jest.fn().mockResolvedValue(1),
-          },
+          provide: getModelToken(Files.name),
+          useValue: filesModel,
+        },
+        {
+          provide: CommonService,
+          useValue: commonService,
         },
       ],
     }).compile();
 
     service = module.get<UploadService>(UploadService);
-    allowedFileTypesModel = module.get<Model<Allowed_file_typesDocument>>(
-      getModelToken("Allowed_file_types"),
-    );
-    filesModel = module.get<Model<FilesDocument>>(getModelToken("Files"));
   });
 
   describe("GetTypes", () => {
-    it("should return array of types", async () => {
+    it("should return types", async () => {
+      allowedFileTypesModel.find.mockResolvedValue([{ type: "image/png" }]);
       const result = await service.GetTypes();
-      expect(result).toEqual(["image/png", "application/pdf"]);
+      expect(result).toEqual(["image/png"]);
     });
 
     it("should throw NotFoundException if no types found", async () => {
-      jest.spyOn(allowedFileTypesModel, "find").mockResolvedValueOnce([]);
+      allowedFileTypesModel.find.mockResolvedValue([]);
       await expect(service.GetTypes()).rejects.toThrow(NotFoundException);
     });
   });
 
   describe("CreateType", () => {
-    it("should create new type if not exists", async () => {
-      jest.spyOn(service, "typeExist").mockResolvedValue(false);
-      const createMock = jest
-        .spyOn(allowedFileTypesModel, "create")
-        .mockResolvedValueOnce({ type: "text/csv" } as any);
+    it("should create a new type", async () => {
+      allowedFileTypesModel.findOne.mockResolvedValue(null);
+      allowedFileTypesModel.create.mockResolvedValue({ type: "image/png" });
 
-      const result = await service.CreateType("text/csv");
-      expect(createMock).toHaveBeenCalledWith({ type: "text/csv" });
-      expect(result).toEqual({ type: "text/csv" });
+      const result = await service.CreateType("image/png");
+      expect(result).toEqual({ type: "image/png" });
     });
 
-    it("should throw error if type exists", async () => {
-      jest
-        .spyOn(service, "typeExist")
-        .mockRejectedValue(new BadRequestException("type already exists"));
+    it("should throw if type already exists", async () => {
+      allowedFileTypesModel.findOne.mockResolvedValue({ type: "image/png" });
 
       await expect(service.CreateType("image/png")).rejects.toThrow(
         BadRequestException,
@@ -93,43 +113,157 @@ describe("UploadService", () => {
   });
 
   describe("deleteType", () => {
-    it("should delete type successfully", async () => {
+    it("should delete type", async () => {
+      allowedFileTypesModel.deleteOne.mockResolvedValue({ deletedCount: 1 });
+
       const result = await service.deleteType("image/png");
       expect(result).toBe("type deleted");
     });
 
-    it("should throw NotFoundException if type not found", async () => {
-      jest
-        .spyOn(allowedFileTypesModel, "deleteOne")
-        .mockResolvedValueOnce({ deletedCount: 0, acknowledged: true });
-      await expect(service.deleteType("nonexistent")).rejects.toThrow(
+    it("should throw if type not found", async () => {
+      allowedFileTypesModel.deleteOne.mockResolvedValue({ deletedCount: 0 });
+
+      await expect(service.deleteType("image/png")).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
   describe("upload", () => {
-    it("should replace URL and save file", async () => {
-      const file = {
-        location: "http://minio-backend-app-marcelo/test-key",
-      } as any;
+    it("should upload file successfully", async () => {
+      commonService.isBase64.mockReturnValue(true);
+      allowedFileTypesModel.find.mockResolvedValue([{ type: "image/png" }]);
 
-      const result = await service.upload(file);
-      expect(result.location).toContain("localhost");
+      const sendMock = require("@config/s3.config").s3.send;
+      sendMock.mockResolvedValue({});
+
+      filesModel.create.mockResolvedValue({ _id: "1", key: "file.png" });
+
+      const result = await service.upload(
+        "test-bucket",
+        Buffer.from("fake").toString("base64"),
+      );
+
+      expect(result).toEqual({ _id: "1", key: "file.png" });
+    });
+
+    it("should throw if file is not base64", async () => {
+      commonService.isBase64.mockReturnValue(false);
+
+      await expect(service.upload("bucket", "notbase64")).rejects.toThrow(
+        NotAcceptableException,
+      );
+    });
+
+    it("should throw if bucket is missing", async () => {
+      commonService.isBase64.mockReturnValue(true);
+
+      await expect(service.upload("", "base64string")).rejects.toThrow(
+        NotAcceptableException,
+      );
+    });
+
+    it("should throw if content type is invalid", async () => {
+      commonService.isBase64.mockReturnValue(true);
+      allowedFileTypesModel.find.mockResolvedValue([{ type: "image/jpeg" }]);
+
+      const { fileTypeFromBuffer } = require("file-type");
+      fileTypeFromBuffer.mockResolvedValue({ mime: "image/png", ext: "png" });
+
+      await expect(
+        service.upload("bucket", Buffer.from("fake").toString("base64")),
+      ).rejects.toThrow(NotAcceptableException);
+    });
+  });
+
+  describe("getFileAll", () => {
+    it("should return paginated files", async () => {
+      filesModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([{ id: "1" }]),
+      });
+
+      filesModel.countDocuments.mockResolvedValue(1);
+
+      const result = await service.getFileAll(1, 10);
+
+      expect(result.items.length).toBe(1);
+      expect(result.totalItems).toBe(1);
+    });
+
+    it("should throw if no files", async () => {
+      filesModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      filesModel.countDocuments.mockResolvedValue(0);
+
+      await expect(service.getFileAll(1, 10)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe("getFileByID", () => {
-    it("should return file if exists", async () => {
-      const result = await service.getFileByID("fileId123");
-      expect(result).toEqual(mockFileDoc);
+    it("should return file", async () => {
+      filesModel.findOne.mockResolvedValue({ id: "1" });
+
+      const result = await service.getFileByID("1");
+      expect(result).toEqual({ id: "1" });
     });
 
-    it("should throw NotFoundException if file not found", async () => {
-      jest.spyOn(filesModel, "findById").mockResolvedValueOnce(null);
-      await expect(service.getFileByID("nonexistent")).rejects.toThrow(
+    it("should throw if not found", async () => {
+      filesModel.findOne.mockResolvedValue(null);
+
+      await expect(service.getFileByID("1")).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("searchFile", () => {
+    it("should return matching files", async () => {
+      filesModel.find.mockResolvedValue([{ id: "1" }]);
+
+      const result = await service.searchFile("bucket");
+      expect(result).toEqual([{ id: "1" }]);
+    });
+
+    it("should throw if no criteria provided", async () => {
+      await expect(service.searchFile()).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw if no files found", async () => {
+      filesModel.find.mockResolvedValue([]);
+
+      await expect(service.searchFile("bucket")).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe("deleteFile", () => {
+    it("should delete file", async () => {
+      const sendMock = require("@config/s3.config").s3.send;
+      sendMock.mockResolvedValue({});
+
+      filesModel.findByIdAndDelete.mockResolvedValue({
+        bucket: "bucket",
+        key: "file.png",
+      });
+
+      const result = await service.deleteFile("id");
+
+      expect(result).toBe("File deleted");
+    });
+
+    it("should throw if file not found", async () => {
+      filesModel.findByIdAndDelete.mockResolvedValue(null);
+
+      await expect(service.deleteFile("id")).rejects.toThrow(NotFoundException);
     });
   });
 });
