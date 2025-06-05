@@ -57,6 +57,10 @@ import { UploadProducerService } from "./services/upload.producer.service";
       provide: "UploadProducerService_create",
       useClass: UploadProducerService,
     },
+    {
+      provide: "UploadProducerService_delete",
+      useClass: UploadProducerService,
+    },
   ],
   controllers: [UploadController, UploadConsumerController],
   exports: [UploadService],

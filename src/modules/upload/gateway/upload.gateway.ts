@@ -1,4 +1,3 @@
-import { CommonService } from "@common/services/common.service";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/configService";
 import { Inject } from "@nestjs/common";
@@ -30,12 +29,16 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
     private readonly uploadService: UploadService,
-    private readonly commonService: CommonService,
     @Inject("UploadProducerService_create")
-    private readonly uploadProducerService: UploadProducerService<{
+    private readonly uploadProducerService_create: UploadProducerService<{
       userId: string;
       file: Base64URLString;
       bucket: string;
+    }>,
+    @Inject("UploadProducerService_delete")
+    private readonly UploadProducerService_delete: UploadProducerService<{
+      userId: string;
+      id: string;
     }>,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
@@ -161,9 +164,30 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const userId = this.webSocketService.getUserIdBySocket(client) as string;
-      return this.uploadProducerService.sendMessage("upload.create", {
+      return this.uploadProducerService_create.sendMessage("upload.create", {
         userId,
         ...body,
+      });
+    } catch (error) {
+      return {
+        event: "error",
+        data: error?.response || error,
+      };
+    }
+  }
+  @SubscribeMessage("upload.delete")
+  deleteUpload(
+    @MessageBody()
+    body: {
+      id: string;
+    },
+    @ConnectedSocket() client: WebSocket,
+  ) {
+    try {
+      const userId = this.webSocketService.getUserIdBySocket(client) as string;
+      return this.UploadProducerService_delete.sendMessage("upload.delete", {
+        userId,
+        id: body.id,
       });
     } catch (error) {
       return {

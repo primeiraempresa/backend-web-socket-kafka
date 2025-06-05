@@ -39,4 +39,26 @@ export class UploadConsumerController {
       );
     }
   }
+  @MessagePattern("upload.delete")
+  async handleUploadDelete(
+    @Payload()
+    message: {
+      userId: string;
+      id: string;
+    },
+  ) {
+    try {
+      const del = await this.uploadService.deleteFile(message.id);
+      return this.webSocketService.sendToUser(message.userId, "upload.delete", {
+        message: del,
+      });
+    } catch (error) {
+      this.logger.error(error);
+      return this.webSocketService.sendToUser(
+        message.userId,
+        "error",
+        error?.response?.response || error,
+      );
+    }
+  }
 }
