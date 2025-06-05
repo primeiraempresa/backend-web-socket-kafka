@@ -1,6 +1,9 @@
+import { CommonService } from "@common/services/common.service";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/configService";
+import { Inject } from "@nestjs/common";
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -10,6 +13,7 @@ import {
 } from "@nestjs/websockets";
 import { FilePagination } from "@upload/models/file_pagination.model";
 import { FilesDocument } from "@upload/schemas/files.schema";
+import { UploadProducerService } from "@upload/services/upload.producer.service";
 import { UploadService } from "@upload/services/upload.service";
 import { UserService } from "@user/services/user.service";
 import { Server, WebSocket } from "ws";
@@ -26,6 +30,13 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
     private readonly uploadService: UploadService,
+    private readonly commonService: CommonService,
+    @Inject("UploadProducerService_create")
+    private readonly uploadProducerService: UploadProducerService<{
+      userId: string;
+      file: Base64URLString;
+      bucket: string;
+    }>,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
     const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
@@ -136,6 +147,24 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "upload.id",
         data: result,
       };
+    } catch (error) {
+      return {
+        event: "error",
+        data: error?.response || error,
+      };
+    }
+  }
+  @SubscribeMessage("upload.create")
+  createUpload(
+    @MessageBody() body: { file: Base64URLString; bucket: string },
+    @ConnectedSocket() client: WebSocket,
+  ) {
+    try {
+      const userId = this.webSocketService.getUserIdBySocket(client) as string;
+      return this.uploadProducerService.sendMessage("upload.create", {
+        userId,
+        ...body,
+      });
     } catch (error) {
       return {
         event: "error",

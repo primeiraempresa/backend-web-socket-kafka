@@ -11,6 +11,8 @@ import { configService } from "@config/configService";
 import { UserModule } from "@user/user.module";
 import { UploadGateway } from "./gateway/upload.gateway";
 import { CommonModule } from "@common/common.module";
+import { UploadConsumerController } from "./controllers/upload.consumer.controller";
+import { UploadProducerService } from "./services/upload.producer.service";
 
 @Module({
   imports: [
@@ -48,8 +50,15 @@ import { CommonModule } from "@common/common.module";
     UserModule,
     CommonModule,
   ],
-  providers: [UploadService, UploadGateway],
-  controllers: [UploadController],
+  providers: [
+    UploadService,
+    UploadGateway,
+    {
+      provide: "UploadProducerService_create",
+      useClass: UploadProducerService,
+    },
+  ],
+  controllers: [UploadController, UploadConsumerController],
   exports: [UploadService],
 })
 export class UploadModule {}
