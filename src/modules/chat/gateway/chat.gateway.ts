@@ -74,6 +74,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: WebSocket, req: Request) {
     const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
     const url = new URL(req.url, baseUrl);
+    const userId = url.searchParams.get("userId") as string;
+    if (!userId) {
+      return client.close(1008, "param userId not found");
+    }
     const authHeader = req.headers["authorization"];
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return client.close(1008, "Missing or invalid authorization header");
@@ -86,11 +90,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch {
       return client.close(1008, "Unauthorized");
-    }
-
-    const userId = url.searchParams.get("userId") as string;
-    if (!userId) {
-      return client.close(1008, "param userId not found");
     }
     try {
       await this.userService.getUserByID(userId);
