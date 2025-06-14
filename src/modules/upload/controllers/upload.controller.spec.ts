@@ -2,7 +2,11 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UploadController } from "./upload.controller";
 import { UploadService } from "../services/upload.service";
 import { NotFoundException } from "@nestjs/common";
-
+jest.mock("file-type", () => ({
+  fileTypeFromBuffer: jest
+    .fn()
+    .mockResolvedValue({ ext: "png", mime: "image/png" }),
+}));
 describe("UploadController", () => {
   let controller: UploadController;
   let service: UploadService;
@@ -142,14 +146,6 @@ describe("UploadController", () => {
       const result = await controller.DeleteFile("file123");
       expect(service.deleteFile).toHaveBeenCalledWith("file123");
       expect(result).toBe("File deleted");
-    });
-  });
-
-  describe("upload", () => {
-    it("should NOT call upload service because method is not implemented", async () => {
-      const file = { location: "http://localhost/file.jpg" } as any;
-      const result = await controller.upload(file, "my-bucket");
-      expect(result).toBeUndefined();
     });
   });
 });

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotAcceptableException,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
@@ -10,11 +11,18 @@ import { Model } from "mongoose";
 import { Allowed_file_typesDocument } from "../schemas/allowed_file_types.schema";
 import { Files } from "../models/files.model";
 import { s3 } from "@config/s3.config";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  CreateBucketCommand,
+  DeleteObjectCommand,
+  HeadBucketCommand,
+  PutBucketPolicyCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { FilesDocument } from "../schemas/files.schema";
-import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 import { FilePagination } from "../models/file_pagination.model";
-
+import { fileTypeFromBuffer, FileTypeResult } from "file-type";
+import { configService } from "@config/configService";
+import { CommonService } from "@common/services/common.service";
 @Injectable()
 export class UploadService {
   constructor(
@@ -22,6 +30,7 @@ export class UploadService {
     private readonly allowedFileTypesModel: Model<Allowed_file_typesDocument>,
     @InjectModel(Files.name)
     private readonly filesModel: Model<FilesDocument>,
+    private readonly commonService: CommonService,
   ) {}
   private readonly logger = new Logger(UploadService.name);
   async GetTypes(): Promise<string[]> {
@@ -74,15 +83,38 @@ export class UploadService {
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
   }
-  async upload(file: IUploadedFile): Promise<FilesDocument> {
-    file.location = file.location.replace(
-      "minio-backend-app-marcelo",
-      "localhost",
-    );
-    return await this.filesModel.create(file);
+  async upload(buket: string, file: Base64URLString): Promise<FilesDocument> {
+    try {
+      if (!this.commonService.isBase64(file)) {
+        throw new BadRequestException(["File not Base64"]);
+      }
+      if (!buket) {
+        throw new BadRequestException(["bucket not Found"]);
+      }
+      const img: Files = await this.generateImageInfoFromBase64(file, {
+        fieldname: "file",
+        bucket: buket,
+      });
+      const fileBuffer = Buffer.from(file, "base64");
+      await this.ensureBucketExists(buket);
+      const command = new PutObjectCommand({
+        Bucket: buket,
+        Key: img.key,
+        Body: fileBuffer,
+        ACL: "public-read",
+        ContentType: img.contentType,
+      });
+      await s3.send(command);
+      return await this.filesModel.create(img);
+    } catch (error) {
+      this.logger.error(error);
+      throw new NotAcceptableException(error);
+    }
   }
-  async getFileByID(id: string) {
-    const file = await this.filesModel.findById(id);
+  async getFileByID(_id: string): Promise<FilesDocument> {
+    const file: FilesDocument | null = await this.filesModel.findOne({
+      _id: _id,
+    });
     if (!file) {
       throw new NotFoundException(["File not found"]);
     }
@@ -144,5 +176,72 @@ export class UploadService {
       );
       throw error;
     }
+  }
+  private async ensureBucketExists(bucketName: string) {
+    try {
+      await s3.send(new HeadBucketCommand({ Bucket: bucketName }));
+    } catch (err: any) {
+      const isNotFound =
+        err.name === "NotFound" || err.$metadata?.httpStatusCode === 404;
+
+      if (isNotFound) {
+        await s3.send(new CreateBucketCommand({ Bucket: bucketName }));
+        const publicPolicy = {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Sid: "PublicReadGetObject",
+              Effect: "Allow",
+              Principal: "*",
+              Action: ["s3:GetObject"],
+              Resource: [`arn:aws:s3:::${bucketName}/*`],
+            },
+          ],
+        };
+        return await s3.send(
+          new PutBucketPolicyCommand({
+            Bucket: bucketName,
+            Policy: JSON.stringify(publicPolicy),
+          }),
+        );
+      }
+      throw err;
+    }
+  }
+  private async generateImageInfoFromBase64(
+    base64: Base64URLString,
+    options: {
+      fieldname: string;
+      originalname?: string;
+      bucket: string;
+      acl?: string;
+    },
+  ): Promise<Files> {
+    const buffer = Buffer.from(base64, "base64");
+    const mimeType = (await fileTypeFromBuffer(buffer)) as FileTypeResult;
+    const allowedTypes = await this.GetTypes();
+    if (!allowedTypes.includes(mimeType?.mime)) {
+      throw new BadRequestException({
+        message: `Invalid content type "${mimeType?.mime}". Allowed types are: ${allowedTypes.join(", ")}`,
+      });
+    }
+    const key = `${Date.now()}-${crypto.randomUUID()}.${mimeType?.ext}`;
+    const region = configService.get("REGIONAWS") as string;
+    const location: string =
+      configService.get("ENV_AMB") == "LOCAL"
+        ? `http://localhost:9000/${options.bucket}/${key}`
+        : `https://${options.bucket}.s3.${region}.amazonaws.com/${key}`;
+
+    return {
+      fieldname: options.fieldname,
+      originalname: options.originalname || key,
+      mimetype: mimeType?.mime,
+      size: buffer.length,
+      bucket: options.bucket,
+      key,
+      acl: options?.acl || "public-read",
+      contentType: mimeType?.mime,
+      location: location,
+    };
   }
 }

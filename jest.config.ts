@@ -1,15 +1,16 @@
 import type { Config } from "jest";
 
 const config: Config = {
-  moduleFileExtensions: ["js", "json", "ts"],
+  moduleFileExtensions: ["ts", "js", "mjs", "json"],
   rootDir: ".",
+  preset: "ts-jest",
+  testEnvironment: "node",
   testRegex: ".*\\.spec\\.ts$",
   transform: {
     "^.+\\.(t|j)s$": "ts-jest",
   },
   collectCoverageFrom: ["src/**/*.(t|j)s"],
   coverageDirectory: "./coverage",
-  testEnvironment: "node",
   moduleNameMapper: {
     "^@config/(.*)$": "<rootDir>/src/configs/$1",
     "^@user/(.*)$": "<rootDir>/src/modules/user/$1",
@@ -17,7 +18,9 @@ const config: Config = {
     "^@common/(.*)$": "<rootDir>/src/modules/common/$1",
     "^@chat/(.*)$": "<rootDir>/src/modules/chat/$1",
     "^@upload/(.*)$": "<rootDir>/src/modules/upload/$1",
+    "^file-type$": "<rootDir>/node_modules/file-type",
   },
+  transformIgnorePatterns: ["node_modules/(?!(file-type)/)"],
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "/dist/",

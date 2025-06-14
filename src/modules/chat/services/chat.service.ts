@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
@@ -24,17 +25,21 @@ export class ChatService {
     private readonly commonService: CommonService,
   ) {}
   async createChat(userIds: string[]): Promise<ChatDocument> {
-    const newChat: ChatDocument = await this.chatModel.create({
-      chatters: userIds,
-    });
-    const collectionName = newChat._id.toString();
-    await this.connection.createCollection(`ChatMessage_${collectionName}`);
-    return newChat;
+    try {
+      const chatExists = await this.getChatByUsersIds(userIds);
+      return chatExists;
+    } catch {
+      const newChat: ChatDocument = await this.chatModel.create({
+        chatters: userIds,
+      });
+      const collectionName = newChat._id.toString();
+      await this.connection.createCollection(`ChatMessage_${collectionName}`);
+      return newChat.populate("chatters");
+    }
   }
   async addMessage(
     chatId: string,
-    senderId: string,
-    message: string,
+    chat_conversation: Chat_conversation,
   ): Promise<ChatConversationDocument> {
     const collectionName = chatId;
     const messageModel: Model<Chat_conversation> = this.connection.model(
@@ -42,13 +47,16 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${collectionName}`,
     );
-    return await messageModel.create({ sender: senderId, message });
+    return (await messageModel.create(chat_conversation)).populate("sender");
   }
   async getMessages(
     chatId: string,
     page: number,
     limit: number,
   ): Promise<ChatPagination> {
+    if (!this.commonService.validateMongoID(chatId)) {
+      throw new BadRequestException(["invalid chat id"]);
+    }
     const skip = (page - 1) * limit;
     const messageModel: Model<Chat_conversation> = this.connection.model(
       `ChatMessage_${chatId}`,
@@ -83,7 +91,11 @@ export class ChatService {
     if (_id && !this.commonService.validateMongoID(_id)) {
       throw new BadRequestException(["invalid chat id"]);
     }
-    if (userIds && !this.commonService.validateArryByMongoIDs(userIds)) {
+    if (
+      userIds &&
+      Array.isArray(userIds) &&
+      !this.commonService.validateArryByMongoIDs(userIds)
+    ) {
       throw new BadRequestException(["invalid users ids"]);
     }
     const newChat = await this.chatModel
@@ -147,6 +159,7 @@ export class ChatService {
         new: true,
         runValidators: true,
       })
+      .populate("sender")
       .exec();
     if (!updateMessageById) {
       throw new NotFoundException(["message not found"]);
@@ -163,18 +176,24 @@ export class ChatService {
     if (!this.commonService.validateMongoID(chatId)) {
       throw new BadRequestException(["invalid chat id"]);
     }
-    const messageModel: Model<Chat_conversation> = this.connection.model(
-      `ChatMessage_${chatId}`,
-      ChatConversationSchema,
-      `ChatMessage_${chatId}`,
-    );
-    const deleteMessageById = await messageModel
-      .findByIdAndDelete(message_id)
-      .exec();
-    if (!deleteMessageById) {
-      throw new NotFoundException(["message not found"]);
+    try {
+      const messageModel: Model<Chat_conversation> = this.connection.model(
+        `ChatMessage_${chatId}`,
+        ChatConversationSchema,
+        `ChatMessage_${chatId}`,
+      );
+      const deleteMessageById = await messageModel
+        .findByIdAndDelete(message_id)
+        .populate("sender")
+        .exec();
+      if (!deleteMessageById) {
+        throw new NotFoundException(["message not found"]);
+      }
+      return deleteMessageById;
+    } catch (error) {
+      console.error("MongoDB Update Error:", error);
+      throw new InternalServerErrorException(error.message);
     }
-    return deleteMessageById;
   }
   async deleteChatById(_id: string): Promise<ChatDocument> {
     if (!this.commonService.validateMongoID(_id)) {
@@ -186,6 +205,6 @@ export class ChatService {
     }
     const collectionName = deleteChatById._id.toString();
     await this.connection.dropCollection(`ChatMessage_${collectionName}`);
-    return deleteChatById;
+    return deleteChatById.populate("chatters");
   }
 }

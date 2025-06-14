@@ -7,7 +7,7 @@ import {
 } from "class-validator";
 import { CommonService } from "../services/common.service";
 
-@ValidatorConstraint({ name: "IsObjectId", async: false })
+@ValidatorConstraint({ name: "IsObjectId", async: true })
 export class IsObjectIdValidation implements ValidatorConstraintInterface {
   constructor(private readonly commonService: CommonService) {}
 

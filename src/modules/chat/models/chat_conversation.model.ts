@@ -1,8 +1,7 @@
-import { IsObjectId } from "@common/validations/IsObjctId.validation";
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Users } from "@user/models/user.model";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
 import mongoose from "mongoose";
 
 @Schema()
@@ -22,9 +21,12 @@ export class Chat_conversation {
     required: true,
     index: true,
   })
-  @IsObjectId()
-  sender: mongoose.Types.ObjectId;
+  @IsMongoId({ each: true })
+  sender: string;
 
-  @Prop({ required: true, default: new Date().toISOString(), index: -1 })
-  createdAt: Date;
+  @Prop({
+    index: -1,
+    type: Date,
+  })
+  createdAt?: Date;
 }

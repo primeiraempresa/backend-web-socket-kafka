@@ -1,12 +1,11 @@
 import { Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
 
 @Schema()
 export class Chat_conversation_DTO {
-  @ApiProperty({ required: false, default: "Olá !" })
-  @IsOptional()
+  @ApiProperty({ required: true, default: "Olá !" })
   @IsNotEmpty()
   @IsString()
-  message?: string;
+  message: string;
 }

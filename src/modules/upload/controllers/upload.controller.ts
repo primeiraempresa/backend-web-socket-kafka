@@ -19,9 +19,9 @@ import {
 } from "@nestjs/swagger";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 import { UploadService } from "../services/upload.service";
-import { DynamicMulterInterceptor } from "../interceptor/dynamic-multer.interceptor";
 import { Allowed_file_types } from "../models/allowed_file_types.model";
 import { AuthGuard } from "@nestjs/passport";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller("upload")
 @UseGuards(AuthGuard("jwt"))
@@ -30,8 +30,8 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
-  async PostTypes(@Body() body: Allowed_file_types) {
-    return await this.uploadService.CreateType(body.type);
+  PostTypes(@Body() body: Allowed_file_types) {
+    return this.uploadService.CreateType(body.type);
   }
 
   @Get("type")
@@ -145,8 +145,8 @@ export class UploadController {
   }
 
   @Post(":bucket")
-  @UseInterceptors(DynamicMulterInterceptor)
   @ApiConsumes("multipart/form-data")
+  @UseInterceptors(FileInterceptor("file"))
   @ApiBody({
     description: "Upload de imagem",
     schema: {
@@ -160,10 +160,10 @@ export class UploadController {
     },
   })
   async upload(
-    @UploadedFile() file: IUploadedFile,
+    @UploadedFile("file") file: IUploadedFile,
     @Param("bucket") bucket: string,
   ) {
-    file.bucket = bucket;
-    return await this.uploadService.upload(file);
+    const base64: Base64URLString = file.buffer.toString("base64");
+    return await this.uploadService.upload(bucket, base64);
   }
 }
