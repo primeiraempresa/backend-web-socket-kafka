@@ -36,6 +36,8 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
 } from "@common/tokens/chat.tokens";
+import { JwtService } from "@nestjs/jwt";
+
 @WebSocketGateway({
   path: "/chat",
   transports: ["websocket"],
@@ -66,12 +68,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly commonService: CommonService,
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
+    private readonly jwtService: JwtService,
   ) {}
-  private usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
   private logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
     const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
     const url = new URL(req.url, baseUrl);
+    const authHeader = req.headers["authorization"];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return client.close(1008, "Missing or invalid authorization header");
+    }
+    const token = authHeader.split(" ")[1];
+    try {
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        return client.close(1008, "Unauthorized");
+      }
+    } catch {
+      return client.close(1008, "Unauthorized");
+    }
+
     const userId = url.searchParams.get("userId") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");

@@ -1,6 +1,7 @@
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/configService";
 import { Inject } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
   MessageBody,
@@ -40,10 +41,25 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
       userId: string;
       id: string;
     }>,
+    private readonly jwtService: JwtService,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
     const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
     const url = new URL(req.url, baseUrl);
+    const authHeader = req.headers["authorization"];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return client.close(1008, "Missing or invalid authorization header");
+    }
+    const token = authHeader.split(" ")[1];
+    try {
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        return client.close(1008, "Unauthorized");
+      }
+    } catch {
+      return client.close(1008, "Unauthorized");
+    }
+
     const userId = url.searchParams.get("userId") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");
