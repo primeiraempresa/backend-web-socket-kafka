@@ -67,11 +67,17 @@ export class ChatConsumerController {
         message.chatId,
         message.chat_conversation,
       );
-      this.webSocketService.sendToUser(
-        message.userId,
-        "chat.message.create",
-        result,
+      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+        [],
+        message.chatId,
       );
+      for (const item of chat.chatters) {
+        this.webSocketService.sendToUser(
+          item["_id"].toString(),
+          "chat.message.create",
+          result,
+        );
+      }
       return result;
     } catch (error) {
       this.logger.error(error);
@@ -99,11 +105,17 @@ export class ChatConsumerController {
         message.messageId,
         message.chat_conversation,
       );
-      this.webSocketService.sendToUser(
-        message.userId,
-        "chat.message.update",
-        result,
+      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+        [],
+        message.chatId,
       );
+      for (const item of chat.chatters) {
+        this.webSocketService.sendToUser(
+          item["_id"].toString(),
+          "chat.message.update",
+          result,
+        );
+      }
       return result;
     } catch (error) {
       this.logger.error(error);
@@ -124,11 +136,17 @@ export class ChatConsumerController {
         message.chatId,
         message.messageId,
       );
-      this.webSocketService.sendToUser(
-        message.userId,
-        "chat.message.delete",
-        result,
+      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+        [],
+        message.chatId,
       );
+      for (const item of chat.chatters) {
+        this.webSocketService.sendToUser(
+          item["_id"].toString(),
+          "chat.message.delete",
+          result,
+        );
+      }
       return result;
     } catch (error) {
       this.logger.error(error);
