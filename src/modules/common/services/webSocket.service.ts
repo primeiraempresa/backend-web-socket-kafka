@@ -37,6 +37,13 @@ export class WebSocketService {
       }
     });
   }
+  getUserIdByID_online(userId: string): boolean {
+    const user = this.usersOnline.get(userId);
+    if (user) {
+      return true;
+    }
+    return false;
+  }
   getUserIdBySocket(client: WebSocket): string | undefined {
     return [...this.usersOnline.entries()].find(
       ([, socket]) => socket === client,
