@@ -11,7 +11,17 @@ import { JwtModule } from "@nestjs/jwt";
 import { ChatModule } from "./modules/chat/chat.module";
 import { CommonModule } from "./modules/common/common.module";
 import { UploadModule } from "./modules/upload/upload.module";
-
+import { BullModule } from "@nestjs/bull";
+const redis = {
+  name: configService.get<string>("DBAAS_SENTINEL_SERVICE_NAME"),
+  sentinels: (configService.get<string>("DBAAS_SENTINEL_HOSTS") as string)
+    .split(",")
+    .map((host) => ({
+      host,
+      port: configService.get<number>("DBAAS_SENTINEL_PORT"),
+    })),
+  password: configService.get<string>("DBAAS_SENTINEL_PASSWORD"),
+};
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,6 +39,9 @@ import { UploadModule } from "./modules/upload/upload.module";
       global: true,
       secret: configService.get<string>("client_secret"),
       signOptions: { expiresIn: "48h" },
+    }),
+    BullModule.forRoot({
+      redis,
     }),
     UserModule,
     AuthModule,
