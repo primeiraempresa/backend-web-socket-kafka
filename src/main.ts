@@ -71,7 +71,6 @@ async function bootstrap() {
       })),
     password: configService.get<string>("DBAAS_SENTINEL_PASSWORD"),
   };
-  console.log(redis)
   const queue_chat = new Queue("chat", { redis });
   serverAdapter.setBasePath("/admin/queues/");
   createBullBoard({
