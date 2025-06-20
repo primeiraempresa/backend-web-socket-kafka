@@ -54,6 +54,7 @@ import { BullModule } from "@nestjs/bull";
   providers: [
     ChatService,
     ChatGateway,
+    ChatProducerService,
     {
       provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
       useClass: ChatProducerService,
