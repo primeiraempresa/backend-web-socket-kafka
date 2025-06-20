@@ -37,7 +37,7 @@ describe("ChatProducerService", () => {
     it("should subscribe to all topics and connect", async () => {
       await service.onModuleInit();
 
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledTimes(5);
+      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledTimes(8);
       expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
         "chat.create",
       );
@@ -52,6 +52,15 @@ describe("ChatProducerService", () => {
       );
       expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
         "chat.message.delete",
+      );
+      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
+        "chat.message.create.pending",
+      );
+      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
+        "chat.message.update.pending",
+      );
+      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
+        "chat.message.delete.pending",
       );
       expect(clientKafka.connect).toHaveBeenCalled();
     });

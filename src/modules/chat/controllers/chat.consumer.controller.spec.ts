@@ -2,12 +2,15 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ChatConsumerController } from "./chat.consumer.controller";
 import { ChatService } from "@chat/services/chat.service";
 import { WebSocketService } from "@common/services/webSocket.service";
+import { ChatProducerService } from "@chat/services/chat.producer.service";
+import { Queue } from "bull";
+import { getQueueToken } from "@nestjs/bull";
 
 describe("ChatConsumerController", () => {
   let controller: ChatConsumerController;
   let chatService: jest.Mocked<ChatService>;
   let chatWebSocketService: jest.Mocked<WebSocketService>;
-
+  let queueMock: jest.Mocked<Queue>;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ChatConsumerController],
@@ -24,13 +27,27 @@ describe("ChatConsumerController", () => {
           },
         },
         {
+          provide: getQueueToken("chat"),
+          useValue: queueMock,
+        },
+        {
+          provide: ChatProducerService,
+          useValue: {
+            sendMessage: jest.fn(),
+          },
+        },
+        {
           provide: WebSocketService,
           useValue: {
             sendToUser: jest.fn(),
+            getUserIdByID_online: jest.fn().mockReturnValue(true),
           },
         },
       ],
     }).compile();
+    queueMock = {
+      add: jest.fn(),
+    } as any;
 
     controller = module.get<ChatConsumerController>(ChatConsumerController);
     chatService = module.get(ChatService);
