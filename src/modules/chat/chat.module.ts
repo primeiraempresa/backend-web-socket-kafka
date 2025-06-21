@@ -19,6 +19,7 @@ import {
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
 } from "../common/tokens/chat.tokens";
 import { BullModule } from "@nestjs/bull";
+import { DateService } from "@common/services/date.service";
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { BullModule } from "@nestjs/bull";
     ChatService,
     ChatGateway,
     ChatProducerService,
+    DateService,
     {
       provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
       useClass: ChatProducerService,

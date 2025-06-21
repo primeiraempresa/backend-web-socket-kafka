@@ -133,6 +133,146 @@ describe("ChatGateway", () => {
     });
   });
 
+  describe("getMessageById", () => {
+    it("should return message if found", async () => {
+      const message = { id: "msg1", chatId: "chat1" };
+      mockChatService.getMessageById.mockResolvedValue(message);
+
+      const response = await gateway.getMessageById({
+        chatId: "chat1",
+        messageId: "msg1",
+      });
+
+      expect(response).toEqual({ event: "chat.message.id", data: message });
+    });
+
+    it("should return error if not found", async () => {
+      mockChatService.getMessageById.mockRejectedValue({
+        response: "Message not found",
+      });
+
+      const response = await gateway.getMessageById({
+        chatId: "chat1",
+        messageId: "msg1",
+      });
+
+      expect(response).toEqual({
+        event: "error",
+        data: "Message not found",
+      });
+    });
+  });
+
+  describe("createMessage", () => {
+    it("should send message if sender is valid", () => {
+      mockCommonService.validateMongoID.mockReturnValue(true);
+      mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
+
+      const client = {} as any;
+      const message = {
+        chatId: "chat1",
+        chat_conversation: {
+          sender: "user1",
+          content: "hello",
+        },
+      };
+
+      gateway.createMessage(message as any, client);
+
+      expect(mockProducer.sendMessage).toHaveBeenCalledWith(
+        "chat.message.create",
+        {
+          userId: "user1",
+          chatId: "chat1",
+          chat_conversation: message.chat_conversation,
+        },
+      );
+    });
+
+    it("should return error if sender is invalid", () => {
+      mockCommonService.validateMongoID.mockReturnValue(false);
+
+      const response = gateway.createMessage(
+        {
+          chatId: "chat1",
+          chat_conversation: { sender: "invalid" },
+        } as any,
+        {} as any,
+      );
+
+      expect(response).toEqual({ error: "Invalid chatId" });
+    });
+  });
+  describe("updateMessage", () => {
+    it("should send update message if message exists", async () => {
+      mockChatService.getMessageById.mockResolvedValue({});
+      mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
+
+      const data = {
+        chatId: "chat1",
+        messageId: "msg1",
+        chat_conversation: { content: "updated" },
+      } as any;
+
+      await gateway.updateMessage(data, {} as any);
+
+      expect(mockProducer.sendMessage).toHaveBeenCalledWith(
+        "chat.message.update",
+        {
+          userId: "user1",
+          ...data,
+        },
+      );
+    });
+
+    it("should return error if message not found", async () => {
+      mockChatService.getMessageById.mockRejectedValue(new Error("Not found"));
+      mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
+
+      const response = await gateway.updateMessage(
+        {
+          chatId: "chat1",
+          messageId: "msg1",
+          chat_conversation: {},
+        } as any,
+        {} as any,
+      );
+
+      expect(response).toEqual({
+        event: "error",
+        data: "Message not found",
+      });
+    });
+  });
+  describe("deleteMessage", () => {
+    it("should send delete message if IDs are valid", () => {
+      mockCommonService.validateMongoID.mockReturnValue(true);
+      mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
+
+      gateway.deleteMessage({ chatId: "chat1", messageId: "msg1" }, {} as any);
+
+      expect(mockProducer.sendMessage).toHaveBeenCalledWith(
+        "chat.message.delete",
+        {
+          userId: "user1",
+          chatId: "chat1",
+          messageId: "msg1",
+        },
+      );
+    });
+
+    it("should return error if IDs are invalid", () => {
+      mockCommonService.validateMongoID.mockReturnValue(false);
+
+      const response = gateway.deleteMessage(
+        { chatId: "invalid", messageId: "invalid" },
+        {} as any,
+      );
+
+      expect(response).toEqual({ error: "Invalid chatId or messageId" });
+    });
+  });
+
   describe("createChat", () => {
     it("should create a chat when valid", () => {
       mockCommonService.validateArryByMongoIDs.mockReturnValue(true);
@@ -155,6 +295,19 @@ describe("ChatGateway", () => {
       const response = gateway.createChat({ chatters: ["invalid"] }, {} as any);
 
       expect(response).toEqual({ error: "Invalid userIds" });
+    });
+  });
+  describe("deleteChat", () => {
+    it("should send delete chat request", async () => {
+      mockChatService.getChatByUsersIds.mockResolvedValue({});
+      mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
+
+      await gateway.deleteChat({ chatId: "chat1" }, {} as any);
+
+      expect(mockProducer.sendMessage).toHaveBeenCalledWith("chat.delete", {
+        userId: "user1",
+        chatId: "chat1",
+      });
     });
   });
 
