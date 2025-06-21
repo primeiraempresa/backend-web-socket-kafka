@@ -1,4 +1,4 @@
-name: Análise com SonarCloud
+name: CI com SonarCloud e pnpm
 
 on:
   push:
@@ -9,30 +9,37 @@ on:
       - main
 
 jobs:
-  sonarcloud:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      - name: Configurar JDK 17
-        uses: actions/setup-java@v2
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          node-version: '16'
 
-      - name: Cache do SonarCloud
-        uses: actions/cache@v3
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar-${{ hashFiles('**/*.java') }}
-          restore-keys: |
-            ${{ runner.os }}-sonar-
+          version: '8'
 
-      - name: Build e análise com Maven
-        run: mvn clean verify sonar:sonar \
-          -Dsonar.projectKey=backend-app-marcelo \
-          -Dsonar.organization=primeiraempresa \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      - name: Instalar dependências
+        run: pnpm install
+
+      - name: Rodar testes com cobertura
+        run: pnpm test:cov
+
+      - name: Instalar SonarScanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
+          unzip sonar-scanner.zip
+          sudo mv sonar-scanner-4.7.0.2747-linux /opt/sonar-scanner
+          sudo ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
+
+      - name: Análise com SonarCloud
+        run: sonar-scanner
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
