@@ -40,6 +40,8 @@ jobs:
           sudo ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
 
       - name: Análise com SonarCloud
-        run: sonar-scanner
+        run: sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           SONAR_TOKEN: '6661c8028a00484cfa1be57bfff6c1785dc4e994'
