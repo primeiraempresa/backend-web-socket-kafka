@@ -16,6 +16,9 @@ export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
     this.client.subscribeToResponseOf("chat.message.create");
     this.client.subscribeToResponseOf("chat.message.update");
     this.client.subscribeToResponseOf("chat.message.delete");
+    this.client.subscribeToResponseOf("chat.message.create.pending");
+    this.client.subscribeToResponseOf("chat.message.update.pending");
+    this.client.subscribeToResponseOf("chat.message.delete.pending");
     await this.client.connect();
   }
 

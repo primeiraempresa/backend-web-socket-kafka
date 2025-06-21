@@ -18,6 +18,7 @@ import {
   CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
 } from "../common/tokens/chat.tokens";
+import { BullModule } from "@nestjs/bull";
 
 @Module({
   imports: [
@@ -43,6 +44,9 @@ import {
         },
       },
     ]),
+    BullModule.registerQueue({
+      name: "chat",
+    }),
     CommonModule,
     UserModule,
   ],
@@ -50,6 +54,7 @@ import {
   providers: [
     ChatService,
     ChatGateway,
+    ChatProducerService,
     {
       provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
       useClass: ChatProducerService,

@@ -13,10 +13,17 @@ import {
 } from "@common/tokens/chat.tokens";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
+import { getQueueToken } from "@nestjs/bull";
 
 describe("ChatGateway", () => {
   let gateway: ChatGateway;
 
+  const mockQueue = {
+    add: jest.fn(),
+    getWaiting: jest.fn().mockResolvedValue([]),
+    getDelayed: jest.fn().mockResolvedValue([]),
+    getActive: jest.fn().mockResolvedValue([]),
+  };
   const mockChatService = {
     getChatByUsersIds: jest.fn(),
     getMessages: jest.fn(),
@@ -75,6 +82,7 @@ describe("ChatGateway", () => {
           useValue: mockProducer,
         },
         { provide: CHAT_PRODUCER_SERVICE_DELETE_CHAT, useValue: mockProducer },
+        { provide: getQueueToken("chat"), useValue: mockQueue },
         JwtService,
       ],
     }).compile();

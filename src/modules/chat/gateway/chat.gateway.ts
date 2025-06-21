@@ -37,6 +37,8 @@ import {
   CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
 } from "@common/tokens/chat.tokens";
 import { JwtService } from "@nestjs/jwt";
+import { Job, Queue } from "bull";
+import { InjectQueue } from "@nestjs/bull";
 
 @WebSocketGateway({
   path: "/chat",
@@ -69,6 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    @InjectQueue("chat") private readonly queue: Queue,
   ) {}
   private logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
@@ -99,12 +102,52 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.webSocketService.addClient(userId, client);
     this.webSocketService.setServer(this.server);
-
     this.webSocketService.broadcast("user.online", {
       userId,
       status: "online",
     });
-
+    async function hasJobInQueue(
+      queue: Queue,
+      jobName: string,
+      event: string,
+      webSocketService: WebSocketService,
+    ) {
+      const waitingJobs: Job[] = await queue.getWaiting();
+      const delayedJobs: Job[] = await queue.getDelayed();
+      const activeJobs: Job[] = await queue.getActive();
+      const allJobs = [...waitingJobs, ...delayedJobs, ...activeJobs];
+      for (const item of allJobs) {
+        if (item?.id) {
+          const id = item.id.toString();
+          if (id && id.includes(jobName)) {
+            webSocketService.sendToUser(
+              userId,
+              event,
+              item.data.chat_conversation,
+            );
+            item.remove();
+          }
+        }
+      }
+    }
+    await hasJobInQueue(
+      this.queue,
+      `chat.message.create.${userId}`,
+      "chat.message.create",
+      this.webSocketService,
+    );
+    await hasJobInQueue(
+      this.queue,
+      `chat.message.update.${userId}`,
+      "chat.message.update",
+      this.webSocketService,
+    );
+    await hasJobInQueue(
+      this.queue,
+      `chat.message.delete.${userId}`,
+      "chat.message.delete",
+      this.webSocketService,
+    );
     client.on("message", (message) => {
       this.webSocketService.handleMessage(client, message.toString());
     });

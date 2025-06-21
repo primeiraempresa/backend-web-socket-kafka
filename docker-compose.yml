@@ -77,6 +77,80 @@ services:
       - api
     depends_on:
       - zookeeper-backend-app-marcelo
+  redis-master-backend-app-marcelo:
+    image: redis
+    container_name: redis-master-backend-app-marcelo
+    command: ["redis-server", "--requirepass", "redis_pass"]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    attach: false
+    networks:
+      redis-network:
+        ipv4_address: 172.30.0.3
+
+  redis-slave-backend-app-marcelo:
+    image: redis:latest
+    container_name: redis-slave-backend-app-marcelo
+    command: ["redis-server", "/usr/local/etc/redis/redis-slave.conf"]
+    attach: false
+    depends_on:
+      - redis-master-backend-app-marcelo
+    volumes:
+      - ./redis/redis-slave.conf:/usr/local/etc/redis/redis-slave.conf
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      redis-network:
+        ipv4_address: 172.30.0.4
+
+  redis-sentinel-backend-app-marcelo:
+    image: redis:7
+    container_name: redis-sentinel-backend-app-marcelo
+    volumes:
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    networks:
+      redis-network:
+        ipv4_address: 172.30.0.5
+    ports:
+      - "26379:26379"
+    depends_on:
+      - redis-master-backend-app-marcelo
+
+  redis-sentinel2-backend-app-marcelo:
+    image: redis:7
+    container_name: redis-sentinel2-backend-app-marcelo
+    volumes:
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    networks:
+      redis-network:
+        ipv4_address: 172.30.0.6
+    ports:
+      - "26380:26379"
+    depends_on:
+      - redis-master-backend-app-marcelo
+
+  redis-sentinel3-backend-app-marcelo:
+    image: redis:7
+    container_name: redis-sentinel3-backend-app-marcelo
+    volumes:
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+    networks:
+      redis-network:
+        ipv4_address: 172.30.0.7
+    ports:
+      - "26381:26379"
+    depends_on:
+      - redis-master-backend-app-marcelo
 
   app:
     build: .
@@ -85,6 +159,9 @@ services:
       - minio-backend-app-marcelo
       - kafka-backend-app-marcelo
       - zookeeper-backend-app-marcelo
+      - redis-sentinel-backend-app-marcelo
+      - redis-sentinel2-backend-app-marcelo
+      - redis-sentinel3-backend-app-marcelo
     entrypoint: .docker/entrypoint.sh
     ports:
       - "${PORT}:${PORT}"
@@ -92,6 +169,7 @@ services:
       - .:/home/node/app
     networks:
         - api
+        - redis-network
     environment:
         URL: "http://localhost:${PORT}/"
         TZ: America/Sao_Paulo
@@ -105,6 +183,10 @@ services:
         KAFKA_BROKER: kafka-backend-app-marcelo:9093
         KAFKA_GROUP_ID: nestjs-consumer-group
         KAFKA_CLIENT_ID: nestjs-consumer-client
+        DBAAS_SENTINEL_HOSTS: 'redis-sentinel-backend-app-marcelo,redis-sentinel2-backend-app-marcelo,redis-sentinel3-backend-app-marcelo'
+        DBAAS_SENTINEL_PORT: 26379
+        DBAAS_SENTINEL_SERVICE_NAME: mymaster
+        DBAAS_SENTINEL_PASSWORD: redis_pass 
 
   mongodb-seed-backend-app-marcelo: # rodar esse container, importa os dados(json) no mongodb local
     image: mongo
@@ -142,5 +224,9 @@ volumes:
   minio_data:
 
 networks:
+  redis-network:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
   api:
     driver: bridge
