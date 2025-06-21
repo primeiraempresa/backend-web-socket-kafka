@@ -2,14 +2,14 @@ require("dotenv").config();
 const sonarqubeScanner = require("sonarqube-scanner");
 sonarqubeScanner(
   {
-    serverUrl: "https://sonarcloud.io",
+    serverUrl: String(process.env.SONAR_URL),
     options: {
       "sonar.token": String(process.env.SONAR_TOKEN),
       "sonar.sources": "src",
       "sonar.inclusions": "src/**/*.ts",
       "sonar.projectKey": "primeiraempresa_backend-app-marcelo",
       "sonar.organization": "primeiraempresa",
-      "sonar.host.url": "https://sonarcloud.io",
+      "sonar.host.url": String(process.env.SONAR_URL),
       // unit tests
       "sonar.tests": "src",
       "sonar.test.inclusions": "src/**/*.spec.ts",
