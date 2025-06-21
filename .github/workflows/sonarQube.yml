@@ -1,0 +1,45 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sonar:
+    name: Run SonarQube Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+
+      - name: Cache SonarQube Scanner
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar
+          key: sonar-cache-${{ runner.os }}-${{ hashFiles('**/sonar-project.properties') }}
+          restore-keys: |
+            sonar-cache-${{ runner.os }}-
+
+      - name: Install SonarQube Scanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://github.com/SonarSource/sonar-scanner-cli/releases/download/4.7.0.2747/sonar-scanner-cli-4.7.0.2747-linux.zip
+          unzip sonar-scanner.zip
+          mv sonar-scanner-4.7.0.2747-linux /opt/sonar-scanner
+          export PATH=$PATH:/opt/sonar-scanner/bin
+
+      - name: Run SonarQube Scanner
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=backend-marcelo \
+            -Dsonar.projectName=backend marcelo \
+            -Dsonar.projectVersion=1.0
