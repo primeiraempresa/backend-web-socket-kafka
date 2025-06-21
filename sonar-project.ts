@@ -2,7 +2,7 @@ require("dotenv").config();
 const sonarqubeScanner = require("sonarqube-scanner");
 sonarqubeScanner(
   {
-    serverUrl: "http://localhost:9000",
+    serverUrl: "http://localhost:9100",
     options: {
       "sonar.token": String(process.env.S_TOKEN_ACESS),
       "sonar.sources": "src",
