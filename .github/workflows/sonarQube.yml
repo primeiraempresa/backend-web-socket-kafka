@@ -19,7 +19,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '22'
 
       - name: Instalar pnpm
         uses: pnpm/action-setup@v4
@@ -42,4 +42,4 @@ jobs:
       - name: Análise com SonarCloud
         run: sonar-scanner
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: '6661c8028a00484cfa1be57bfff6c1785dc4e994'
