@@ -35,4 +35,4 @@ jobs:
       - name: Análise com SonarCloud
         run: pnpm sonar
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: 45df69f09ace91aa3d7660a10f0e725aeb08bcb0
