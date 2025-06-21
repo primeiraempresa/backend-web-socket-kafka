@@ -64,6 +64,49 @@ describe("UserGateway", () => {
         "Missing or invalid authorization header",
       );
     });
+    it("should handle different message types correctly", async () => {
+      const onMessageCallback = jest.fn();
+      client.on = jest.fn((event, cb) => {
+        if (event === "message") onMessageCallback.mockImplementation(cb);
+        return client; // ✅ Retorna client para satisfazer o tipo original
+      }) as any;
+
+      req = {
+        url: "/user?userId=123",
+        headers: { authorization: "Bearer validtoken" },
+      };
+
+      jwtService.verify.mockReturnValue({ userId: "123" });
+      userService.getUserByID.mockResolvedValue({ _id: "123" } as any);
+
+      await gateway.handleConnection(client, req);
+
+      // Simula mensagem string
+      onMessageCallback('{"event":"user.isOnline","data":{"userId":"123"}}');
+      expect(webSocketService.handleMessage).toHaveBeenCalledWith(
+        client,
+        expect.any(String),
+      );
+
+      // Simula Buffer
+      const bufferMessage = Buffer.from(
+        '{"event":"user.isOnline","data":{"userId":"123"}}',
+        "utf8",
+      );
+      onMessageCallback(bufferMessage);
+
+      // Simula array de buffers
+      const bufferArray = [Buffer.from("message")];
+      onMessageCallback(bufferArray);
+
+      // Simula ArrayBuffer
+      const arrayBuffer = new ArrayBuffer(10);
+      const view = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < 10; i++) view[i] = i;
+      onMessageCallback(arrayBuffer);
+
+      expect(webSocketService.handleMessage).toHaveBeenCalledTimes(4);
+    });
 
     it("should close client if token verification fails", async () => {
       req = {

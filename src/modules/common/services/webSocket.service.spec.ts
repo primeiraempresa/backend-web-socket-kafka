@@ -38,12 +38,40 @@ describe("ChatWebSocketService", () => {
       expect(service.usersOnline.get("user1")).toBe(mockClient);
     });
   });
+  describe("getUserIdByID_online", () => {
+    it("should return true if user is online", () => {
+      service.addClient("user1", mockClient);
+      expect(service.getUserIdByID_online("user1")).toBe(true);
+    });
 
+    it("should return false if user is not online", () => {
+      expect(service.getUserIdByID_online("unknown")).toBe(false);
+    });
+  });
   describe("removeClient", () => {
     it("should remove client from usersOnline", () => {
       service.addClient("user1", mockClient);
       service.removeClient("user1");
       expect(service.usersOnline.has("user1")).toBe(false);
+    });
+  });
+  describe("handleMessage - users.online", () => {
+    it("should respond with list of online users", () => {
+      service.addClient("user1", mockClient);
+
+      const rawMessage = JSON.stringify({
+        event: "users.online",
+        data: { userId: "user1" },
+      });
+
+      service.handleMessage(mockClient, rawMessage);
+
+      expect(mockClient.send).toHaveBeenCalledWith(
+        JSON.stringify({
+          event: "users.online",
+          data: { users: ["user1"] },
+        }),
+      );
     });
   });
 

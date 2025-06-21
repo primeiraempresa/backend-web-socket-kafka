@@ -2,7 +2,11 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ChatService } from "./chat.service";
 import { getConnectionToken, getModelToken } from "@nestjs/mongoose";
 import { CommonService } from "@common/services/common.service";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 
 describe("ChatService", () => {
   let service: ChatService;
@@ -56,6 +60,16 @@ describe("ChatService", () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+  it("createChat - should return existing chat if it exists", async () => {
+    const existingChat = { _id: "chat123", chatters: ["u1", "u2"] } as any;
+    jest.spyOn(service, "getChatByUsersIds").mockResolvedValue(existingChat);
+
+    const result = await service.createChat(["u1", "u2"]);
+
+    expect(service.getChatByUsersIds).toHaveBeenCalledWith(["u1", "u2"]);
+    expect(result).toEqual(existingChat);
+    expect(chatModel.create).not.toHaveBeenCalled();
+  });
 
   it("createChat - should create chat and collection", async () => {
     const mockChat = { _id: "chat123", chatters: ["u1", "u2"] };
@@ -116,6 +130,13 @@ describe("ChatService", () => {
       NotFoundException,
     );
   });
+  it("getChatByUsersIds - should throw BadRequest for invalid userIds", async () => {
+    commonService.validateArryByMongoIDs.mockReturnValue(false);
+
+    await expect(
+      service.getChatByUsersIds(["invalidId1", "invalidId2"]),
+    ).rejects.toThrow(BadRequestException);
+  });
 
   it("getChatByUsersIds - should return chat by ID", async () => {
     const chat = { _id: "chat1", chatters: [] };
@@ -124,6 +145,15 @@ describe("ChatService", () => {
 
     const result = await service.getChatByUsersIds(undefined, "chat1");
     expect(result).toEqual(chat);
+  });
+  it("getChatByUsersIds - should throw NotFoundException when chat not found", async () => {
+    chatModel.findOne.mockReturnValue({
+      populate: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(service.getChatByUsersIds(["u1", "u2"])).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("getChatByUsersIds - should throw BadRequest for invalid ID", async () => {
@@ -141,6 +171,14 @@ describe("ChatService", () => {
     const result = await service.getMessageById("chat1", "msg1");
     expect(result).toEqual(message);
   });
+  it("getMessageById - should throw NotFoundException if message not found", async () => {
+    messageModel.populate.mockResolvedValue(null);
+    messageModel.findOne.mockReturnValue(messageModel);
+
+    await expect(service.getMessageById("chat1", "msg1")).rejects.toThrow(
+      NotFoundException,
+    );
+  });
 
   it("updateMessageById - should update message", async () => {
     const updated = { _id: "msg1", message: "edited" };
@@ -151,6 +189,13 @@ describe("ChatService", () => {
     });
     expect(result).toEqual(updated);
   });
+  it("updateMessageById - should throw NotFoundException if message not found", async () => {
+    messageModel.exec.mockResolvedValue(null);
+
+    await expect(
+      service.updateMessageById("chat1", "msg1", { message: "edit" }),
+    ).rejects.toThrow(NotFoundException);
+  });
 
   it("deleteMessageById - should delete a message", async () => {
     const deleted = { _id: "msg1" };
@@ -158,6 +203,24 @@ describe("ChatService", () => {
 
     const result = await service.deleteMessageById("chat1", "msg1");
     expect(result).toEqual(deleted);
+  });
+
+  it("deleteMessageById - should return InternalServerErrorException if message not found", async () => {
+    messageModel.exec.mockResolvedValue(null);
+
+    await expect(service.deleteMessageById("chat1", "msg1")).rejects.toThrow(
+      InternalServerErrorException,
+    );
+  });
+
+  it("deleteMessageById - should throw InternalServerErrorException on DB error", async () => {
+    messageModel.exec.mockImplementation(() => {
+      throw new Error("DB Error");
+    });
+
+    await expect(service.deleteMessageById("chat1", "msg1")).rejects.toThrow(
+      "DB Error",
+    );
   });
 
   it("deleteChatById - should delete chat and drop collection", async () => {
