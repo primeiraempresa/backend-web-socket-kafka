@@ -11,6 +11,7 @@ import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 import * as bcrypt from "bcryptjs";
+import { DateService } from "@common/services/date.service";
 
 @Controller()
 export class ChatConsumerController {
@@ -20,8 +21,9 @@ export class ChatConsumerController {
     private readonly chatProducerService: ChatProducerService<Chat_conversationT_WS>,
     @InjectQueue("chat")
     private readonly queue: Queue,
+    private readonly dateService: DateService,
   ) {}
-  private logger: Logger = new Logger(ChatConsumerController.name);
+  private readonly logger: Logger = new Logger(ChatConsumerController.name);
   @MessagePattern("chat.create")
   async handleChatCreate(
     @Payload() message: { userId: string; chats: Chats },
@@ -37,9 +39,9 @@ export class ChatConsumerController {
       this.webSocketService.sendToUser(
         message.userId,
         "error",
-        error?.response || error,
+        error?.response ?? error,
       );
-      return error?.response || error;
+      return error?.response ?? error;
     }
   }
   @MessagePattern("chat.delete")
@@ -55,9 +57,9 @@ export class ChatConsumerController {
       this.webSocketService.sendToUser(
         message.userId,
         "error",
-        error?.response || error,
+        error?.response ?? error,
       );
-      return error?.response || error;
+      return error?.response ?? error;
     }
   }
   @MessagePattern("chat.message.create")
@@ -98,9 +100,9 @@ export class ChatConsumerController {
       this.webSocketService.sendToUser(
         message.userId,
         "error",
-        error?.response || error,
+        error?.response ?? error,
       );
-      return error?.response || error;
+      return error?.response ?? error;
     }
   }
   @MessagePattern("chat.message.update")
@@ -142,9 +144,9 @@ export class ChatConsumerController {
       this.webSocketService.sendToUser(
         message.userId,
         "error",
-        error?.response || error,
+        error?.response ?? error,
       );
-      return error?.response || error;
+      return error?.response ?? error;
     }
   }
   @MessagePattern("chat.message.delete")
@@ -184,14 +186,14 @@ export class ChatConsumerController {
       this.webSocketService.sendToUser(
         message.userId,
         "error",
-        error?.response || error,
+        error?.response ?? error,
       );
-      return error?.response || error;
+      return error?.response ?? error;
     }
   }
   @MessagePattern("chat.message.create.pending")
   async handleMessageCreatepending(@Payload() message: Chat_conversationT_WS) {
-    const date = new Date().toISOString();
+    const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.create`, message, {
       jobId: `chat.message.create.${message.userId}-${hash}`,
@@ -199,7 +201,7 @@ export class ChatConsumerController {
   }
   @MessagePattern("chat.message.update.pending")
   async handleMessageUpdatepending(@Payload() message: Chat_conversationT_WS) {
-    const date = new Date().toISOString();
+    const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.update`, message, {
       jobId: `chat.message.update.${message.userId}-${hash}`,
@@ -207,7 +209,7 @@ export class ChatConsumerController {
   }
   @MessagePattern("chat.message.delete.pending")
   async handleMessageDeletepending(@Payload() message: Chat_conversationT_WS) {
-    const date = new Date().toISOString();
+    const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.delete`, message, {
       jobId: `chat.message.delete.${message.userId}-${hash}`,

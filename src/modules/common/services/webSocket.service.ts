@@ -52,6 +52,8 @@ export class WebSocketService {
   handleMessage(client: WebSocket, rawMessage: string) {
     try {
       const { event, data } = JSON.parse(rawMessage);
+      const { userId } = data;
+      const isOnline: boolean = this.usersOnline.has(userId);
 
       switch (event) {
         case "users.online":
@@ -64,10 +66,7 @@ export class WebSocketService {
             }),
           );
           break;
-
         case "user.isOnline":
-          const { userId } = data;
-          const isOnline = this.usersOnline.has(userId);
           client.send(
             JSON.stringify({
               event: "user.isOnline",

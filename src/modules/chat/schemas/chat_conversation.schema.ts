@@ -13,9 +13,7 @@ export type ChatConversationDocument = HydratedDocument<Chat_conversation>;
 ChatConversationSchema.pre(
   "save",
   function (next: CallbackWithoutResultAndOptionalError) {
-    if (!this.createdAt) {
-      this.createdAt = new DateService().now();
-    }
+    this.createdAt ??= new DateService().now();
     next();
   },
 );

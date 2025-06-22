@@ -12,7 +12,7 @@ import {
 import { UserPagination } from "@user/models/userPagination.model";
 import { UsersDocument } from "@user/schemas/user.schema";
 import { UserService } from "@user/services/user.service";
-import { Server, WebSocket } from "ws";
+import { RawData, Server, WebSocket } from "ws";
 
 @WebSocketGateway({
   path: "/user",
@@ -29,14 +29,14 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
-    const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
+    const baseUrl = configService.get<string>("URL") ?? "http://localhost:3000";
     const url = new URL(req.url, baseUrl);
     const userId = url.searchParams.get("userId") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");
     }
     const authHeader = req.headers["authorization"];
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return client.close(1008, "Missing or invalid authorization header");
     }
     const token = authHeader.split(" ")[1];
@@ -62,8 +62,23 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
       status: "online",
     });
 
-    client.on("message", (message) => {
-      this.webSocketService.handleMessage(client, message.toString());
+    client.on("message", (message: RawData) => {
+      if (typeof message === "string") {
+        const text = message;
+        this.webSocketService.handleMessage(client, text);
+      }
+      if (Buffer.isBuffer(message)) {
+        const text = message.toString("utf8");
+        this.webSocketService.handleMessage(client, text);
+      }
+      if (Array.isArray(message)) {
+        const text = Buffer.concat(message).toString("utf8");
+        this.webSocketService.handleMessage(client, text);
+      }
+      if (message instanceof ArrayBuffer) {
+        const text = Buffer.from(message).toString("utf8");
+        this.webSocketService.handleMessage(client, text);
+      }
     });
   }
 
@@ -100,7 +115,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       return {
         event: "error",
-        data: error?.response || error,
+        data: error?.response ?? error,
       };
     }
   }
@@ -118,7 +133,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error) {
       return {
         event: "error",
-        data: error?.response || error,
+        data: error?.response ?? error,
       };
     }
   }

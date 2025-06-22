@@ -10,7 +10,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 
-      secretOrKey: configService.get<string>("client_secret") || "",
+      secretOrKey: configService.get<string>("client_secret") ?? "",
     });
   }
   validate(payload: { sub: string }): boolean {
