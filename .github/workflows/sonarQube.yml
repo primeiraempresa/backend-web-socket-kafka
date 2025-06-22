@@ -31,7 +31,12 @@ jobs:
 
       - name: Rodar testes com cobertura
         run: pnpm test:cov
-
+      
+      - name: Verificar arquivo de cobertura
+        run: ls -l coverage/lcov.info
+      - name: Habilitar debug
+        run: echo "SONAR_SCANNER_OPTS=-X" >> $GITHUB_ENV
+        
       - name: Análise com SonarCloud
         run: pnpm sonar
         env:
