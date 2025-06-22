@@ -1,5 +1,6 @@
 require("dotenv").config();
 const sonarqubeScanner = require("sonarqube-scanner");
+console.log(process.env.SONAR_URL);
 sonarqubeScanner(
   {
     serverUrl: String(process.env.SONAR_URL),
