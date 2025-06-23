@@ -86,8 +86,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return client.close(1008, "Missing or invalid authorization header");
     }
     const token = authHeader.split(" ")[1];
-    const payload = this.jwtService.verify(token);
-    if (!payload) {
+    try {
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        return client.close(1008, "Unauthorized");
+      }
+    } catch {
       return client.close(1008, "Unauthorized");
     }
     try {

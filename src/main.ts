@@ -45,6 +45,7 @@ async function bootstrap() {
         appName: "API app Marcelo. ",
       },
     },
+    jsonDocumentUrl: "swagger.json",
   });
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.KAFKA,
