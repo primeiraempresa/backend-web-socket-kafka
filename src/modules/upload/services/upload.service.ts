@@ -155,6 +155,7 @@ export class UploadService {
   }
   async deleteFile(id: string) {
     const findAndDelete = await this.filesModel.findByIdAndDelete(id);
+    console.log(findAndDelete);
     if (!findAndDelete) {
       throw new NotFoundException(["File not found"]);
     }

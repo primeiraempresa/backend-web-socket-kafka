@@ -15,15 +15,15 @@ import { ChatService } from "../services/chat.service";
 import { ApiOAuth2, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "@nestjs/passport";
 import { ChatConversationDocument } from "../schemas/chat_conversation.schema";
-import { ChatDocument } from "../schemas/chat.schema";
+import { ChatsDocument } from "../schemas/chat.schema";
 import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
 import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
-import { Chat_conversation } from "@chat/models/chat_conversation.model";
+import { ChatConversation } from "@chat/models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
 import { Chats } from "@chat/models/chat.model";
 import { Observable } from "rxjs";
-import { Chat_conversationT } from "@chat/interfaces/chat_conversation-T.interface";
+import { ChatConversationT } from "@chat/interfaces/chat_conversation-T.interface";
 import { Chat_conversation_messageT } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { Chat_T } from "@chat/interfaces/chat-T.interface";
 import {
@@ -44,7 +44,7 @@ export class ChatController {
     @Inject(CHAT_PRODUCER_SERVICE_CREATE_CHAT)
     private readonly chatProducerService_createChat: ChatProducerService<Chats>,
     @Inject(CHAT_PRODUCER_SERVICE_CREATE_MESSAGE)
-    private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT>,
+    private readonly chatProducerService_createMessage: ChatProducerService<ChatConversationT>,
     @Inject(CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE)
     private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT>,
     @Inject(CHAT_PRODUCER_SERVICE_DELETE_MESSAGE)
@@ -96,7 +96,7 @@ export class ChatController {
   async getChatByUsersIdsOrById(
     @Query("userIds") userIds?: string[],
     @Query("chat_id") chat_id?: string,
-  ): Promise<ChatDocument> {
+  ): Promise<ChatsDocument> {
     return await this.chatService.getChatByUsersIds(userIds, chat_id);
   }
 
@@ -118,8 +118,8 @@ export class ChatController {
   @Post("/:chatId/messages")
   createMessage(
     @Param("chatId") chatId: string,
-    @Body() body: Chat_conversation,
-  ): Observable<Chat_conversationT> {
+    @Body() body: ChatConversation,
+  ): Observable<ChatConversationT> {
     if (!this.commonService.validateMongoID(chatId)) {
       throw new BadRequestException(["invalid chat id"]);
     }
