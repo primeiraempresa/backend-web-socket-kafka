@@ -1,12 +1,12 @@
 import { Chats } from "@chat/models/chat.model";
 import { ChatsDocument } from "@chat/schemas/chat.schema";
-import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
 import { ChatService } from "@chat/services/chat.service";
-import { Process, Processor } from "@nestjs/bull";
+import { InjectQueue, Process, Processor } from "@nestjs/bull";
 import { Logger } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
+import { FilesDocument } from "@upload/schemas/files.schema";
 import { UploadService } from "@upload/services/upload.service";
-import { Job } from "bull";
+import { Job, Queue } from "bull";
 import { Connection, Model } from "mongoose";
 
 @Processor("chat")
@@ -16,6 +16,7 @@ export class ChatProcessorService {
     @InjectModel(Chats.name) private readonly chatModel: Model<ChatsDocument>,
     private readonly chatService: ChatService,
     private readonly uploadService: UploadService,
+    @InjectQueue("chat") private readonly queue: Queue,
   ) {}
   private readonly logger: Logger = new Logger(ChatProcessorService.name);
 
@@ -34,7 +35,13 @@ export class ChatProcessorService {
         1,
       );
       for (const item of message.items) {
-        await this.deleteFile(item, job);
+        await this.queue.add("file.delete", {
+          files: {
+            images: item.images,
+            file: item.file,
+          },
+          job,
+        });
       }
       page++;
       if (!message?.nextPage) break;
@@ -43,12 +50,21 @@ export class ChatProcessorService {
     await this.chatModel.findByIdAndDelete(collectionName);
     return "chat deleted successfully";
   }
-  private async deleteFile(
-    chat_conversation: ChatConversationDocument,
-    job: Job<ChatsDocument>,
+  @Process({
+    name: "file.delete",
+    concurrency: 1,
+  })
+  async deleteFile(
+    job: Job<{
+      files: {
+        images: FilesDocument[];
+        file: FilesDocument;
+      };
+      job: Job<ChatsDocument>;
+    }>,
   ) {
-    if (chat_conversation?.images) {
-      for (const item2 of chat_conversation.images) {
+    if (job.data.files?.images) {
+      for (const item2 of job.data.files.images) {
         try {
           await this.uploadService.deleteFile(item2._id.toString());
         } catch (error) {
@@ -60,20 +76,19 @@ export class ChatProcessorService {
         }
       }
     }
-    if (chat_conversation?.file) {
+    if (job.data.files?.file) {
       try {
-        await this.uploadService.deleteFile(
-          chat_conversation.file._id.toString(),
-        );
+        await this.uploadService.deleteFile(job.data.files.file._id.toString());
       } catch (error) {
         this.logger.error(
-          `Erro ao deletar imagem ${chat_conversation._id.toString()}:`,
+          `Erro ao deletar imagem ${job.data.files.file._id.toString()}:`,
           error,
         );
         job.log(
-          `Erro ao deletar imagem ${chat_conversation._id.toString()}: ${error}`,
+          `Erro ao deletar imagem ${job.data.files.file._id.toString()}: ${error}`,
         );
       }
     }
+    return await job.remove();
   }
 }

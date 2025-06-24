@@ -16,7 +16,7 @@ import { ApiOAuth2, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { AuthGuard } from "@nestjs/passport";
 import { ChatConversationDocument } from "../schemas/chat_conversation.schema";
 import { ChatsDocument } from "../schemas/chat.schema";
-import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
+import { ChatConversationDTO } from "../dto/chat_conversation.dto";
 import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatConversation } from "@chat/models/chat_conversation.model";
@@ -136,7 +136,7 @@ export class ChatController {
   async updateMessage(
     @Param("chatId") chatId: string,
     @Param("messageId") messageId: string,
-    @Body() body: Chat_conversation_DTO,
+    @Body() body: ChatConversationDTO,
   ): Promise<Observable<Chat_conversation_messageT>> {
     await this.chatService.getMessageById(chatId, messageId);
     return this.chatProducerService_updateMessage.sendMessage(

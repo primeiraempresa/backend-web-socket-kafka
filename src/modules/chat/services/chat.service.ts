@@ -15,10 +15,11 @@ import {
 } from "../schemas/chat_conversation.schema";
 import { ChatConversation } from "../models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
-import { Chat_conversation_DTO } from "../dto/chat_conversation.dto";
+import { ChatConversationDTO } from "../dto/chat_conversation.dto";
 import { UploadService } from "@upload/services/upload.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
+import { FilesDocument } from "@upload/schemas/files.schema";
 
 @Injectable()
 export class ChatService {
@@ -164,7 +165,7 @@ export class ChatService {
   async updateMessageById(
     chatId: string,
     message_id: string,
-    body: Chat_conversation_DTO,
+    body: ChatConversationDTO,
   ): Promise<ChatConversationDocument> {
     if (!this.commonService.validateMongoID(message_id)) {
       throw new BadRequestException(["invalid message id"]);
@@ -177,8 +178,25 @@ export class ChatService {
       ChatConversationSchema,
       `ChatMessage_${chatId}`,
     );
-    const updateMessageById = await messageModel
-      .findByIdAndUpdate(message_id, body, {
+    const currentMessage = await messageModel
+      .findById(message_id)
+      .populate("images")
+      .exec();
+    if (!currentMessage) {
+      throw new NotFoundException(["message not found"]);
+    }
+    let removedImages: FilesDocument[] = [];
+    const currentImages = currentMessage.images ?? [];
+    const newImageIds = (body.images ?? []).map((img) => img._id.toString());
+    removedImages = currentImages.filter(
+      (img) => !newImageIds.includes(img._id.toString()),
+    );
+    if (body?.images?.length === 0) {
+      body.images = null;
+    }
+    const updateData: Partial<ChatConversationDTO> = { ...body };
+    const updatedMessage = await messageModel
+      .findByIdAndUpdate(message_id, updateData, {
         new: true,
         runValidators: true,
       })
@@ -186,10 +204,19 @@ export class ChatService {
       .populate("images")
       .populate("file")
       .exec();
-    if (!updateMessageById) {
+
+    if (!updatedMessage) {
       throw new NotFoundException(["message not found"]);
     }
-    return updateMessageById;
+    if (removedImages.length > 0) {
+      await this.queue.add("file.delete", {
+        files: {
+          images: removedImages,
+          file: null,
+        },
+      });
+    }
+    return updatedMessage;
   }
   async deleteMessageById(
     chatId: string,
