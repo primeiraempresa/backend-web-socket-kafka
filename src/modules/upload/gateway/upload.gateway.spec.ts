@@ -7,6 +7,8 @@ import { UserService } from "@user/services/user.service";
 import { UploadService } from "@upload/services/upload.service";
 import { getModelToken } from "@nestjs/mongoose";
 import { Users } from "@user/models/user.model";
+import { CacheService } from "@common/services/cache.service";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 jest.mock("@upload/services/upload.service", () => {
   return {
     UploadService: jest.fn().mockImplementation(() => ({
@@ -26,6 +28,7 @@ jest.mock("file-type", () => {
 });
 describe("UploadGateway", () => {
   let gateway: UploadGateway;
+  let mockCacheManager: jest.Mocked<Cache>;
 
   // Mocks
   const mockWebSocketService = {
@@ -73,6 +76,12 @@ describe("UploadGateway", () => {
     create: jest.fn(),
   });
   beforeEach(async () => {
+    mockCacheManager = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+      // outros métodos que o Cache pode ter
+    } as unknown as jest.Mocked<Cache>;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UploadGateway,
@@ -92,6 +101,11 @@ describe("UploadGateway", () => {
         {
           provide: "UploadProducerService_create",
           useValue: mockUploadProducerCreate,
+        },
+        CacheService,
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
         },
       ],
     }).compile();

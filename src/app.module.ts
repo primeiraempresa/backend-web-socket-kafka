@@ -26,7 +26,7 @@ import { redisStore } from "cache-manager-redis-store";
     ),
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: async () => ({
+      useFactory: () => ({
         store: redisStore,
         ...redisSentinelsConfig,
       }),

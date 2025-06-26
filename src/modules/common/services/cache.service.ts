@@ -12,10 +12,10 @@ export class CacheService {
   }
 
   async setToCache<T>(key: string, value: T): Promise<T> {
-    return await this.cacheManager.set(key, value);
+    return await this.cacheManager.set<T>(key, value);
   }
 
-  async deleteFromCache<T>(key: string): Promise<boolean> {
+  async deleteFromCache(key: string): Promise<boolean> {
     return await this.cacheManager.del(key);
   }
 }

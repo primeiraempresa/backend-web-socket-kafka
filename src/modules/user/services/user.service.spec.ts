@@ -9,6 +9,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
+import { CacheService } from "@common/services/cache.service";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 
 const mockUser = {
   _id: "507f1f77bcf86cd799439011",
@@ -37,7 +39,14 @@ describe("UserService", () => {
   let service: UserService;
   let usersModel: ReturnType<typeof mockUsersModel>;
   let cacheManager: Cache;
+  let mockCacheManager: jest.Mocked<Cache>;
   beforeEach(async () => {
+    mockCacheManager = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+      // outros métodos que o Cache pode ter
+    } as unknown as jest.Mocked<Cache>;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
@@ -45,6 +54,11 @@ describe("UserService", () => {
         {
           provide: "CACHE_MANAGER",
           useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
+        CacheService,
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
         },
       ],
     }).compile();
