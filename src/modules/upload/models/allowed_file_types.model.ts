@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString } from "class-validator";
 
 @Schema()
-export class Allowed_file_types {
+export class AllowedFileTypes {
   @ApiProperty({
     required: true,
     default: "image/jpeg",

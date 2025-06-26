@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { UploadService } from "./services/upload.service";
 import { UploadController } from "./controllers/upload.controller";
 import { MongooseModule } from "@nestjs/mongoose";
-import { Allowed_file_types } from "./models/allowed_file_types.model";
+import { AllowedFileTypes } from "./models/allowed_file_types.model";
 import { Allowed_file_typesSchema } from "./schemas/allowed_file_types.schema";
 import { Files } from "./models/files.model";
 import { FilesSchema } from "./schemas/files.schema";
@@ -18,9 +18,9 @@ import { UploadProducerService } from "./services/upload.producer.service";
   imports: [
     MongooseModule.forFeature([
       {
-        name: Allowed_file_types.name,
+        name: AllowedFileTypes.name,
         schema: Allowed_file_typesSchema,
-        collection: Allowed_file_types.name,
+        collection: AllowedFileTypes.name,
       },
       {
         name: Files.name,

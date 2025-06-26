@@ -4,7 +4,7 @@ import { toZonedTime } from "date-fns-tz";
 @Injectable()
 export class DateService {
   private readonly timeZone =
-    configService.get<string>("TZ") || "America/Sao_Paulo";
+    configService.get<string>("TZ") ?? "America/Sao_Paulo";
 
   now() {
     const utcDate = new Date();

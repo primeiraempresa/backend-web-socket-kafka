@@ -256,6 +256,9 @@ export class ChatService {
       return deleteMessageById;
     } catch (error) {
       console.error("MongoDB Update Error:", error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new InternalServerErrorException(error.message);
     }
   }

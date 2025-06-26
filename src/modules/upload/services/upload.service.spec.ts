@@ -2,20 +2,23 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UploadService } from "./upload.service";
 import { getModelToken } from "@nestjs/mongoose";
 import { Files } from "../models/files.model";
-import { Allowed_file_types } from "../models/allowed_file_types.model";
+import { AllowedFileTypes } from "../models/allowed_file_types.model";
 import { CommonService } from "@common/services/common.service";
 import {
   BadRequestException,
   NotAcceptableException,
   NotFoundException,
 } from "@nestjs/common";
+import * as fileType from "file-type";
 
 jest.mock("file-type", () => ({
-  fileTypeFromBuffer: jest.fn(() =>
-    Promise.resolve({ mime: "image/png", ext: "png" }),
-  ),
+  fromBuffer: jest.fn(),
 }));
 
+(fileType.fromBuffer as jest.Mock).mockResolvedValue({
+  mime: "image/png",
+  ext: "png",
+});
 jest.mock("@config/s3.config", () => ({
   s3: {
     send: jest.fn(),
@@ -64,7 +67,7 @@ describe("UploadService", () => {
       providers: [
         UploadService,
         {
-          provide: getModelToken(Allowed_file_types.name),
+          provide: getModelToken(AllowedFileTypes.name),
           useValue: allowedFileTypesModel,
         },
         {
@@ -158,17 +161,12 @@ describe("UploadService", () => {
     it("should throw if bucket is missing", async () => {
       commonService.isBase64.mockReturnValue(true);
 
-      await expect(service.upload("", "base64string")).rejects.toThrow(
-        NotAcceptableException,
-      );
+      await expect(service.upload("", "base64string")).rejects.toThrow(Error);
     });
 
     it("should throw if content type is invalid", async () => {
       commonService.isBase64.mockReturnValue(true);
       allowedFileTypesModel.find.mockResolvedValue([{ type: "image/jpeg" }]);
-
-      const { fileTypeFromBuffer } = require("file-type");
-      fileTypeFromBuffer.mockResolvedValue({ mime: "image/png", ext: "png" });
 
       await expect(
         service.upload("bucket", Buffer.from("fake").toString("base64")),

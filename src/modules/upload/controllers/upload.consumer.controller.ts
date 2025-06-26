@@ -7,10 +7,10 @@ import { UploadService } from "@upload/services/upload.service";
 @Controller()
 export class UploadConsumerController {
   constructor(
-    private uploadService: UploadService,
+    private readonly uploadService: UploadService,
     private readonly webSocketService: WebSocketService,
   ) {}
-  private logger: Logger = new Logger(UploadConsumerController.name);
+  private readonly logger: Logger = new Logger(UploadConsumerController.name);
   @MessagePattern("upload.create")
   async handleUploadCreate(
     @Payload()
