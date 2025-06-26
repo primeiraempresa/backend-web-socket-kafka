@@ -10,6 +10,7 @@ import { WsAdapter } from "@nestjs/platform-ws";
 import { createBullBoard } from "@bull-board/api";
 import * as Queue from "bull";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
+import { redisSentinelsConfig } from "@config/redisSentinels.config";
 
 async function bootstrap() {
   const logger = new Logger();
@@ -62,17 +63,7 @@ async function bootstrap() {
   await app.startAllMicroservices();
   //Config Bull DashBord
   const serverAdapter = new ExpressAdapter();
-  const redis = {
-    name: configService.get<string>("DBAAS_SENTINEL_SERVICE_NAME"),
-    sentinels: (configService.get<string>("DBAAS_SENTINEL_HOSTS") as string)
-      .split(",")
-      .map((host) => ({
-        host,
-        port: configService.get<number>("DBAAS_SENTINEL_PORT"),
-      })),
-    password: configService.get<string>("DBAAS_SENTINEL_PASSWORD"),
-  };
-  const queue_chat = new Queue("chat", { redis });
+  const queue_chat = new Queue("chat", { redis: redisSentinelsConfig });
   serverAdapter.setBasePath("/admin/queues/");
   createBullBoard({
     queues: [new BullAdapter(queue_chat)],
