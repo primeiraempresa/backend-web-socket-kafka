@@ -3,7 +3,7 @@ import { ChatController } from "./controllers/chat.controller";
 import { ChatService } from "./services/chat.service";
 import { MongooseModule } from "@nestjs/mongoose";
 import { Chats } from "./models/chat.model";
-import { Chat_schema } from "./schemas/chat.schema";
+import { Chats_schema } from "./schemas/chat.schema";
 import { CommonModule } from "@common/common.module";
 import { ChatConsumerController } from "./controllers/chat.consumer.controller";
 import { ClientsModule, Transport } from "@nestjs/microservices";
@@ -20,11 +20,13 @@ import {
 } from "../common/tokens/chat.tokens";
 import { BullModule } from "@nestjs/bull";
 import { DateService } from "@common/services/date.service";
+import { UploadModule } from "@upload/upload.module";
+import { ChatProcessorService } from "./jobs/chat.processor.service";
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Chats.name, schema: Chat_schema, collection: Chats.name },
+      { name: Chats.name, schema: Chats_schema, collection: Chats.name },
     ]),
     ClientsModule.register([
       {
@@ -50,12 +52,14 @@ import { DateService } from "@common/services/date.service";
     }),
     CommonModule,
     UserModule,
+    UploadModule,
   ],
   controllers: [ChatController, ChatConsumerController],
   providers: [
     ChatService,
     ChatGateway,
     ChatProducerService,
+    ChatProcessorService,
     DateService,
     {
       provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,

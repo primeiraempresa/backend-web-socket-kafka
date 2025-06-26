@@ -1,10 +1,10 @@
-import { Chat_conversation } from "@chat/models/chat_conversation.model";
+import { ChatConversation } from "@chat/models/chat_conversation.model";
 
-export interface Chat_conversationT {
+export interface ChatConversationT {
   chatId: string;
-  chat_conversation: Chat_conversation;
+  chat_conversation: ChatConversation;
 }
 
-export interface Chat_conversationT_WS extends Chat_conversationT {
+export interface ChatConversationTwS extends ChatConversationT {
   userId: string;
 }

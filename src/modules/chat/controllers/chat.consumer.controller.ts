@@ -1,11 +1,11 @@
 import { Chats } from "@chat/models/chat.model";
-import { ChatDocument } from "@chat/schemas/chat.schema";
+import { ChatsDocument } from "@chat/schemas/chat.schema";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatService } from "@chat/services/chat.service";
 import { Controller, Logger } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { Chat_conversationT_WS } from "@chat/interfaces/chat_conversation-T.interface";
+import { ChatConversationTwS } from "@chat/interfaces/chat_conversation-T.interface";
 import { Chat_conversation_messageT_Ws } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { Queue } from "bull";
@@ -18,7 +18,7 @@ export class ChatConsumerController {
   constructor(
     private readonly chatService: ChatService,
     private readonly webSocketService: WebSocketService,
-    private readonly chatProducerService: ChatProducerService<Chat_conversationT_WS>,
+    private readonly chatProducerService: ChatProducerService<ChatConversationTwS>,
     @InjectQueue("chat")
     private readonly queue: Queue,
     private readonly dateService: DateService,
@@ -27,9 +27,9 @@ export class ChatConsumerController {
   @MessagePattern("chat.create")
   async handleChatCreate(
     @Payload() message: { userId: string; chats: Chats },
-  ): Promise<ChatDocument> {
+  ): Promise<ChatsDocument> {
     try {
-      const result: ChatDocument = await this.chatService.createChat(
+      const result: ChatsDocument = await this.chatService.createChat(
         message.chats.chatters,
       );
       this.webSocketService.sendToUser(message.userId, "chat.create", result);
@@ -47,7 +47,7 @@ export class ChatConsumerController {
   @MessagePattern("chat.delete")
   async handleChatDelete(
     @Payload() message: { userId: string; chatId: string },
-  ): Promise<ChatDocument> {
+  ) {
     try {
       const result = await this.chatService.deleteChatById(message.chatId);
       this.webSocketService.sendToUser(message.userId, "chat.delete", result);
@@ -65,14 +65,14 @@ export class ChatConsumerController {
   @MessagePattern("chat.message.create")
   async handleMessageCreate(
     @Payload()
-    message: Chat_conversationT_WS,
+    message: ChatConversationTwS,
   ): Promise<ChatConversationDocument> {
     try {
       const result = await this.chatService.addMessage(
         message.chatId,
         message.chat_conversation,
       );
-      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+      const chat: ChatsDocument = await this.chatService.getChatByUsersIds(
         [],
         message.chatId,
       );
@@ -116,7 +116,7 @@ export class ChatConsumerController {
         message.messageId,
         message.chat_conversation,
       );
-      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+      const chat: ChatsDocument = await this.chatService.getChatByUsersIds(
         [],
         message.chatId,
       );
@@ -158,7 +158,7 @@ export class ChatConsumerController {
         message.chatId,
         message.messageId,
       );
-      const chat: ChatDocument = await this.chatService.getChatByUsersIds(
+      const chat: ChatsDocument = await this.chatService.getChatByUsersIds(
         [],
         message.chatId,
       );
@@ -192,7 +192,7 @@ export class ChatConsumerController {
     }
   }
   @MessagePattern("chat.message.create.pending")
-  async handleMessageCreatepending(@Payload() message: Chat_conversationT_WS) {
+  async handleMessageCreatepending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.create`, message, {
@@ -200,7 +200,7 @@ export class ChatConsumerController {
     });
   }
   @MessagePattern("chat.message.update.pending")
-  async handleMessageUpdatepending(@Payload() message: Chat_conversationT_WS) {
+  async handleMessageUpdatepending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.update`, message, {
@@ -208,7 +208,7 @@ export class ChatConsumerController {
     });
   }
   @MessagePattern("chat.message.delete.pending")
-  async handleMessageDeletepending(@Payload() message: Chat_conversationT_WS) {
+  async handleMessageDeletepending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.delete`, message, {

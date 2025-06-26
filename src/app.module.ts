@@ -12,16 +12,9 @@ import { ChatModule } from "./modules/chat/chat.module";
 import { CommonModule } from "./modules/common/common.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { BullModule } from "@nestjs/bull";
-const redis = {
-  name: configService.get<string>("DBAAS_SENTINEL_SERVICE_NAME"),
-  sentinels: (configService.get<string>("DBAAS_SENTINEL_HOSTS") as string)
-    .split(",")
-    .map((host) => ({
-      host,
-      port: configService.get<number>("DBAAS_SENTINEL_PORT"),
-    })),
-  password: configService.get<string>("DBAAS_SENTINEL_PASSWORD"),
-};
+import { redisSentinelsConfig } from "@config/redisSentinels.config";
+import { redisStore } from "cache-manager-redis-store";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,8 +24,12 @@ const redis = {
     MongooseModule.forRoot(
       configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string,
     ),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
+      useFactory: () => ({
+        store: redisStore,
+        ...redisSentinelsConfig,
+      }),
     }),
     WinstonModule.forRoot(winstonConfig),
     JwtModule.register({
@@ -41,7 +38,7 @@ const redis = {
       signOptions: { expiresIn: "48h" },
     }),
     BullModule.forRoot({
-      redis,
+      redis: redisSentinelsConfig,
     }),
     UserModule,
     AuthModule,

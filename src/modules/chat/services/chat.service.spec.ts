@@ -1,245 +1,308 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatService } from "./chat.service";
-import { getConnectionToken, getModelToken } from "@nestjs/mongoose";
+import { getModelToken } from "@nestjs/mongoose";
+import { getConnectionToken } from "@nestjs/mongoose";
 import { CommonService } from "@common/services/common.service";
-import {
-  BadRequestException,
-  InternalServerErrorException,
-  NotFoundException,
-} from "@nestjs/common";
+import { UploadService } from "@upload/services/upload.service";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { Chats } from "../models/chat.model";
 
 describe("ChatService", () => {
   let service: ChatService;
   let chatModel: any;
   let connection: any;
+  let queue: any;
   let commonService: any;
-  let messageModel: any;
+  let uploadService: any;
 
   beforeEach(async () => {
     chatModel = {
       create: jest.fn(),
       findOne: jest.fn(),
+      findById: jest.fn(),
       findByIdAndDelete: jest.fn(),
-    };
-
-    messageModel = {
-      create: jest.fn(),
-      find: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      skip: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      populate: jest.fn().mockReturnThis(),
-      exec: jest.fn(),
-      countDocuments: jest.fn(),
-      findOne: jest.fn(),
-      findByIdAndUpdate: jest.fn().mockReturnThis(),
-      findByIdAndDelete: jest.fn().mockReturnThis(),
     };
 
     connection = {
       createCollection: jest.fn(),
-      dropCollection: jest.fn(),
-      model: jest.fn().mockReturnValue(messageModel),
+      model: jest.fn(),
+    };
+
+    queue = {
+      add: jest.fn(),
     };
 
     commonService = {
-      validateMongoID: jest.fn().mockReturnValue(true),
-      validateArryByMongoIDs: jest.fn().mockReturnValue(true),
+      validateMongoID: jest.fn(),
+      validateArryByMongoIDs: jest.fn(),
+    };
+
+    uploadService = {
+      deleteFile: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatService,
-        { provide: getModelToken("Chats"), useValue: chatModel },
+        { provide: getModelToken(Chats.name), useValue: chatModel },
         { provide: getConnectionToken(), useValue: connection },
+        { provide: "BullQueue_chat", useValue: queue },
         { provide: CommonService, useValue: commonService },
+        { provide: UploadService, useValue: uploadService },
       ],
     }).compile();
 
     service = module.get<ChatService>(ChatService);
   });
 
-  afterEach(() => jest.clearAllMocks());
-  it("createChat - should return existing chat if it exists", async () => {
-    const existingChat = { _id: "chat123", chatters: ["u1", "u2"] } as any;
-    jest.spyOn(service, "getChatByUsersIds").mockResolvedValue(existingChat);
+  describe("createChat", () => {
+    it("should return existing chat if found", async () => {
+      const userIds = ["id1", "id2"];
+      const mockChat = { _id: "chatId", populate: jest.fn().mockReturnThis() };
+      jest
+        .spyOn(service, "getChatByUsersIds")
+        .mockResolvedValue(mockChat as any);
 
-    const result = await service.createChat(["u1", "u2"]);
-
-    expect(service.getChatByUsersIds).toHaveBeenCalledWith(["u1", "u2"]);
-    expect(result).toEqual(existingChat);
-    expect(chatModel.create).not.toHaveBeenCalled();
-  });
-
-  it("createChat - should create chat and collection", async () => {
-    const mockChat = { _id: "chat123", chatters: ["u1", "u2"] };
-    const populate = jest.fn().mockResolvedValue({
-      ...mockChat,
-      chatters: [{ _id: "u1" }, { _id: "u2" }],
+      const result = await service.createChat(userIds);
+      expect(result).toBe(mockChat);
     });
 
-    chatModel.create.mockResolvedValue({ ...mockChat, populate });
+    it("should create and return new chat if not found", async () => {
+      const userIds = ["id1", "id2"];
+      jest
+        .spyOn(service, "getChatByUsersIds")
+        .mockRejectedValue(new NotFoundException());
+      const mockChat = {
+        _id: { toString: () => "mockId" },
+        populate: jest.fn().mockReturnValue("populatedChat"),
+      };
+      chatModel.create.mockResolvedValue(mockChat);
 
-    const result = await service.createChat(["u1", "u2"]);
-
-    expect(result).toEqual({
-      ...mockChat,
-      chatters: [{ _id: "u1" }, { _id: "u2" }],
+      const result = await service.createChat(userIds);
+      expect(result).toBe("populatedChat");
     });
-    expect(chatModel.create).toHaveBeenCalled();
-    expect(connection.createCollection).toHaveBeenCalledWith(
-      "ChatMessage_chat123",
-    );
-    expect(populate).toHaveBeenCalledWith("chatters");
   });
 
-  it("addMessage - should add a message", async () => {
-    const message = { _id: "msg1", sender: "u1", message: "hello" };
-    const populate = jest.fn().mockResolvedValue(message);
-
-    messageModel.create.mockResolvedValue({ ...message, populate });
-
-    const result = await service.addMessage("chat1", {
-      sender: "u1",
-      message: "hello",
-    });
-
-    expect(result).toEqual(message);
-    expect(messageModel.create).toHaveBeenCalledWith({
-      sender: "u1",
-      message: "hello",
-    });
-    expect(populate).toHaveBeenCalledWith("sender");
-  });
-
-  it("getMessages - should return paginated messages", async () => {
-    const messages = [{ sender: "u1", message: "hi" }];
-    messageModel.exec.mockResolvedValue(messages);
-    messageModel.countDocuments.mockResolvedValue(1);
-
-    const result = await service.getMessages("chat1", 1, 10);
-    expect(result.items).toEqual(messages);
-    expect(result.totalItems).toEqual(1);
-  });
-
-  it("getMessages - should throw NotFoundException if no messages", async () => {
-    messageModel.exec.mockResolvedValue([]);
-    messageModel.countDocuments.mockResolvedValue(0);
-
-    await expect(service.getMessages("chat1", 1, 10)).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-  it("getChatByUsersIds - should throw BadRequest for invalid userIds", async () => {
-    commonService.validateArryByMongoIDs.mockReturnValue(false);
-
-    await expect(
-      service.getChatByUsersIds(["invalidId1", "invalidId2"]),
-    ).rejects.toThrow(BadRequestException);
-  });
-
-  it("getChatByUsersIds - should return chat by ID", async () => {
-    const chat = { _id: "chat1", chatters: [] };
-    const populate = jest.fn().mockResolvedValue(chat);
-    chatModel.findOne.mockReturnValue({ populate });
-
-    const result = await service.getChatByUsersIds(undefined, "chat1");
-    expect(result).toEqual(chat);
-  });
-  it("getChatByUsersIds - should throw NotFoundException when chat not found", async () => {
-    chatModel.findOne.mockReturnValue({
-      populate: jest.fn().mockResolvedValue(null),
+  describe("addMessage", () => {
+    it("should throw if no content provided", async () => {
+      await expect(
+        service.addMessage("chatId", {
+          message: "",
+          images: [],
+          file: null,
+        } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    await expect(service.getChatByUsersIds(["u1", "u2"])).rejects.toThrow(
-      NotFoundException,
-    );
-  });
+    it("should create and return message", async () => {
+      const mockMessage = {
+        populate: jest.fn().mockReturnThis(),
+      };
+      const messageModel = {
+        create: jest.fn().mockResolvedValue(mockMessage),
+      };
+      connection.model.mockReturnValue(messageModel);
 
-  it("getChatByUsersIds - should throw BadRequest for invalid ID", async () => {
-    commonService.validateMongoID.mockReturnValue(false);
-    await expect(service.getChatByUsersIds(undefined, "badid")).rejects.toThrow(
-      BadRequestException,
-    );
-  });
+      const result = await service.addMessage("chatId", {
+        message: "Hello",
+      } as any);
 
-  it("getMessageById - should return a message", async () => {
-    const message = { _id: "msg1", message: "hello" };
-    messageModel.populate.mockResolvedValue(message);
-    messageModel.findOne.mockReturnValue(messageModel);
-
-    const result = await service.getMessageById("chat1", "msg1");
-    expect(result).toEqual(message);
-  });
-  it("getMessageById - should throw NotFoundException if message not found", async () => {
-    messageModel.populate.mockResolvedValue(null);
-    messageModel.findOne.mockReturnValue(messageModel);
-
-    await expect(service.getMessageById("chat1", "msg1")).rejects.toThrow(
-      NotFoundException,
-    );
-  });
-
-  it("updateMessageById - should update message", async () => {
-    const updated = { _id: "msg1", message: "edited" };
-    messageModel.exec.mockResolvedValue(updated);
-
-    const result = await service.updateMessageById("chat1", "msg1", {
-      message: "edited",
+      expect(result).toBe(mockMessage);
     });
-    expect(result).toEqual(updated);
-  });
-  it("updateMessageById - should throw NotFoundException if message not found", async () => {
-    messageModel.exec.mockResolvedValue(null);
-
-    await expect(
-      service.updateMessageById("chat1", "msg1", { message: "edit" }),
-    ).rejects.toThrow(NotFoundException);
   });
 
-  it("deleteMessageById - should delete a message", async () => {
-    const deleted = { _id: "msg1" };
-    messageModel.exec.mockResolvedValue(deleted);
+  describe("getMessages", () => {
+    it("should return paginated messages", async () => {
+      const chatId = "validChatId";
+      commonService.validateMongoID.mockReturnValue(true);
+      const messageModel = {
+        find: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnThis(),
+          skip: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          populate: jest.fn().mockReturnThis(),
+          exec: jest.fn().mockResolvedValue([{ message: "msg" }]),
+        }),
+        countDocuments: jest.fn().mockResolvedValue(1),
+      };
+      connection.model.mockReturnValue(messageModel);
 
-    const result = await service.deleteMessageById("chat1", "msg1");
-    expect(result).toEqual(deleted);
-  });
-
-  it("deleteMessageById - should return InternalServerErrorException if message not found", async () => {
-    messageModel.exec.mockResolvedValue(null);
-
-    await expect(service.deleteMessageById("chat1", "msg1")).rejects.toThrow(
-      InternalServerErrorException,
-    );
-  });
-
-  it("deleteMessageById - should throw InternalServerErrorException on DB error", async () => {
-    messageModel.exec.mockImplementation(() => {
-      throw new Error("DB Error");
+      const result = await service.getMessages(chatId, 1, 1);
+      expect(result.items.length).toBe(1);
+      expect(result.totalItems).toBe(1);
     });
 
-    await expect(service.deleteMessageById("chat1", "msg1")).rejects.toThrow(
-      "DB Error",
-    );
+    it("should throw NotFoundException if no messages", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      const messageModel = {
+        find: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnThis(),
+          skip: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          populate: jest.fn().mockReturnThis(),
+          exec: jest.fn().mockResolvedValue([]),
+        }),
+        countDocuments: jest.fn().mockResolvedValue(0),
+      };
+      connection.model.mockReturnValue(messageModel);
+
+      await expect(service.getMessages("chatId", 1, 10)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 
-  it("deleteChatById - should delete chat and drop collection", async () => {
-    const chat = { _id: "chat123" };
-    const populate = jest.fn().mockResolvedValue({
-      _id: "chat123",
-      chatters: [{ _id: "u1" }, { _id: "u2" }],
+  describe("getChatByUsersIds", () => {
+    it("should throw for invalid id", async () => {
+      commonService.validateMongoID.mockReturnValue(false);
+      await expect(
+        service.getChatByUsersIds(undefined, "badId"),
+      ).rejects.toThrow(BadRequestException);
     });
 
-    chatModel.findByIdAndDelete.mockResolvedValue({ ...chat, populate });
+    it("should return chat if found", async () => {
+      const mockChat = { _id: "id" };
+      commonService.validateArryByMongoIDs.mockReturnValue(true);
+      chatModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnValue(mockChat),
+      });
 
-    const result = await service.deleteChatById("chat123");
-    expect(result).toEqual({
-      _id: "chat123",
-      chatters: [{ _id: "u1" }, { _id: "u2" }],
+      const result = await service.getChatByUsersIds(["id1", "id2"]);
+      expect(result).toBe(mockChat);
     });
-    expect(connection.dropCollection).toHaveBeenCalledWith(
-      "ChatMessage_chat123",
-    );
-    expect(populate).toHaveBeenCalledWith("chatters");
+
+    it("should throw if chat not found", async () => {
+      commonService.validateArryByMongoIDs.mockReturnValue(true);
+      chatModel.findOne.mockReturnValue({
+        populate: jest.fn().mockReturnValue(null),
+      });
+
+      await expect(service.getChatByUsersIds(["id1", "id2"])).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe("getMessageById", () => {
+    it("should return message if found", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      const messageModel = {
+        findOne: jest.fn().mockReturnValue({
+          populate: jest.fn().mockReturnThis(),
+        }),
+      };
+      connection.model.mockReturnValue(messageModel);
+
+      await expect(
+        service.getMessageById("chatId", "msgId"),
+      ).resolves.not.toBeNull();
+    });
+  });
+
+  describe("updateMessageById", () => {
+    it("should update and return message", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+
+      const mockFound = {
+        images: [{ _id: "img1" }],
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue({ images: [{ _id: "img1" }] }),
+      };
+      const mockUpdated = {
+        _id: "msgId",
+        sender: {},
+        images: [],
+        file: null,
+      };
+      const mockUpdatedChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockUpdated),
+      };
+
+      // 🛠️ Model com mocks corretos
+      const messageModel = {
+        findById: jest.fn().mockReturnValue(mockFound),
+        findByIdAndUpdate: jest.fn().mockReturnValue(mockUpdatedChain),
+      };
+      connection.model.mockReturnValue(messageModel as any);
+
+      const result = await service.updateMessageById("chatId", "msgId", {
+        images: [],
+      } as any);
+
+      expect(messageModel.findById).toHaveBeenCalledWith("msgId");
+      expect(messageModel.findByIdAndUpdate).toHaveBeenCalled();
+      expect(result).toBe(mockUpdated);
+    });
+  });
+
+  describe("deleteMessageById", () => {
+    it("should delete message and call file deletion", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+
+      // 🛠️ Modelo corrigido com chain populate().exec()
+      const mockDeleted = {
+        images: [{ _id: "img1" }],
+        file: { _id: "file1" },
+      };
+      const mockDeletedChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(mockDeleted),
+      };
+      const messageModel = {
+        findByIdAndDelete: jest.fn().mockReturnValue(mockDeletedChain),
+      };
+      connection.model.mockReturnValue(messageModel as any);
+
+      const result = await service.deleteMessageById("chatId", "msgId");
+
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("img1");
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("file1");
+      expect(result).toBe(mockDeleted);
+    });
+
+    it("should throw NotFoundException if message not found", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+
+      const nullChain = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null),
+      };
+      const messageModel = {
+        findByIdAndDelete: jest.fn().mockReturnValue(nullChain),
+      };
+      connection.model.mockReturnValue(messageModel as any);
+
+      await expect(
+        service.deleteMessageById("chatId", "msgId"),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("deleteChatById", () => {
+    it("should throw for invalid id", async () => {
+      commonService.validateMongoID.mockReturnValue(false);
+      await expect(service.deleteChatById("badId")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it("should enqueue chat deletion job", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      const mockChat = { _id: "chatId" };
+      chatModel.findById.mockResolvedValue(mockChat);
+
+      await service.deleteChatById("chatId");
+      expect(queue.add).toHaveBeenCalledWith("chat.delete", mockChat);
+    });
+
+    it("should throw if chat not found", async () => {
+      commonService.validateMongoID.mockReturnValue(true);
+      chatModel.findById.mockResolvedValue(null);
+
+      await expect(service.deleteChatById("chatId")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
   });
 });

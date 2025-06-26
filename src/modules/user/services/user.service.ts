@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,13 +11,13 @@ import { Model, ObjectId, isValidObjectId } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
-import { Cache } from "cache-manager";
 import { UserPagination } from "@user/models/userPagination.model";
+import { CacheService } from "@common/services/cache.service";
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(Users.name) private readonly usersModel: Model<UsersDocument>,
-    @Inject("CACHE_MANAGER") private cacheManager: Cache,
+    private readonly cacheService: CacheService,
   ) {}
   async getUsers(page: number, limit: number): Promise<UserPagination> {
     const skip = (page - 1) * limit;
@@ -47,9 +46,9 @@ export class UserService {
     if (!isValidObjectId(_id)) {
       throw new NotFoundException(["user not found"]);
     }
-    const cacheKey = `user_${_id.toString()}`;
+    const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
     const cachedUser: UsersDocument | null =
-      await this.cacheManager.get<UsersDocument>(cacheKey);
+      await this.cacheService.getFromCache<UsersDocument>(cacheKey);
     if (cachedUser) return cachedUser;
     const user = await this.usersModel
       .findById(_id)
@@ -58,7 +57,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(["user not found"]);
     }
-    await this.cacheManager.set(cacheKey, user);
+    await this.cacheService.setToCache(cacheKey, user);
     return user;
   }
   async registerUser(body: Users): Promise<UsersDocument> {
@@ -73,7 +72,7 @@ export class UserService {
     body: UsersDto,
     _id: ObjectId | string,
   ): Promise<UsersDocument> {
-    const cacheKey = `user_${_id.toString()}`;
+    const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
     const user = await this.getUserByID(_id);
     if (body?.email && body.email !== user.email) {
       await this.emailExist(body?.email);
@@ -81,7 +80,7 @@ export class UserService {
     if (body?.username && body.username !== user.username) {
       await this.userNameExist(body?.username);
     }
-    await this.cacheManager.del(cacheKey);
+    await this.cacheService.deleteFromCache(cacheKey);
     const updatedUser = await this.usersModel
       .findByIdAndUpdate(user._id, body, {
         new: true,
@@ -109,10 +108,10 @@ export class UserService {
     return user;
   }
 
-  async deleteUser(userLogin: UserLogin, _id: string) {
+  async deleteUser(userLogin: UserLogin, _id: ObjectId | string) {
     await this.loginUser(userLogin);
-    const cacheKey = `user_${_id}`;
-    await this.cacheManager.del(cacheKey);
+    const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
+    await this.cacheService.deleteFromCache(cacheKey);
     return await this.usersModel.findOneAndDelete({ _id });
   }
   private async findUser(user: string): Promise<UsersDocument | null> {

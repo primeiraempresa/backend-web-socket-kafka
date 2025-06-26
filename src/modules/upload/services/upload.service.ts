@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Allowed_file_types } from "../models/allowed_file_types.model";
+import { AllowedFileTypes } from "../models/allowed_file_types.model";
 import { Model } from "mongoose";
 import { Allowed_file_typesDocument } from "../schemas/allowed_file_types.schema";
 import { Files } from "../models/files.model";
@@ -20,13 +20,13 @@ import {
 } from "@aws-sdk/client-s3";
 import { FilesDocument } from "../schemas/files.schema";
 import { FilePagination } from "../models/file_pagination.model";
-import { fileTypeFromBuffer, FileTypeResult } from "file-type";
+import * as fileType from "file-type";
 import { configService } from "@config/configService";
 import { CommonService } from "@common/services/common.service";
 @Injectable()
 export class UploadService {
   constructor(
-    @InjectModel(Allowed_file_types.name)
+    @InjectModel(AllowedFileTypes.name)
     private readonly allowedFileTypesModel: Model<Allowed_file_typesDocument>,
     @InjectModel(Files.name)
     private readonly filesModel: Model<FilesDocument>,
@@ -218,7 +218,7 @@ export class UploadService {
     },
   ): Promise<Files> {
     const buffer = Buffer.from(base64, "base64");
-    const mimeType = (await fileTypeFromBuffer(buffer)) as FileTypeResult;
+    const mimeType = (await fileType.fromBuffer(buffer)) as any;
     const allowedTypes = await this.GetTypes();
     if (!allowedTypes.includes(mimeType?.mime)) {
       throw new BadRequestException({
@@ -234,12 +234,12 @@ export class UploadService {
 
     return {
       fieldname: options.fieldname,
-      originalname: options.originalname || key,
+      originalname: options.originalname ?? key,
       mimetype: mimeType?.mime,
       size: buffer.length,
       bucket: options.bucket,
       key,
-      acl: options?.acl || "public-read",
+      acl: options?.acl ?? "public-read",
       contentType: mimeType?.mime,
       location: location,
     };

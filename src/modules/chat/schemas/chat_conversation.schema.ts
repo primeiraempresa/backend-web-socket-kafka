@@ -1,5 +1,5 @@
 import { SchemaFactory } from "@nestjs/mongoose";
-import { Chat_conversation } from "../models/chat_conversation.model";
+import { ChatConversation } from "../models/chat_conversation.model";
 import {
   CallbackWithoutResultAndOptionalError,
   HydratedDocument,
@@ -7,8 +7,8 @@ import {
 import { DateService } from "@common/services/date.service";
 
 export const ChatConversationSchema =
-  SchemaFactory.createForClass(Chat_conversation);
-export type ChatConversationDocument = HydratedDocument<Chat_conversation>;
+  SchemaFactory.createForClass(ChatConversation);
+export type ChatConversationDocument = HydratedDocument<ChatConversation>;
 
 ChatConversationSchema.pre(
   "save",

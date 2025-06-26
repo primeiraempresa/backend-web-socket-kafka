@@ -19,7 +19,7 @@ import {
 } from "@nestjs/swagger";
 import { IUploadedFile } from "@common/interface/UploadedFile.interface";
 import { UploadService } from "../services/upload.service";
-import { Allowed_file_types } from "../models/allowed_file_types.model";
+import { AllowedFileTypes } from "../models/allowed_file_types.model";
 import { AuthGuard } from "@nestjs/passport";
 import { FileInterceptor } from "@nestjs/platform-express";
 
@@ -30,7 +30,7 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
   @Post("type")
   @ApiOperation({ summary: "register type of uploads" })
-  PostTypes(@Body() body: Allowed_file_types) {
+  PostTypes(@Body() body: AllowedFileTypes) {
     return this.uploadService.CreateType(body.type);
   }
 

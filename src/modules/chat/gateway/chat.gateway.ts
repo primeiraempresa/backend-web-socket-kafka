@@ -1,7 +1,7 @@
 import { Chats } from "@chat/models/chat.model";
-import { Chat_conversation } from "@chat/models/chat_conversation.model";
+import { ChatConversation } from "@chat/models/chat_conversation.model";
 import { ChatPagination } from "@chat/models/chatPagination.model";
-import { ChatDocument } from "@chat/schemas/chat.schema";
+import { ChatsDocument } from "@chat/schemas/chat.schema";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
@@ -21,8 +21,8 @@ import { UserService } from "@user/services/user.service";
 import { Observable } from "rxjs";
 import { Chat_T, Chat_T_WS } from "@chat/interfaces/chat-T.interface";
 import {
-  Chat_conversationT,
-  Chat_conversationT_WS,
+  ChatConversationT,
+  ChatConversationTwS,
 } from "@chat/interfaces/chat_conversation-T.interface";
 import {
   Chat_conversation_messageT,
@@ -57,7 +57,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chats: Chats;
     }>,
     @Inject(CHAT_PRODUCER_SERVICE_CREATE_MESSAGE)
-    private readonly chatProducerService_createMessage: ChatProducerService<Chat_conversationT_WS>,
+    private readonly chatProducerService_createMessage: ChatProducerService<ChatConversationTwS>,
     @Inject(CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE)
     private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT_Ws>,
     @Inject(CHAT_PRODUCER_SERVICE_DELETE_MESSAGE)
@@ -86,8 +86,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return client.close(1008, "Missing or invalid authorization header");
     }
     const token = authHeader.split(" ")[1];
-    const payload = this.jwtService.verify(token);
-    if (!payload) {
+    try {
+      const payload = this.jwtService.verify(token);
+      if (!payload) {
+        return client.close(1008, "Unauthorized");
+      }
+    } catch {
       return client.close(1008, "Unauthorized");
     }
     try {
@@ -184,7 +188,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: { userIds?: string[]; chatId?: string },
   ): Promise<{
     event: string;
-    data: ChatDocument | Error;
+    data: ChatsDocument | Error;
   }> {
     try {
       const result = await this.chatService.getChatByUsersIds(
@@ -231,10 +235,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat.message.id")
   async getMessageById(@MessageBody() body: Chat_T): Promise<{
     event: string;
-    data: Chat_conversation | Error;
+    data: ChatConversation | Error;
   }> {
     try {
-      const result: Chat_conversation = await this.chatService.getMessageById(
+      const result: ChatConversation = await this.chatService.getMessageById(
         body.chatId,
         body.messageId,
       );
@@ -267,9 +271,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat.message.create")
   createMessage(
     @MessageBody()
-    message: Chat_conversationT,
+    message: ChatConversationT,
     @ConnectedSocket() client: WebSocket,
-  ): Observable<Chat_conversationT_WS> | { error: string } {
+  ): Observable<ChatConversationTwS> | { error: string } {
     const userId = this.webSocketService.getUserIdBySocket(client) as string;
     const { chatId, chat_conversation } = message;
     if (!this.commonService.validateMongoID(chat_conversation.sender)) {
