@@ -26,7 +26,7 @@ export class ChatService {
   constructor(
     @InjectModel(Chats.name) private readonly chatModel: Model<ChatsDocument>,
     @InjectConnection() private readonly connection: Connection,
-    @InjectQueue("chat") private readonly queue: Queue,
+    @InjectQueue("chat.process") private readonly queue: Queue,
     private readonly commonService: CommonService,
     private readonly uploadService: UploadService,
   ) {}
