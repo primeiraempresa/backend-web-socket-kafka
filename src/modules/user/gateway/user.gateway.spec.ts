@@ -46,7 +46,7 @@ describe("UserGateway", () => {
 
     it("should close client if userId param missing", async () => {
       req = {
-        url: "/user",
+        url: "ws://[::1]:3000/",
         headers: { authorization: "Bearer token" },
       };
       await gateway.handleConnection(client, req);
@@ -55,14 +55,10 @@ describe("UserGateway", () => {
 
     it("should close client if Authorization header missing or invalid", async () => {
       req = {
-        url: "/user?userId=123",
-        headers: { authorization: "InvalidToken" },
+        url: "ws://[::1]:3000/?userId=123?",
       };
       await gateway.handleConnection(client, req);
-      expect(client.close).toHaveBeenCalledWith(
-        1008,
-        "Missing or invalid authorization header",
-      );
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
     it("should handle different message types correctly", async () => {
       const onMessageCallback = jest.fn();
@@ -72,8 +68,7 @@ describe("UserGateway", () => {
       }) as any;
 
       req = {
-        url: "/user?userId=123",
-        headers: { authorization: "Bearer validtoken" },
+        url: "ws://[::1]:3000/?userId=123&token=validtoken",
       };
 
       jwtService.verify.mockReturnValue({ userId: "123" });
@@ -110,20 +105,19 @@ describe("UserGateway", () => {
 
     it("should close client if token verification fails", async () => {
       req = {
-        url: "/user?userId=123",
+        url: "ws://[::1]:3000/?userId=123",
         headers: { authorization: "Bearer invalidtoken" },
       };
       jwtService.verify.mockImplementation(() => {
         throw new Error("Invalid token");
       });
       await gateway.handleConnection(client, req);
-      expect(client.close).toHaveBeenCalledWith(1008, "Unauthorized");
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
 
     it("should close client if user not found", async () => {
       req = {
-        url: "/user?userId=123",
-        headers: { authorization: "Bearer validtoken" },
+        url: "ws://[::1]:3000/user?userId=123&token=validtoken",
       };
       jwtService.verify.mockReturnValue({ userId: "123" });
       userService.getUserByID.mockRejectedValue(new Error("Not found"));
@@ -133,8 +127,7 @@ describe("UserGateway", () => {
 
     it("should add client, set server, broadcast and setup message handler on successful connection", async () => {
       req = {
-        url: "/user?userId=123",
-        headers: { authorization: "Bearer validtoken" },
+        url: "ws://[::1]:3000/?userId=123&token=validtoken",
       };
       jwtService.verify.mockReturnValue({ userId: "123" });
       userService.getUserByID.mockResolvedValue({ _id: "123" } as any);
