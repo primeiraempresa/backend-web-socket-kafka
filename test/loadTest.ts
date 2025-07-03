@@ -147,7 +147,7 @@ async function sendMessage(user: User, chatId: string, content: string) {
 }
 
 async function main() {
-  const userCount = 100;
+  const userCount = 1000;
   const users: User[] = [];
 
   LoadTestLogger.app(
@@ -171,7 +171,7 @@ async function main() {
     try {
       const chatId = await createChat(userA, userIds);
 
-      await Promise.all([
+      Promise.all([
         sendMessage(userA, chatId, `Hello from ${userA.username}`),
         sendMessage(userB, chatId, `Hello from ${userB.username}`),
       ]);
