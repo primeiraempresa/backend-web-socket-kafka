@@ -26,7 +26,7 @@ class LoadTestLogger {
   }
 }
 
-const WS_BASE = "ws://localhost:3000/chat";
+const WS_BASE = "ws://localhost:3000/";
 const API_BASE = "http://localhost:3000/api";
 
 const CLIENT_ID = process.env.client_id;
@@ -70,9 +70,9 @@ async function createUser(index: number): Promise<User> {
   );
 
   const token = loginRes.data.accessToken;
-  const ws = new WebSocket(`${WS_BASE}?userId=${res.data._id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const ws = new WebSocket(
+    `${WS_BASE}?userId=${res.data._id}&token=${appAccessToken}`,
+  );
 
   await new Promise<void>((resolve, reject) => {
     ws.on("open", resolve);
@@ -147,7 +147,7 @@ async function sendMessage(user: User, chatId: string, content: string) {
 }
 
 async function main() {
-  const userCount = 10;
+  const userCount = 100;
   const users: User[] = [];
 
   LoadTestLogger.app(
