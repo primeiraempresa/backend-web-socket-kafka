@@ -19,7 +19,6 @@ import { UserService } from "@user/services/user.service";
 import { RawData, Server, WebSocket } from "ws";
 
 @WebSocketGateway({
-  path: "/upload",
   transports: ["websocket"],
   cors: { origin: "*" },
 })
@@ -44,13 +43,16 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
-    const baseUrl = configService.get<string>("URL") ?? "http://localhost:3000";
+    const baseUrl = configService.get<string>("URL");
     const url = new URL(req.url, baseUrl);
-    const authHeader = req.headers["authorization"];
-    if (!authHeader?.startsWith("Bearer ")) {
-      return client.close(1008, "Missing or invalid authorization header");
+    const userId = url.searchParams.get("userId") as string;
+    const token = url.searchParams.get("token") as string;
+    if (!userId) {
+      return client.close(1008, "param userId not found");
     }
-    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return client.close(1008, "param token not found");
+    }
     try {
       const payload = this.jwtService.verify(token);
       if (!payload) {
@@ -58,11 +60,6 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch {
       return client.close(1008, "Unauthorized");
-    }
-
-    const userId = url.searchParams.get("userId") as string;
-    if (!userId) {
-      return client.close(1008, "param userId not found");
     }
     try {
       await this.userService.getUserByID(userId);

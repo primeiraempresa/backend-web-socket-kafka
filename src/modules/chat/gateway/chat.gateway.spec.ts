@@ -315,7 +315,7 @@ describe("ChatGateway", () => {
     it("should close connection if userId is missing in URL", () => {
       const client = { close: jest.fn() };
       const req = {
-        url: "/?wrongParam=value",
+        url: "ws://[::1]:3000/?wrongParam=value",
         headers: { authorization: "Bearer token" },
       };
 
@@ -326,36 +326,29 @@ describe("ChatGateway", () => {
 
     it("should close connection if authorization header is missing", () => {
       const client = { close: jest.fn() };
-      const req = { url: "/?userId=user1", headers: {} };
+      const req = { url: "ws://[::1]:3000/?userId=user1", headers: {} };
 
       gateway.handleConnection(client as any, req as any);
 
-      expect(client.close).toHaveBeenCalledWith(
-        1008,
-        "Missing or invalid authorization header",
-      );
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
 
     it("should close connection if authorization header is invalid", () => {
       const client = { close: jest.fn() };
       const req = {
-        url: "/?userId=user1",
+        url: "ws://[::1]:3000/?userId=user1",
         headers: { authorization: "InvalidToken" },
       };
 
       gateway.handleConnection(client as any, req as any);
 
-      expect(client.close).toHaveBeenCalledWith(
-        1008,
-        "Missing or invalid authorization header",
-      );
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
 
     it("should close connection if user not found", async () => {
       const client = { close: jest.fn(), on: jest.fn() } as any;
       const req = {
-        url: "/chat?userId=notFoundUserId",
-        headers: { authorization: "Bearer valid.token.here" },
+        url: "ws://[::1]:3000/?token=valid.token.here",
       } as any;
 
       jest
@@ -367,13 +360,13 @@ describe("ChatGateway", () => {
 
       await gateway.handleConnection(client, req);
 
-      expect(client.close).toHaveBeenCalledWith(1008, "user not found");
+      expect(client.close).toHaveBeenCalledWith(1008, "param userId not found");
     });
 
     it("should connect and add client successfully", async () => {
       const client = { close: jest.fn(), on: jest.fn() } as any;
       const req = {
-        url: "/chat?userId=validUserId",
+        url: "ws://[::1]:3000/?userId=validUserId&token=valid.token.here",
         headers: { authorization: "Bearer valid.token.here" },
       } as any;
       jest

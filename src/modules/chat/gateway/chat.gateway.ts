@@ -41,7 +41,6 @@ import { Job, Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 
 @WebSocketGateway({
-  path: "/chat",
   transports: ["websocket"],
   cors: { origin: "*" },
 })
@@ -75,17 +74,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
   private readonly logger = new Logger(ChatGateway.name);
   async handleConnection(client: WebSocket, req: Request) {
-    const baseUrl = configService.get<string>("URL") || "http://localhost:3000";
+    const baseUrl = configService.get<string>("URL");
     const url = new URL(req.url, baseUrl);
     const userId = url.searchParams.get("userId") as string;
+    const token = url.searchParams.get("token") as string;
     if (!userId) {
       return client.close(1008, "param userId not found");
     }
-    const authHeader = req.headers["authorization"];
-    if (!authHeader?.startsWith("Bearer ")) {
-      return client.close(1008, "Missing or invalid authorization header");
+    if (!token) {
+      return client.close(1008, "param token not found");
     }
-    const token = authHeader.split(" ")[1];
     try {
       const payload = this.jwtService.verify(token);
       if (!payload) {

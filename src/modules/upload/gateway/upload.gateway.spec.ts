@@ -120,20 +120,19 @@ describe("UploadGateway", () => {
   describe("handleConnection", () => {
     it("should close connection if no auth header", async () => {
       const client = { close: jest.fn(), on: jest.fn() } as any;
-      const req: any = { headers: {}, url: "/upload?userId=test" };
+      const req: any = {
+        headers: {},
+        url: "ws://[::1]:3000/upload?userId=test",
+      };
 
       await gateway.handleConnection(client, req);
-      expect(client.close).toHaveBeenCalledWith(
-        1008,
-        "Missing or invalid authorization header",
-      );
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
 
     it("should close connection if token is invalid", async () => {
       const client = { close: jest.fn(), on: jest.fn() } as any;
       const req: any = {
-        headers: { authorization: "Bearer invalid" },
-        url: "/upload?userId=test",
+        url: "ws://[::1]:3000/upload?userId=test",
       };
 
       mockJwtService.verify.mockImplementation(() => {
@@ -141,14 +140,13 @@ describe("UploadGateway", () => {
       });
 
       await gateway.handleConnection(client, req);
-      expect(client.close).toHaveBeenCalledWith(1008, "Unauthorized");
+      expect(client.close).toHaveBeenCalledWith(1008, "param token not found");
     });
 
     it("should close connection if user is not found", async () => {
       const client = { close: jest.fn(), on: jest.fn() } as any;
       const req: any = {
-        headers: { authorization: "Bearer token" },
-        url: "/upload?userId=test",
+        url: "ws://[::1]:3000/upload?userId=test&token=validToken",
       };
 
       mockJwtService.verify.mockReturnValue({ userId: "test" });
