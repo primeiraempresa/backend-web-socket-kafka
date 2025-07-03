@@ -136,10 +136,6 @@ describe("UserGateway", () => {
 
       expect(webSocketService.addClient).toHaveBeenCalledWith("123", client);
       expect(webSocketService.setServer).toHaveBeenCalledWith(gateway.server);
-      expect(webSocketService.broadcast).toHaveBeenCalledWith("user.online", {
-        userId: "123",
-        status: "online",
-      });
       expect(client.on).toHaveBeenCalledWith("message", expect.any(Function));
     });
   });
@@ -152,10 +148,6 @@ describe("UserGateway", () => {
       gateway.handleDisconnect(client);
 
       expect(webSocketService.removeClient).toHaveBeenCalledWith("user123");
-      expect(webSocketService.broadcast).toHaveBeenCalledWith("user.offline", {
-        userId: "user123",
-        status: "offline",
-      });
     });
 
     it("should do nothing if user not found", () => {

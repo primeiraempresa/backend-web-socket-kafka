@@ -46,7 +46,7 @@ describe("ChatService", () => {
         ChatService,
         { provide: getModelToken(Chats.name), useValue: chatModel },
         { provide: getConnectionToken(), useValue: connection },
-        { provide: "BullQueue_chat", useValue: queue },
+        { provide: "BullQueue_chat.process", useValue: queue },
         { provide: CommonService, useValue: commonService },
         { provide: UploadService, useValue: uploadService },
       ],
