@@ -82,6 +82,10 @@ export class ChatController {
   ): Promise<ChatConversationDocument> {
     return await this.chatService.getMessageById(chatId, messageId);
   }
+  @Get("user/:userId")
+  async getChatsByUserId(@Param("userId") userId: string) {
+    return await this.chatService.getChatsByUserId(userId);
+  }
   @Post()
   createChat(@Body() body: Chats): Promise<ChatsDocument> {
     if (!this.commonService.validateArryByMongoIDs(body.chatters)) {

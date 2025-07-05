@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectConnection, InjectModel } from "@nestjs/mongoose";
 import { ChatsDocument } from "../schemas/chat.schema";
-import { Connection, Model } from "mongoose";
+import mongoose, { Connection, Model } from "mongoose";
 import { ChatPagination } from "../models/chatPagination.model";
 import { Chats } from "../models/chat.model";
 import {
@@ -42,6 +42,18 @@ export class ChatService {
       await this.connection.createCollection(`ChatMessage_${collectionName}`);
       return newChat.populate("chatters");
     }
+  }
+  async getChatsByUserId(userId: string) {
+    const chats = await this.chatModel
+      .find({
+        chatters: { $in: [new mongoose.Types.ObjectId(userId)] },
+      })
+      .populate("chatters")
+      .exec();
+    if (chats.length < 1) {
+      throw new NotFoundException(["no chats found"]);
+    }
+    return chats;
   }
   async addMessage(
     chatId: string,
