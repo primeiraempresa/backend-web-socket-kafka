@@ -1,6 +1,6 @@
 import { IToken } from "@common/interface/acessToken.interface";
 import { DateService } from "@common/services/date.service";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import {
   Injectable,
   ServiceUnavailableException,
@@ -29,19 +29,18 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     const id = configService.get<string>("client_id")?.toString();
-    if (id) {
-      const hash = id
-        .split("")
-        .reduce(
-          (hex: string, c) =>
-            hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
-          "",
-        );
-      return this.generateToken({
-        id: hash,
-      });
+    if (!id) {
+      throw new ServiceUnavailableException("client_id not found in server");
     }
-    throw new ServiceUnavailableException(["client_id not found in server"]);
+    const hash = id
+      .split("")
+      .reduce(
+        (hex: string, c) => hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
+        "",
+      );
+    return this.generateToken({
+      id: hash,
+    });
   }
   validateUserById(userId: string): boolean {
     const id = configService.get<string>("client_id")?.toString();

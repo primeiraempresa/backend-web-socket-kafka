@@ -1,4 +1,4 @@
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { Injectable } from "@nestjs/common";
 import { toZonedTime } from "date-fns-tz";
 @Injectable()

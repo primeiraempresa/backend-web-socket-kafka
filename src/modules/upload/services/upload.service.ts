@@ -21,7 +21,7 @@ import {
 import { FilesDocument } from "../schemas/files.schema";
 import { FilePagination } from "../models/file_pagination.model";
 import * as fileType from "file-type";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { CommonService } from "@common/services/common.service";
 @Injectable()
 export class UploadService {

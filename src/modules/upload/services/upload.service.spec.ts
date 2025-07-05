@@ -25,7 +25,7 @@ jest.mock("@config/s3.config", () => ({
   },
 }));
 
-jest.mock("@config/configService", () => ({
+jest.mock("@config/config.service", () => ({
   configService: {
     get: jest.fn((key: string) => {
       const values = {

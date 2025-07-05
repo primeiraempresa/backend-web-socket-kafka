@@ -1,5 +1,5 @@
 import { WebSocketService } from "@common/services/webSocket.service";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { Inject } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import {
