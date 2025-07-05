@@ -4,16 +4,10 @@ import { ChatService } from "@chat/services/chat.service";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { CommonService } from "@common/services/common.service";
 import { UserService } from "@user/services/user.service";
-import {
-  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
-  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
-  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "@common/tokens/chat.tokens";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { getQueueToken } from "@nestjs/bull";
+import { ChatProducerService } from "@chat/services/chat.producer.service";
 
 describe("ChatGateway", () => {
   let gateway: ChatGateway;
@@ -68,20 +62,7 @@ describe("ChatGateway", () => {
         { provide: CommonService, useValue: mockCommonService },
         { provide: UserService, useValue: mockUserService },
         { provide: ConfigService, useValue: mockConfigService },
-        { provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT, useValue: mockProducer },
-        {
-          provide: CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
-          useValue: mockProducer,
-        },
-        {
-          provide: CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-          useValue: mockProducer,
-        },
-        {
-          provide: CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
-          useValue: mockProducer,
-        },
-        { provide: CHAT_PRODUCER_SERVICE_DELETE_CHAT, useValue: mockProducer },
+        { provide: ChatProducerService, useValue: mockProducer },
         { provide: getQueueToken("chat"), useValue: mockQueue },
         JwtService,
       ],

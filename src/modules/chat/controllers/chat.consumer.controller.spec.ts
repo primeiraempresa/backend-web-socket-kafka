@@ -11,7 +11,7 @@ import { DateService } from "@common/services/date.service";
 describe("ChatConsumerController", () => {
   let controller: ChatConsumerController;
   let chatService: jest.Mocked<ChatService>;
-  let chatProducerService: ChatProducerService<any>;
+  let chatProducerService: ChatProducerService;
   let chatWebSocketService: jest.Mocked<WebSocketService>;
   let queueMock: jest.Mocked<Queue>;
   const mockDate = new Date("2023-01-01T00:00:00.000Z");

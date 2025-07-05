@@ -4,7 +4,7 @@ import { ClientKafka } from "@nestjs/microservices";
 import { of } from "rxjs";
 
 describe("ChatProducerService", () => {
-  let service: ChatProducerService<any>;
+  let service: ChatProducerService;
   let clientKafka: ClientKafka;
 
   const mockClientKafka = {
@@ -25,7 +25,7 @@ describe("ChatProducerService", () => {
       ],
     }).compile();
 
-    service = module.get<ChatProducerService<any>>(ChatProducerService);
+    service = module.get<ChatProducerService>(ChatProducerService);
     clientKafka = module.get<ClientKafka>("CHAT_MODULE");
   });
 
