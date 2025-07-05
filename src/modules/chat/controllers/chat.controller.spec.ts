@@ -19,6 +19,7 @@ describe("ChatController", () => {
       updateMessageById: jest.fn(),
       deleteMessageById: jest.fn(),
       deleteChatById: jest.fn(),
+      getChatsByUserId: jest.fn(),
     };
 
     commonService = {
@@ -58,6 +59,20 @@ describe("ChatController", () => {
         "user2",
       ]);
       expect(response).toEqual(chat);
+    });
+  });
+
+  describe("getChatsByUserId", () => {
+    it("should return chats for the given user ID", async () => {
+      const userId = "abc123";
+      const chats = [{ id: "chat1" }, { id: "chat2" }];
+
+      chatService.getChatsByUserId?.mockResolvedValue(chats);
+
+      const result = await controller.getChatsByUserId(userId);
+
+      expect(chatService.getChatsByUserId).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(chats);
     });
   });
 

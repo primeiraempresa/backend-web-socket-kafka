@@ -6,6 +6,7 @@ import { CommonService } from "@common/services/common.service";
 import { UploadService } from "@upload/services/upload.service";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Chats } from "../models/chat.model";
+import mongoose from "mongoose";
 
 describe("ChatService", () => {
   let service: ChatService;
@@ -21,6 +22,7 @@ describe("ChatService", () => {
       findOne: jest.fn(),
       findById: jest.fn(),
       findByIdAndDelete: jest.fn(),
+      find: jest.fn(),
     };
 
     connection = {
@@ -108,6 +110,37 @@ describe("ChatService", () => {
       } as any);
 
       expect(result).toBe(mockMessage);
+    });
+  });
+
+  describe("getChatsByUserId", () => {
+    it("should return chats for the given user ID", async () => {
+      const userId = "64c3c82ef395d95ee1122334";
+      const expectedChats = [{ id: "chat1" }, { id: "chat2" }];
+
+      const execMock = jest.fn().mockResolvedValue(expectedChats);
+      const populateMock = jest.fn().mockReturnValue({ exec: execMock });
+      chatModel.find.mockReturnValue({ populate: populateMock });
+
+      const result = await service.getChatsByUserId(userId);
+
+      expect(chatModel.find).toHaveBeenCalledWith({
+        chatters: { $in: [new mongoose.Types.ObjectId(userId)] },
+      });
+      expect(populateMock).toHaveBeenCalledWith("chatters");
+      expect(result).toEqual(expectedChats);
+    });
+
+    it("should throw NotFoundException if no chats are found", async () => {
+      const userId = "64c3c82ef395d95ee1122334";
+
+      const execMock = jest.fn().mockResolvedValue([]);
+      const populateMock = jest.fn().mockReturnValue({ exec: execMock });
+      chatModel.find.mockReturnValue({ populate: populateMock });
+
+      await expect(service.getChatsByUserId(userId)).rejects.toThrow(
+        new NotFoundException(["no chats found"]),
+      );
     });
   });
 

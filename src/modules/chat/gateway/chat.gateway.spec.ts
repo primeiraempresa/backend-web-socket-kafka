@@ -22,6 +22,7 @@ describe("ChatGateway", () => {
     getChatByUsersIds: jest.fn(),
     getMessages: jest.fn(),
     getMessageById: jest.fn(),
+    getChatsByUserId: jest.fn(),
   };
 
   const mockProducer = {
@@ -95,6 +96,48 @@ describe("ChatGateway", () => {
       const response = await gateway.getAllChats({ userIds: ["user1"] });
 
       expect(response).toEqual({ event: "error", data: "error" });
+    });
+  });
+  describe("getChatsByUserId", () => {
+    it("should return chats for the given user ID", async () => {
+      const userId = "123";
+      const chats = [{ id: "chat1" }, { id: "chat2" }];
+      mockChatService.getChatsByUserId.mockResolvedValue(chats);
+
+      const result = await gateway.getChatsByUserId({ userId });
+
+      expect(mockChatService.getChatsByUserId).toHaveBeenCalledWith(userId);
+      expect(result).toEqual({
+        event: "chats.user",
+        data: chats,
+      });
+    });
+
+    it("should handle errors and return error event", async () => {
+      const userId = "123";
+      const error = { response: { message: "User not found" } };
+      mockChatService.getChatsByUserId.mockRejectedValue(error);
+
+      const result = await gateway.getChatsByUserId({ userId });
+
+      expect(mockChatService.getChatsByUserId).toHaveBeenCalledWith(userId);
+      expect(result).toEqual({
+        event: "error",
+        data: error.response,
+      });
+    });
+
+    it("should return full error if no response field exists", async () => {
+      const userId = "123";
+      const error = new Error("Something went wrong");
+      mockChatService.getChatsByUserId.mockRejectedValue(error);
+
+      const result = await gateway.getChatsByUserId({ userId });
+
+      expect(result).toEqual({
+        event: "error",
+        data: error,
+      });
     });
   });
 
