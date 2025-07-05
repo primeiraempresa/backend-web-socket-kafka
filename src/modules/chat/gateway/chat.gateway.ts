@@ -7,7 +7,7 @@ import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
 import { configService } from "@config/configService";
-import { Inject, Logger } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -29,13 +29,6 @@ import {
   Chat_conversation_messageT_Ws,
 } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { RawData, Server, WebSocket } from "ws";
-import {
-  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
-  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
-  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "@common/tokens/chat.tokens";
 import { JwtService } from "@nestjs/jwt";
 import { Job, Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
@@ -50,22 +43,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly chatService: ChatService,
-    @Inject(CHAT_PRODUCER_SERVICE_CREATE_CHAT)
-    private readonly chatProducerService_createChat: ChatProducerService<{
-      userId: string;
-      chats: Chats;
-    }>,
-    @Inject(CHAT_PRODUCER_SERVICE_CREATE_MESSAGE)
-    private readonly chatProducerService_createMessage: ChatProducerService<ChatConversationTwS>,
-    @Inject(CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE)
-    private readonly chatProducerService_updateMessage: ChatProducerService<Chat_conversation_messageT_Ws>,
-    @Inject(CHAT_PRODUCER_SERVICE_DELETE_MESSAGE)
-    private readonly chatProducerService_deleteMessage: ChatProducerService<Chat_T_WS>,
-    @Inject(CHAT_PRODUCER_SERVICE_DELETE_CHAT)
-    private readonly chatProducerService_deleteChat: ChatProducerService<{
-      userId: string;
-      chatId: string;
-    }>,
+    private readonly chatProducerService: ChatProducerService,
     private readonly commonService: CommonService,
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
@@ -251,7 +229,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { error: "Invalid userIds" };
     }
     const userId = this.webSocketService.getUserIdBySocket(client) as string;
-    return this.chatProducerService_createChat.sendMessage("chat.create", {
+    return this.chatProducerService.sendMessage<{
+      userId: string;
+      chats: Chats;
+    }>("chat.create", {
       userId,
       chats: body,
     });
@@ -268,7 +249,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!this.commonService.validateMongoID(chat_conversation.sender)) {
       return { error: "Invalid chatId" };
     }
-    return this.chatProducerService_createMessage.sendMessage(
+    return this.chatProducerService.sendMessage<ChatConversationTwS>(
       "chat.message.create",
       {
         userId,
@@ -294,7 +275,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { chatId, messageId, chat_conversation } = data;
     try {
       await this.chatService.getMessageById(chatId, messageId);
-      return this.chatProducerService_updateMessage.sendMessage(
+      return this.chatProducerService.sendMessage<Chat_conversation_messageT_Ws>(
         "chat.message.update",
         {
           userId,
@@ -333,7 +314,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     ) {
       return { error: "Invalid chatId or messageId" };
     }
-    return this.chatProducerService_deleteMessage.sendMessage(
+    return this.chatProducerService.sendMessage<Chat_T_WS>(
       "chat.message.delete",
       {
         userId,
@@ -356,7 +337,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { chatId } = data;
     const userId = this.webSocketService.getUserIdBySocket(client) as string;
     await this.chatService.getChatByUsersIds([], chatId);
-    return this.chatProducerService_deleteChat.sendMessage("chat.delete", {
+    return this.chatProducerService.sendMessage<{
+      userId: string;
+      chatId: string;
+    }>("chat.delete", {
       userId,
       chatId,
     });

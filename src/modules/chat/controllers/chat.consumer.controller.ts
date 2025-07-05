@@ -18,7 +18,7 @@ export class ChatConsumerController {
   constructor(
     private readonly chatService: ChatService,
     private readonly webSocketService: WebSocketService,
-    private readonly chatProducerService: ChatProducerService<ChatConversationTwS>,
+    private readonly chatProducerService: ChatProducerService,
     @InjectQueue("chat")
     private readonly queue: Queue,
     private readonly dateService: DateService,
@@ -88,11 +88,14 @@ export class ChatConsumerController {
           );
           continue;
         }
-        this.chatProducerService.sendMessage("chat.message.create.pending", {
-          userId: item["_id"].toString(),
-          chatId: message.chatId,
-          chat_conversation: result,
-        });
+        this.chatProducerService.sendMessage<ChatConversationTwS>(
+          "chat.message.create.pending",
+          {
+            userId: item["_id"].toString(),
+            chatId: message.chatId,
+            chat_conversation: result,
+          },
+        );
       }
       return result;
     } catch (error) {
@@ -132,11 +135,14 @@ export class ChatConsumerController {
           );
           continue;
         }
-        this.chatProducerService.sendMessage("chat.message.update.pending", {
-          userId: item["_id"].toString(),
-          chatId: message.chatId,
-          chat_conversation: result,
-        });
+        this.chatProducerService.sendMessage<ChatConversationTwS>(
+          "chat.message.update.pending",
+          {
+            userId: item["_id"].toString(),
+            chatId: message.chatId,
+            chat_conversation: result,
+          },
+        );
       }
       return result;
     } catch (error) {
@@ -174,11 +180,14 @@ export class ChatConsumerController {
           );
           continue;
         }
-        this.chatProducerService.sendMessage("chat.message.delete.pending", {
-          userId: item["_id"].toString(),
-          chatId: message.chatId,
-          chat_conversation: result,
-        });
+        this.chatProducerService.sendMessage<ChatConversationTwS>(
+          "chat.message.delete.pending",
+          {
+            userId: item["_id"].toString(),
+            chatId: message.chatId,
+            chat_conversation: result,
+          },
+        );
       }
       return result;
     } catch (error) {

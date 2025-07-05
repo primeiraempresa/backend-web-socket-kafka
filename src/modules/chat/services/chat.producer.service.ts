@@ -8,7 +8,7 @@ import { ClientKafka } from "@nestjs/microservices";
 import { Observable } from "rxjs";
 
 @Injectable()
-export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
+export class ChatProducerService implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject("CHAT_MODULE") private readonly client: ClientKafka) {}
   async onModuleInit() {
     this.client.subscribeToResponseOf("chat.create");
@@ -26,7 +26,7 @@ export class ChatProducerService<T> implements OnModuleInit, OnModuleDestroy {
     await this.client.close();
   }
 
-  sendMessage(topic: string, message: T): Observable<T> {
+  sendMessage<T>(topic: string, message: T): Observable<T> {
     return this.client.emit<T>(topic, message);
   }
 }

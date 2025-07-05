@@ -11,13 +11,6 @@ import { configService } from "@config/configService";
 import { ChatProducerService } from "./services/chat.producer.service";
 import { ChatGateway } from "./gateway/chat.gateway";
 import { UserModule } from "@user/user.module";
-import {
-  CHAT_PRODUCER_SERVICE_CREATE_CHAT,
-  CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_DELETE_CHAT,
-  CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
-  CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-} from "../common/tokens/chat.tokens";
 import { BullModule } from "@nestjs/bull";
 import { DateService } from "@common/services/date.service";
 import { UploadModule } from "@upload/upload.module";
@@ -64,26 +57,6 @@ import { ChatProcessorService } from "./jobs/chat.processor.service";
     ChatProducerService,
     ChatProcessorService,
     DateService,
-    {
-      provide: CHAT_PRODUCER_SERVICE_CREATE_CHAT,
-      useClass: ChatProducerService,
-    },
-    {
-      provide: CHAT_PRODUCER_SERVICE_CREATE_MESSAGE,
-      useClass: ChatProducerService,
-    },
-    {
-      provide: CHAT_PRODUCER_SERVICE_UPDATE_MESSAGE,
-      useClass: ChatProducerService,
-    },
-    {
-      provide: CHAT_PRODUCER_SERVICE_DELETE_MESSAGE,
-      useClass: ChatProducerService,
-    },
-    {
-      provide: CHAT_PRODUCER_SERVICE_DELETE_CHAT,
-      useClass: ChatProducerService,
-    },
   ],
 })
 export class ChatModule {}
