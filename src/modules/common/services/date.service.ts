@@ -6,8 +6,13 @@ export class DateService {
   private readonly timeZone =
     configService.get<string>("TZ") ?? "America/Sao_Paulo";
 
-  now() {
+  now(): Date {
     const utcDate = new Date();
+    const zonedDate = toZonedTime(utcDate, this.timeZone);
+    return zonedDate;
+  }
+  date(date: number | string): Date {
+    const utcDate = new Date(date);
     const zonedDate = toZonedTime(utcDate, this.timeZone);
     return zonedDate;
   }

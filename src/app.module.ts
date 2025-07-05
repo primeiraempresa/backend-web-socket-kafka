@@ -35,7 +35,9 @@ import { redisStore } from "cache-manager-redis-store";
     JwtModule.register({
       global: true,
       secret: configService.get<string>("client_secret"),
-      signOptions: { expiresIn: "48h" },
+      signOptions: {
+        expiresIn: configService.get<string>("EXPIRES_TOKEN") ?? "48h",
+      },
     }),
     BullModule.forRoot({
       redis: redisSentinelsConfig,

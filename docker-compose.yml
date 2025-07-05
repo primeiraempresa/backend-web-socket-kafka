@@ -187,6 +187,7 @@ services:
         DBAAS_SENTINEL_PORT: 26379
         DBAAS_SENTINEL_SERVICE_NAME: mymaster
         DBAAS_SENTINEL_PASSWORD: redis_pass 
+        EXPIRES_TOKEN: 48h
 
   mongodb-seed-backend-app-marcelo: # rodar esse container, importa os dados(json) no mongodb local
     image: mongo
