@@ -13,7 +13,7 @@ const config: Config = {
   collectCoverageFrom: ["src/**/*.(t|j)s"],
   coverageDirectory: "./coverage",
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
-    prefix: "<rootDir>/../",
+    prefix: "<rootDir>",
   }),
   transformIgnorePatterns: ["node_modules/(?!(file-type)/)"],
   coveragePathIgnorePatterns: [

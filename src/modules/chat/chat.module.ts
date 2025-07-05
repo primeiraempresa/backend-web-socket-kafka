@@ -7,12 +7,11 @@ import { Chats_schema } from "./schemas/chat.schema";
 import { CommonModule } from "@common/common.module";
 import { ChatConsumerController } from "./controllers/chat.consumer.controller";
 import { ClientsModule, Transport } from "@nestjs/microservices";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { ChatProducerService } from "./services/chat.producer.service";
 import { ChatGateway } from "./gateway/chat.gateway";
 import { UserModule } from "@user/user.module";
 import { BullModule } from "@nestjs/bull";
-import { DateService } from "@common/services/date.service";
 import { UploadModule } from "@upload/upload.module";
 import { ChatProcessorService } from "./jobs/chat.processor.service";
 
@@ -56,7 +55,6 @@ import { ChatProcessorService } from "./jobs/chat.processor.service";
     ChatGateway,
     ChatProducerService,
     ChatProcessorService,
-    DateService,
   ],
 })
 export class ChatModule {}

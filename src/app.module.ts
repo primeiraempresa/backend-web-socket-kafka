@@ -4,7 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { WinstonModule } from "nest-winston";
 import winstonConfig from "@config/winston.config";
 import { MongooseModule } from "@nestjs/mongoose";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { CacheModule } from "@nestjs/cache-manager";
 import { AuthModule } from "./modules/auth/auth.module";
 import { JwtModule } from "@nestjs/jwt";
@@ -12,7 +12,7 @@ import { ChatModule } from "./modules/chat/chat.module";
 import { CommonModule } from "./modules/common/common.module";
 import { UploadModule } from "./modules/upload/upload.module";
 import { BullModule } from "@nestjs/bull";
-import { redisSentinelsConfig } from "@config/redisSentinels.config";
+import { redisSentinelsConfig } from "@config/redis.sentinels.config";
 import { redisStore } from "cache-manager-redis-store";
 
 @Module({
@@ -35,7 +35,9 @@ import { redisStore } from "cache-manager-redis-store";
     JwtModule.register({
       global: true,
       secret: configService.get<string>("client_secret"),
-      signOptions: { expiresIn: "48h" },
+      signOptions: {
+        expiresIn: configService.get<string>("EXPIRES_TOKEN") ?? "48h",
+      },
     }),
     BullModule.forRoot({
       redis: redisSentinelsConfig,

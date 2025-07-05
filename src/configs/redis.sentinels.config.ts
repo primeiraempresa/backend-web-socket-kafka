@@ -1,4 +1,4 @@
-import { configService } from "./configService";
+import { configService } from "./config.service";
 
 export const redisSentinelsConfig = {
   name: configService.get<string>("DBAAS_SENTINEL_SERVICE_NAME"),

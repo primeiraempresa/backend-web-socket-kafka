@@ -1,6 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { WINSTON_MODULE_NEST_PROVIDER } from "nest-winston";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { Logger, ValidationPipe } from "@nestjs/common";
@@ -10,7 +10,7 @@ import { WsAdapter } from "@nestjs/platform-ws";
 import { createBullBoard } from "@bull-board/api";
 import * as Queue from "bull";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
-import { redisSentinelsConfig } from "@config/redisSentinels.config";
+import { redisSentinelsConfig } from "@config/redis.sentinels.config";
 
 async function bootstrap() {
   const logger = new Logger();

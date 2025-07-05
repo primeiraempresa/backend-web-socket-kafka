@@ -1,5 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { configService } from "./configService";
+import { configService } from "./config.service";
 const isLocal: boolean = configService.get<string>("ENV_AMB") === "LOCAL";
 export const s3 = new S3Client({
   region: configService.get<string>("REGIONAWS") as string,

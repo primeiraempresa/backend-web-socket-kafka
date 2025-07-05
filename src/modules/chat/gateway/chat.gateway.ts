@@ -6,7 +6,7 @@ import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
 import { ChatService } from "@chat/services/chat.service";
 import { CommonService } from "@common/services/common.service";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { Logger } from "@nestjs/common";
 import {
   WebSocketGateway,

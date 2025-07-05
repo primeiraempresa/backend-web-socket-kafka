@@ -7,7 +7,7 @@ import { Allowed_file_typesSchema } from "./schemas/allowed_file_types.schema";
 import { Files } from "./models/files.model";
 import { FilesSchema } from "./schemas/files.schema";
 import { ClientsModule, Transport } from "@nestjs/microservices";
-import { configService } from "@config/configService";
+import { configService } from "@config/config.service";
 import { UserModule } from "@user/user.module";
 import { UploadGateway } from "./gateway/upload.gateway";
 import { CommonModule } from "@common/common.module";

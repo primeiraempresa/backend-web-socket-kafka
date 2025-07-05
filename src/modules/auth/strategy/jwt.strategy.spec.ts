@@ -1,7 +1,7 @@
 import { JwtStrategy } from "./jwt.strategy";
 import { AuthService } from "../services/auth.service";
 import { UnauthorizedException } from "@nestjs/common";
-jest.mock("@config/configService", () => ({
+jest.mock("@config/config.service", () => ({
   configService: {
     get: jest.fn().mockImplementation((key: string) => {
       if (key === "client_secret") return "my-secret-key";

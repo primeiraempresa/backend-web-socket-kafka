@@ -27,6 +27,8 @@ describe("AuthController", () => {
       const expectedToken: IToken = {
         access_token: "mock_token",
         token_type: "Bearer",
+        expires_in: "2025-07-05T03:50:32.000Z",
+        issued: "2025-07-05T03:50:32.000Z",
       };
 
       jest.spyOn(authService, "validate").mockReturnValue(expectedToken);
