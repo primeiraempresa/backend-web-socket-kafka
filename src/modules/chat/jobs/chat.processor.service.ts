@@ -9,14 +9,14 @@ import { UploadService } from "@upload/services/upload.service";
 import { Job, Queue } from "bull";
 import { Connection, Model } from "mongoose";
 
-@Processor("chat")
+@Processor("chat.process")
 export class ChatProcessorService {
   constructor(
     @InjectConnection() private readonly connection: Connection,
     @InjectModel(Chats.name) private readonly chatModel: Model<ChatsDocument>,
     private readonly chatService: ChatService,
     private readonly uploadService: UploadService,
-    @InjectQueue("chat") private readonly queue: Queue,
+    @InjectQueue("chat.process") private readonly queue: Queue,
   ) {}
   private readonly logger: Logger = new Logger(ChatProcessorService.name);
 
@@ -89,6 +89,6 @@ export class ChatProcessorService {
         );
       }
     }
-    return await job.remove();
+    // return await job.remove();
   }
 }

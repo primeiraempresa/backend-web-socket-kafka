@@ -13,13 +13,25 @@ export class WebSocketService {
   }
 
   addClient(userId: string, client: WebSocket) {
-    this.usersOnline.set(userId, client);
-    this.logger.debug(`User ${userId} connected`);
+    if (!this.getUserIdByID_online(userId)) {
+      this.usersOnline.set(userId, client);
+      this.logger.debug(`User ${userId} connected`);
+      this.broadcast("user.online", {
+        userId,
+        status: "online",
+      });
+    }
   }
 
   removeClient(userId: string) {
-    this.usersOnline.delete(userId);
-    this.logger.debug(`User ${userId} disconnected`);
+    if (this.getUserIdByID_online(userId)) {
+      this.usersOnline.delete(userId);
+      this.logger.debug(`User ${userId} disconnected`);
+      this.broadcast("user.offline", {
+        userId,
+        status: "offline",
+      });
+    }
   }
 
   sendToUser(userId: string, event: string, data: object) {

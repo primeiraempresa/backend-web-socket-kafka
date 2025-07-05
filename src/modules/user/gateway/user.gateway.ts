@@ -55,11 +55,6 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.webSocketService.addClient(userId, client);
     this.webSocketService.setServer(this.server);
 
-    this.webSocketService.broadcast("user.online", {
-      userId,
-      status: "online",
-    });
-
     client.on("message", (message: RawData) => {
       if (typeof message === "string") {
         const text = message;
@@ -87,11 +82,6 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (userId) {
       this.webSocketService.removeClient(userId);
-
-      this.webSocketService.broadcast("user.offline", {
-        userId,
-        status: "offline",
-      });
     }
   }
   @SubscribeMessage("user")

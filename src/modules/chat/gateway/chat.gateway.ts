@@ -100,10 +100,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.webSocketService.addClient(userId, client);
     this.webSocketService.setServer(this.server);
-    this.webSocketService.broadcast("user.online", {
-      userId,
-      status: "online",
-    });
     async function hasJobInQueue(
       queue: Queue,
       jobName: string,
@@ -173,11 +169,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (userId) {
       this.webSocketService.removeClient(userId);
-
-      this.webSocketService.broadcast("user.offline", {
-        userId,
-        status: "offline",
-      });
     }
   }
 

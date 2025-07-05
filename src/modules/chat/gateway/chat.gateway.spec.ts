@@ -394,13 +394,6 @@ describe("ChatGateway", () => {
       expect(mockChatWebSocketService.removeClient).toHaveBeenCalledWith(
         "user1",
       );
-      expect(mockChatWebSocketService.broadcast).toHaveBeenCalledWith(
-        "user.offline",
-        {
-          userId: "user1",
-          status: "offline",
-        },
-      );
     });
   });
 });

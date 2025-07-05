@@ -165,13 +165,6 @@ describe("UploadGateway", () => {
       gateway.handleDisconnect(client);
 
       expect(mockWebSocketService.removeClient).toHaveBeenCalledWith("user123");
-      expect(mockWebSocketService.broadcast).toHaveBeenCalledWith(
-        "user.offline",
-        {
-          userId: "user123",
-          status: "offline",
-        },
-      );
     });
 
     it("should do nothing if user is not found", () => {

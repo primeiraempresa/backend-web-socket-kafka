@@ -50,6 +50,9 @@ import { ChatProcessorService } from "./jobs/chat.processor.service";
     BullModule.registerQueue({
       name: "chat",
     }),
+    BullModule.registerQueue({
+      name: "chat.process",
+    }),
     CommonModule,
     UserModule,
     UploadModule,
