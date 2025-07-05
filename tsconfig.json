@@ -17,13 +17,15 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
+    "resolveJsonModule": true,
     "paths": {
       "@config/*": ["src/configs/*"],
       "@user/*": ["src/modules/user/*"],
       "@auth/*": ["src/modules/auth/*"],
       "@common/*": ["src/modules/common/*"],
       "@chat/*": ["src/modules/chat/*"],
-      "@upload/*": ["src/modules/upload/*"]
+      "@upload/*": ["src/modules/upload/*"],
+      "file-type": ["node_modules/file-type"]
     }
   }
 }

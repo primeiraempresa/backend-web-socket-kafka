@@ -4,7 +4,7 @@ import { Logger } from "@nestjs/common";
 import * as env from "dotenv";
 env.config();
 class LoadTestLogger {
-  private static logger = new Logger("LoadTest");
+  private static readonly logger = new Logger("LoadTest");
 
   static app(message: string) {
     this.logger.log(`🟢 [APP] ${message}`);

@@ -1,12 +1,12 @@
 import type { Config } from "jest";
-import { compilerOptions } from "./tsconfig.json";
+import { compilerOptions } from "../tsconfig.json";
 import { pathsToModuleNameMapper } from "ts-jest";
 const config: Config = {
   moduleFileExtensions: ["ts", "js", "mjs", "json"],
   rootDir: ".",
   preset: "ts-jest",
   testEnvironment: "node",
-  testRegex: ".*\\.spec\\.ts$",
+  testRegex: ".*\\.e2e-spec\\.ts$",
   transform: {
     "^.+\\.(t|j)s$": "ts-jest",
   },
