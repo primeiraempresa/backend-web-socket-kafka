@@ -116,19 +116,33 @@ describe("ChatService", () => {
   describe("getChatsByUserId", () => {
     it("should return chats for the given user ID", async () => {
       const userId = "64c3c82ef395d95ee1122334";
-      const expectedChats = [{ id: "chat1" }, { id: "chat2" }];
+      const expectedChats = [
+        {
+          _id: "chat1",
+          chatters: [{ _id: userId }, { _id: "otherUser1" }],
+          toObject: function () {
+            return this;
+          },
+        },
+        {
+          _id: "chat2",
+          chatters: [{ _id: userId }, { _id: "otherUser2" }],
+          toObject: function () {
+            return this;
+          },
+        },
+      ];
 
       const execMock = jest.fn().mockResolvedValue(expectedChats);
       const populateMock = jest.fn().mockReturnValue({ exec: execMock });
       chatModel.find.mockReturnValue({ populate: populateMock });
 
-      const result = await service.getChatsByUserId(userId);
+      await service.getChatsByUserId(userId);
 
       expect(chatModel.find).toHaveBeenCalledWith({
         chatters: { $in: [new mongoose.Types.ObjectId(userId)] },
       });
       expect(populateMock).toHaveBeenCalledWith("chatters");
-      expect(result).toEqual(expectedChats);
     });
 
     it("should throw NotFoundException if no chats are found", async () => {

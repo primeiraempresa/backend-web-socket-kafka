@@ -44,16 +44,27 @@ export class ChatService {
     }
   }
   async getChatsByUserId(userId: string) {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     const chats = await this.chatModel
       .find({
-        chatters: { $in: [new mongoose.Types.ObjectId(userId)] },
+        chatters: { $in: [userObjectId] },
       })
       .populate("chatters")
       .exec();
     if (chats.length < 1) {
       throw new NotFoundException(["no chats found"]);
     }
-    return chats;
+    const chatsWithoutUser = chats.map((chat) => {
+      const otherChatters = chat.chatters.filter(
+        (chatter: any) => chatter._id.toString() !== userId,
+      );
+      return {
+        ...chat.toObject(),
+        chatters: otherChatters,
+      };
+    });
+
+    return chatsWithoutUser;
   }
   async addMessage(
     chatId: string,
