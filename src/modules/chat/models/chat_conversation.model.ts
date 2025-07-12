@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
 import { Files } from "@upload/models/files.model";
 import { FilesDocument, FilesSchema } from "@upload/schemas/files.schema";
@@ -55,6 +55,3 @@ export class ChatConversation {
   @Prop()
   createdAt?: Date;
 }
-
-export const ChatConversationSchema =
-  SchemaFactory.createForClass(ChatConversation);
