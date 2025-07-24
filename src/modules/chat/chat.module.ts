@@ -14,6 +14,7 @@ import { UserModule } from "@user/user.module";
 import { BullModule } from "@nestjs/bull";
 import { UploadModule } from "@upload/upload.module";
 import { ChatProcessorService } from "./jobs/chat.processor.service";
+import { ChatNotificationService } from "./services/chat-notification.service";
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { ChatProcessorService } from "./jobs/chat.processor.service";
     ChatGateway,
     ChatProducerService,
     ChatProcessorService,
+    ChatNotificationService,
   ],
 })
 export class ChatModule {}
