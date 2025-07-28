@@ -1,10 +1,38 @@
 [
-    {
-      "_id": { "$oid": "67f9f61c571627cad4f95818" },
-      "chatters": [
-        { "$oid": "67d21a67b5aed094d5c435e5" },
-        { "$oid": "67d21a67b5aed094d5c435e3" }
-      ]
+  {
+    "_id": {
+      "$oid": "67f9f61c571627cad4f95818"
+    },
+    "chatters": [
+      {
+        "$oid": "67d21a67b5aed094d5c435e5"
+      },
+      {
+        "$oid": "67d21a67b5aed094d5c435e3"
+      }
+    ],
+    "createdAt": {
+      "$date": "2025-05-28T23:29:36.000Z"
+    },
+    "updatedAt": {
+      "$date": "2025-05-28T23:29:36.000Z"
+    },
+    "lastMessage": {
+      "images": null,
+      "file": null,
+      "updatedAt": {
+        "$date": "2025-07-12T04:29:30.208Z"
+      },
+      "_id": {
+        "$oid": "67f9f63d94cbb60e81e35d30"
+      },
+      "message": "Olá!! tudo bem ? blz !!!! já te retorno",
+      "sender": {
+        "$oid": "67d21a67b5aed094d5c435e3"
+      },
+      "createdAt": {
+        "$date": "2025-05-28T23:29:36.000Z"
+      }
     }
-  ]
-  
+  }
+]
