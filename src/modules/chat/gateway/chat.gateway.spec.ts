@@ -303,7 +303,7 @@ describe("ChatGateway", () => {
       mockChatWebSocketService.getUserIdBySocket.mockReturnValue("user1");
 
       const client = {};
-      const chatData = { chatters: ["user2"] };
+      const chatData = { chatters: ["user2"] } as any;
 
       gateway.createChat(chatData, client as any);
 
@@ -316,7 +316,10 @@ describe("ChatGateway", () => {
     it("should return error if chatters are invalid", () => {
       mockCommonService.validateArryByMongoIDs.mockReturnValue(false);
 
-      const response = gateway.createChat({ chatters: ["invalid"] }, {} as any);
+      const response = gateway.createChat(
+        { chatters: ["invalid"] } as any,
+        {} as any,
+      );
 
       expect(response).toEqual({ error: "Invalid userIds" });
     });

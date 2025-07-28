@@ -89,7 +89,7 @@ describe("ChatController", () => {
   describe("createChat", () => {
     it("should throw BadRequestException for invalid userIds", () => {
       commonService.validateArryByMongoIDs?.mockReturnValue(false);
-      const body = { chatters: ["invalidId"] };
+      const body = { chatters: ["invalidId"] } as any;
 
       expect(() => controller.createChat(body)).toThrow(BadRequestException);
     });
@@ -99,7 +99,9 @@ describe("ChatController", () => {
       const chat = { _id: "chat1" };
       chatService.createChat?.mockResolvedValue(chat);
 
-      const result = await controller.createChat({ chatters: ["validId"] });
+      const result = await controller.createChat({
+        chatters: ["validId"],
+      } as any);
       expect(result).toEqual(chat);
     });
   });
