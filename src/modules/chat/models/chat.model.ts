@@ -3,8 +3,9 @@ import mongoose from "mongoose";
 import { Users } from "@user/models/user.model";
 import { ArrayNotEmpty, IsArray, IsMongoId, IsNotEmpty } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { ChatConversation } from "./chat_conversation.model";
 
-@Schema()
+@Schema({ timestamps: { createdAt: "createdAt" } })
 export class Chats {
   @ApiProperty({
     required: true,
@@ -24,4 +25,24 @@ export class Chats {
   @ArrayNotEmpty()
   @IsMongoId({ each: true })
   chatters: string[];
+
+  @Prop({
+    required: false,
+  })
+  createdAt: Date;
+
+  @Prop({
+    required: false,
+  })
+  updatedAt: Date;
+
+  @Prop({
+    required: false,
+  })
+  lastMessage?: ChatConversation;
+
+  @Prop({
+    required: false,
+  })
+  chatName?: string;
 }

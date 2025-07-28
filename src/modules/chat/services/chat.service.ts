@@ -20,6 +20,8 @@ import { UploadService } from "@upload/services/upload.service";
 import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 import { FilesDocument } from "@upload/schemas/files.schema";
+import { DateService } from "@common/services/date.service";
+import { Users } from "@user/models/user.model";
 
 @Injectable()
 export class ChatService {
@@ -50,6 +52,13 @@ export class ChatService {
         chatters: { $in: [userObjectId] },
       })
       .populate("chatters")
+      .populate({
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          model: Users.name,
+        },
+      })
       .exec();
     if (chats.length < 1) {
       throw new NotFoundException(["no chats found"]);
@@ -90,6 +99,10 @@ export class ChatService {
     await newMessage.populate("sender");
     await newMessage.populate("images");
     await newMessage.populate("file");
+    await this.chatModel.findByIdAndUpdate(chatId, {
+      updatedAt: new DateService().now(),
+      lastMessage: newMessage,
+    });
     return newMessage;
   }
   async getMessages(
@@ -154,7 +167,15 @@ export class ChatService {
           { _id },
         ],
       })
-      .populate("chatters");
+      .populate("chatters")
+      .populate({
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          model: Users.name,
+        },
+      })
+      .exec();
     if (!newChat) {
       throw new NotFoundException(["chat not found"]);
     }
@@ -239,6 +260,16 @@ export class ChatService {
         },
       });
     }
+    await this.chatModel.findByIdAndUpdate(
+      chatId,
+      {
+        updatedAt: new DateService().now(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
     return updatedMessage;
   }
   async deleteMessageById(

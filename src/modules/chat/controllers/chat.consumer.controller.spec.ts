@@ -111,7 +111,7 @@ describe("ChatConsumerController", () => {
       const message = {
         userId: "user1",
         chats: { chatters: ["user1", "user2"] },
-      };
+      } as any;
       const result = { _id: "chat1" } as any;
       chatService.createChat.mockResolvedValue(result);
 
