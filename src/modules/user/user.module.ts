@@ -9,9 +9,10 @@ import { CommonModule } from "@common/common.module";
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Users.name, schema: Users_schema, collection: Users.name },
-    ]),
+    MongooseModule.forFeature(
+      [{ name: Users.name, schema: Users_schema, collection: Users.name }],
+      "Datas",
+    ),
     CommonModule,
   ],
   controllers: [UserController],

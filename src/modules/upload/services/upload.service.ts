@@ -26,9 +26,9 @@ import { CommonService } from "@common/services/common.service";
 @Injectable()
 export class UploadService {
   constructor(
-    @InjectModel(AllowedFileTypes.name)
+    @InjectModel(AllowedFileTypes.name, "Datas")
     private readonly allowedFileTypesModel: Model<Allowed_file_typesDocument>,
-    @InjectModel(Files.name)
+    @InjectModel(Files.name, "Datas")
     private readonly filesModel: Model<FilesDocument>,
     private readonly commonService: CommonService,
   ) {}

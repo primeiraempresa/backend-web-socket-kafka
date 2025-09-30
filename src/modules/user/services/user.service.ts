@@ -16,7 +16,8 @@ import { CacheService } from "@common/services/cache.service";
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(Users.name) private readonly usersModel: Model<UsersDocument>,
+    @InjectModel(Users.name, "Datas")
+    private readonly usersModel: Model<UsersDocument>,
     private readonly cacheService: CacheService,
   ) {}
   async getUsers(page: number, limit: number): Promise<UserPagination> {

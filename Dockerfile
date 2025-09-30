@@ -1,4 +1,4 @@
-FROM node:22.14
+FROM node:24.1
 
 RUN npm install -g pnpm
 RUN npm install -g @nestjs/cli

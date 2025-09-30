@@ -16,18 +16,21 @@ import { UploadProducerService } from "./services/upload.producer.service";
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      {
-        name: AllowedFileTypes.name,
-        schema: Allowed_file_typesSchema,
-        collection: AllowedFileTypes.name,
-      },
-      {
-        name: Files.name,
-        schema: FilesSchema,
-        collection: Files.name,
-      },
-    ]),
+    MongooseModule.forFeature(
+      [
+        {
+          name: AllowedFileTypes.name,
+          schema: Allowed_file_typesSchema,
+          collection: AllowedFileTypes.name,
+        },
+        {
+          name: Files.name,
+          schema: FilesSchema,
+          collection: Files.name,
+        },
+      ],
+      "Datas",
+    ),
     ClientsModule.register([
       {
         name: "UPLOAD_MODULE",

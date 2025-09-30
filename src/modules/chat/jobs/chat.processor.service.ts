@@ -12,8 +12,10 @@ import { Connection, Model } from "mongoose";
 @Processor("chat.process")
 export class ChatProcessorService {
   constructor(
-    @InjectConnection() private readonly connection: Connection,
-    @InjectModel(Chats.name) private readonly chatModel: Model<ChatsDocument>,
+    @InjectConnection("ChatsConnection")
+    private readonly connection: Connection,
+    @InjectModel(Chats.name, "Datas")
+    private readonly chatModel: Model<ChatsDocument>,
     private readonly chatService: ChatService,
     private readonly uploadService: UploadService,
     @InjectQueue("chat.process") private readonly queue: Queue,

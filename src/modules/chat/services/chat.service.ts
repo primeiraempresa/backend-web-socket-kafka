@@ -26,8 +26,10 @@ import { Users } from "@user/models/user.model";
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(Chats.name) private readonly chatModel: Model<ChatsDocument>,
-    @InjectConnection() private readonly connection: Connection,
+    @InjectConnection("ChatsConnection")
+    private readonly connection: Connection,
+    @InjectModel(Chats.name, "Datas")
+    private readonly chatModel: Model<ChatsDocument>,
     @InjectQueue("chat.process") private readonly queue: Queue,
     private readonly commonService: CommonService,
     private readonly uploadService: UploadService,
