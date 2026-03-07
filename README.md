@@ -100,3 +100,18 @@ $ chmod +x .docker/entrypoint.sh
 $ chmod +x .docker/minio-seed.sh
 ```
 
+
+docker compose down
+docker network prune -f
+docker compose up -d
+
+
+--------------------------
+Parar todos os containers:
+docker stop $(docker ps -q)
+
+Remover TODOS os containers
+docker rm -f $(docker ps -aq)
+
+Remover TODOS os volumes
+docker volume rm $(docker volume ls -q)
