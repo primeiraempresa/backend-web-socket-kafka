@@ -7,7 +7,6 @@ import {
 import { getConnectionToken, getModelToken } from "@nestjs/mongoose";
 import { getQueueToken } from "@nestjs/bull";
 import mongoose from "mongoose";
-
 import { ChatService } from "./chat.service";
 import { CommonService } from "@common/services/common.service";
 import { UploadService } from "@upload/services/upload.service";

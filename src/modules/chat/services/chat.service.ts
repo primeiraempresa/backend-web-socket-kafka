@@ -23,6 +23,7 @@ import { InjectQueue } from "@nestjs/bull";
 import { DateService } from "@common/services/date.service";
 import { IPagination } from "@common/interface/pagination.interface";
 import { Files } from "@upload/models/files.model";
+import { UsersDocument } from "@user/schemas/user.schema";
 
 @Injectable()
 export class ChatService {
@@ -34,7 +35,7 @@ export class ChatService {
     private readonly chatModel: Model<ChatsDocument>,
 
     @InjectModel(Users.name, "Datas")
-    private readonly userModel: Model<any>,
+    private readonly userModel: Model<UsersDocument>,
 
     @InjectModel(Files.name, "Datas")
     private readonly fileModel: Model<FilesDocument>,
