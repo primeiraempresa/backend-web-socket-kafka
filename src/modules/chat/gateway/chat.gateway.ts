@@ -1,6 +1,5 @@
 import { Chats } from "@chat/models/chat.model";
 import { ChatConversation } from "@chat/models/chat_conversation.model";
-import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatsDocument } from "@chat/schemas/chat.schema";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { ChatProducerService } from "@chat/services/chat.producer.service";
@@ -32,6 +31,8 @@ import { RawData, Server, WebSocket } from "ws";
 import { JwtService } from "@nestjs/jwt";
 import { Job, Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
+import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
+import { IPagination } from "@common/interface/pagination.interface";
 
 @WebSocketGateway({
   transports: ["websocket"],
@@ -39,7 +40,7 @@ import { InjectQueue } from "@nestjs/bull";
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly chatService: ChatService,
@@ -166,7 +167,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "chat",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -181,7 +182,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "chats.user",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -194,7 +195,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: { chatId: string; page?: number; perPage?: number },
   ): Promise<{
     event: string;
-    data: ChatPagination | Error;
+    data: IPagination<ChatConversationDocument> | Error;
   }> {
     try {
       const result = await this.chatService.getMessages(
@@ -206,7 +207,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "chat.message",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -228,7 +229,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "chat.message.id",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,

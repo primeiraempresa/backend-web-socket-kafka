@@ -3,21 +3,21 @@ import { Prop, Schema } from "@nestjs/mongoose";
 @Schema()
 export class Files {
   @Prop({ required: true, index: true })
-  fieldname: string;
+  fieldname!: string;
   @Prop({ required: true, index: true })
-  originalname: string;
+  originalname!: string;
   @Prop({ required: true, index: true })
-  mimetype: string;
+  mimetype!: string;
   @Prop({ required: true, index: true })
-  size: number;
+  size!: number;
   @Prop({ required: true, index: true })
-  bucket: string;
+  bucket!: string;
   @Prop({ required: true, index: true })
-  key: string;
+  key!: string;
   @Prop({ required: true, index: true })
-  acl: string;
+  acl!: string;
   @Prop({ required: true, index: true })
-  contentType: string;
+  contentType!: string;
   @Prop({ required: true, index: true })
-  location: string;
+  location!: string;
 }

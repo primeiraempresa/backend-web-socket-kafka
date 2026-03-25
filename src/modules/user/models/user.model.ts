@@ -15,26 +15,26 @@ export class Users {
   @Prop({ required: true, index: true, unique: true })
   @IsNotEmpty()
   @IsString()
-  username: string;
+  username!: string;
 
   @ApiProperty({ required: true })
   @Prop({ required: true, index: true, unique: true })
   @IsNotEmpty()
   @IsEmail({ allow_display_name: true }, { message: "Invalid email. " })
   @IsString()
-  email: string;
+  email!: string;
 
   @ApiProperty({ required: true })
   @Prop({ required: true })
   @IsStrongPassword({ minLength: 8, minUppercase: 1, minSymbols: 1 })
   @IsNotEmpty()
   @IsString()
-  password: string;
+  password!: string;
 
   @ApiProperty({ required: true })
   @Prop({ required: true })
   @IsObject()
-  esportes: Sports;
+  esportes!: Sports;
 
   @ApiProperty({ default: null })
   @Prop({ required: false, default: null })
@@ -45,5 +45,5 @@ export class Users {
     required: true,
     index: true,
   })
-  profilePic: string;
+  profilePic!: string;
 }

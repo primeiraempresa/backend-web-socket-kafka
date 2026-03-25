@@ -1,3 +1,4 @@
+import { IPagination } from "@common/interface/pagination.interface";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/config.service";
 import { Inject } from "@nestjs/common";
@@ -11,7 +12,6 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { FilePagination } from "@upload/models/file_pagination.model";
 import { FilesDocument } from "@upload/schemas/files.schema";
 import { UploadProducerService } from "@upload/services/upload.producer.service";
 import { UploadService } from "@upload/services/upload.service";
@@ -24,7 +24,7 @@ import { RawData, Server, WebSocket } from "ws";
 })
 export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
   constructor(
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
@@ -102,18 +102,19 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: { page?: number; perPage?: number },
   ): Promise<{
     event: string;
-    data: FilePagination | Error;
+    data: IPagination<FilesDocument> | Error;
   }> {
     try {
-      const result: FilePagination = await this.uploadService.getFileAll(
-        body?.page ? parseInt(body?.page.toString()) : 1,
-        body?.perPage ? parseInt(body?.perPage.toString()) : 10,
-      );
+      const result: IPagination<FilesDocument> =
+        await this.uploadService.getFileAll(
+          body?.page ? parseInt(body?.page.toString()) : 1,
+          body?.perPage ? parseInt(body?.perPage.toString()) : 10,
+        );
       return {
         event: "upload",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -133,7 +134,7 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "upload.id",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -167,7 +168,7 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "upload.id",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -185,7 +186,7 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId,
         ...body,
       });
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -206,7 +207,7 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId,
         id: body.id,
       });
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,

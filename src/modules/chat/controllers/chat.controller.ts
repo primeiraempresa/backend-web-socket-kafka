@@ -16,10 +16,10 @@ import { AuthGuard } from "@nestjs/passport";
 import { ChatConversationDocument } from "../schemas/chat_conversation.schema";
 import { ChatsDocument } from "../schemas/chat.schema";
 import { ChatConversationDTO } from "../dto/chat_conversation.dto";
-import { ChatPagination } from "@chat/models/chatPagination.model";
 import { ChatConversation } from "@chat/models/chat_conversation.model";
 import { CommonService } from "@common/services/common.service";
 import { Chats } from "@chat/models/chat.model";
+import { IPagination } from "@common/interface/pagination.interface";
 
 @Controller("chat")
 @UseGuards(AuthGuard("jwt"))
@@ -47,7 +47,7 @@ export class ChatController {
     @Param("chatId") chatId: string,
     @Query("page") page?: number,
     @Query("perPage") perPage?: number,
-  ): Promise<ChatPagination> {
+  ): Promise<IPagination<ChatConversationDocument>> {
     return await this.chatService.getMessages(
       chatId,
       page ? parseInt(page.toString()) : 1,

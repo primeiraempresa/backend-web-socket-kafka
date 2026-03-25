@@ -1,3 +1,4 @@
+import { IPagination } from "@common/interface/pagination.interface";
 import {
   Body,
   Controller,
@@ -14,7 +15,6 @@ import { ApiOAuth2, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { UsersDto } from "@user/dto/users.dto";
 import { Users } from "@user/models/user.model";
-import { UserPagination } from "@user/models/userPagination.model";
 import { UsersDocument } from "@user/schemas/user.schema";
 import { UserService } from "@user/services/user.service";
 
@@ -41,7 +41,7 @@ export class UserController {
   async GetUsers(
     @Query("page") page?: number,
     @Query("perPage") perPage?: number,
-  ): Promise<UserPagination> {
+  ): Promise<IPagination<UsersDocument>> {
     return await this.users_service.getUsers(
       page ? parseInt(page.toString()) : 1,
       perPage ? parseInt(perPage.toString()) : 10,

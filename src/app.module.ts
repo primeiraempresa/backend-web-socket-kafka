@@ -22,7 +22,15 @@ import { redisStore } from "cache-manager-redis-store";
       envFilePath: ".env",
     }),
     MongooseModule.forRoot(
-      configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string,
+      `${configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string}`,
+      { connectionName: "Datas", dbName: "Datas" },
+    ),
+    MongooseModule.forRoot(
+      `${configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string}`,
+      {
+        connectionName: "ChatsConnection",
+        dbName: "Chats_Messages",
+      },
     ),
     CacheModule.registerAsync({
       isGlobal: true,

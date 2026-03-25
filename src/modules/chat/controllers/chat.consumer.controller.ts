@@ -34,7 +34,7 @@ export class ChatConsumerController {
       );
       this.webSocketService.sendToUser(message.userId, "chat.create", result);
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       this.webSocketService.sendToUser(
         message.userId,
@@ -52,7 +52,7 @@ export class ChatConsumerController {
       const result = await this.chatService.deleteChatById(message.chatId);
       this.webSocketService.sendToUser(message.userId, "chat.delete", result);
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       this.webSocketService.sendToUser(
         message.userId,
@@ -98,7 +98,7 @@ export class ChatConsumerController {
         );
       }
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       this.webSocketService.sendToUser(
         message.userId,
@@ -145,7 +145,7 @@ export class ChatConsumerController {
         );
       }
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       this.webSocketService.sendToUser(
         message.userId,
@@ -190,7 +190,7 @@ export class ChatConsumerController {
         );
       }
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       this.webSocketService.sendToUser(
         message.userId,

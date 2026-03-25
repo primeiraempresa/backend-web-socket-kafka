@@ -14,7 +14,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly dateService: DateService,
   ) {}
-  private access_token: IToken;
+  private access_token!: IToken;
   private setAccessToken(token: IToken) {
     this.access_token = token;
   }
@@ -22,22 +22,24 @@ export class AuthService {
     return this.access_token;
   }
   validate(client_id: string, client_secret: string): IToken {
-    if (
-      client_id != configService.get<string>("client_id") ||
-      client_secret != configService.get<string>("client_secret")
-    ) {
-      throw new UnauthorizedException();
-    }
-    const id = configService.get<string>("client_id")?.toString();
-    if (!id) {
+    const configClientId = configService.get<string>("client_id")?.toString();
+    const configClientSecret = configService.get<string>("client_secret");
+
+    if (!configClientId) {
       throw new ServiceUnavailableException("client_id not found in server");
     }
-    const hash = id
+
+    if (client_id !== configClientId || client_secret !== configClientSecret) {
+      throw new UnauthorizedException();
+    }
+
+    const hash = configClientId
       .split("")
       .reduce(
         (hex: string, c) => hex + c.charCodeAt(0).toString(16).padStart(2, "0"),
         "",
       );
+
     return this.generateToken({
       id: hash,
     });
