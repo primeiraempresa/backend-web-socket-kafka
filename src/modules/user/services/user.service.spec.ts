@@ -45,12 +45,14 @@ describe("UserService", () => {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-      // outros métodos que o Cache pode ter
     } as unknown as jest.Mocked<Cache>;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { provide: getModelToken(Users.name), useFactory: mockUsersModel },
+        {
+          provide: getModelToken(Users.name, "Datas"),
+          useFactory: mockUsersModel,
+        },
         {
           provide: "CACHE_MANAGER",
           useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
@@ -63,7 +65,7 @@ describe("UserService", () => {
       ],
     }).compile();
     service = module.get<UserService>(UserService);
-    usersModel = module.get(getModelToken(Users.name));
+    usersModel = module.get(getModelToken(Users.name, "Datas"));
     cacheManager = module.get<Cache>("CACHE_MANAGER");
   });
   describe("getUsers", () => {

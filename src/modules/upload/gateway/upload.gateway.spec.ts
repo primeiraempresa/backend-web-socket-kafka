@@ -89,7 +89,10 @@ describe("UploadGateway", () => {
         { provide: UploadService, useValue: mockUploadService },
         { provide: JwtService, useValue: mockJwtService },
         UserService,
-        { provide: getModelToken(Users.name), useFactory: mockUsersModel },
+        {
+          provide: getModelToken(Users.name, "Datas"),
+          useFactory: mockUsersModel,
+        },
         {
           provide: "CACHE_MANAGER",
           useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },

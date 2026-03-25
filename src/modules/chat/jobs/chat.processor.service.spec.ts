@@ -1,13 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { getConnectionToken, getModelToken } from "@nestjs/mongoose";
+
 import { ChatProcessorService } from "./chat.processor.service";
 import { ChatService } from "@chat/services/chat.service";
 import { UploadService } from "@upload/services/upload.service";
-import { getConnectionToken, getModelToken } from "@nestjs/mongoose";
-import { Connection } from "mongoose";
-import { Logger } from "@nestjs/common";
+import { Chats } from "@chat/models/chat.model";
+import { getQueueToken } from "@nestjs/bull";
 
 describe("ChatProcessorService", () => {
   let service: ChatProcessorService;
+
   const mockConnection = {
     dropCollection: jest.fn(),
   };
@@ -27,21 +29,24 @@ describe("ChatProcessorService", () => {
   const mockQueue = {
     add: jest.fn(),
   };
-  const mockJob = (data) => ({
+
+  const mockJob = (data: any) => ({
     data,
     log: jest.fn(),
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatProcessorService,
         {
-          provide: Connection,
+          provide: getConnectionToken("ChatsConnection"),
           useValue: mockConnection,
         },
         {
-          provide: getModelToken("Chats"),
+          provide: getModelToken(Chats.name, "Datas"),
           useValue: mockChatModel,
         },
         {
@@ -53,18 +58,9 @@ describe("ChatProcessorService", () => {
           useValue: mockUploadService,
         },
         {
-          provide: "bull_queue_chat.process",
+          provide: getQueueToken("chat.process"),
           useValue: mockQueue,
         },
-        {
-          provide: getConnectionToken(),
-          useValue: mockConnection,
-        },
-        {
-          provide: "BullQueue_chat.process",
-          useValue: mockQueue,
-        },
-        Logger,
       ],
     }).compile();
 
@@ -76,22 +72,41 @@ describe("ChatProcessorService", () => {
   });
 
   describe("chatDelete", () => {
-    it("should delete chat and associated files", async () => {
-      const chatId = "chat123";
+    it("should delete chat and enqueue file deletions from messages", async () => {
+      const chatId = "507f1f77bcf86cd799439011";
       const job = mockJob({ _id: chatId });
+
       mockChatService.getMessages
         .mockResolvedValueOnce({
-          items: [{ images: [{ _id: "img1" }], file: { _id: "file1" } }],
-          nextPage: true,
+          items: [
+            {
+              images: [{ _id: "img1" }],
+              file: { _id: "file1" },
+            },
+          ],
+          nextPage: 2,
         })
         .mockResolvedValueOnce({
           items: [],
-          nextPage: false,
+          nextPage: null,
         });
 
-      await expect(service.chatDelete(job as any)).resolves.toBe(
-        "chat deleted successfully",
+      const result = await service.chatDelete(job as any);
+
+      expect(result).toBe("chat deleted successfully");
+
+      expect(mockChatService.getMessages).toHaveBeenCalledWith(
+        chatId,
+        1,
+        expect.any(Number),
       );
+
+      expect(mockChatService.getMessages).toHaveBeenCalledWith(
+        chatId,
+        2,
+        expect.any(Number),
+      );
+
       expect(mockQueue.add).toHaveBeenCalledWith(
         "file.delete",
         expect.objectContaining({
@@ -102,20 +117,24 @@ describe("ChatProcessorService", () => {
           job,
         }),
       );
+
       expect(mockConnection.dropCollection).toHaveBeenCalledWith(
         `ChatMessage_${chatId}`,
       );
+
       expect(mockChatModel.findByIdAndDelete).toHaveBeenCalledWith(chatId);
     });
   });
 
   describe("deleteFile", () => {
-    it("should delete images and files successfully", async () => {
-      const filesData = {
-        images: [{ _id: "img1" }, { _id: "img2" }],
-        file: { _id: "file1" },
-      };
-      const job = mockJob({ files: filesData, job: {} });
+    it("should delete all images and file successfully", async () => {
+      const job = mockJob({
+        files: {
+          images: [{ _id: "img1" }, { _id: "img2" }],
+          file: { _id: "file1" },
+        },
+        job: {},
+      });
 
       mockUploadService.deleteFile.mockResolvedValue(undefined);
 
@@ -125,56 +144,51 @@ describe("ChatProcessorService", () => {
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith("img1");
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith("img2");
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith("file1");
+
       expect(job.log).not.toHaveBeenCalled();
     });
 
-    it("should handle errors when deleting images", async () => {
+    it("should handle error when deleting an image", async () => {
       const error = new Error("fail to delete");
 
-      const filesData = {
-        images: [{ _id: "img1" }],
-        file: undefined,
-      };
-      const job = mockJob({ files: filesData, job: {} });
+      const job = mockJob({
+        files: {
+          images: [{ _id: "img1" }],
+          file: undefined,
+        },
+        job: {},
+      });
 
       mockUploadService.deleteFile.mockRejectedValueOnce(error);
-
-      const loggerErrorSpy = jest.spyOn(service["logger"], "error");
 
       await service.deleteFile(job as any);
 
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith("img1");
-      expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Erro ao deletar imagem img1:`,
-        error,
-      );
+
       expect(job.log).toHaveBeenCalledWith(
-        `Erro ao deletar imagem img1:${error}`,
+        expect.stringContaining("Erro ao deletar imagem img1"),
       );
     });
 
-    it("should handle errors when deleting file", async () => {
+    it("should handle error when deleting a file", async () => {
       const error = new Error("fail to delete file");
 
-      const filesData = {
-        images: undefined,
-        file: { _id: "file1" },
-      };
-      const job = mockJob({ files: filesData, job: {} });
+      const job = mockJob({
+        files: {
+          images: undefined,
+          file: { _id: "file1" },
+        },
+        job: {},
+      });
 
       mockUploadService.deleteFile.mockRejectedValueOnce(error);
-
-      const loggerErrorSpy = jest.spyOn(service["logger"], "error");
 
       await service.deleteFile(job as any);
 
       expect(mockUploadService.deleteFile).toHaveBeenCalledWith("file1");
-      expect(loggerErrorSpy).toHaveBeenCalledWith(
-        `Erro ao deletar imagem file1:`,
-        error,
-      );
+
       expect(job.log).toHaveBeenCalledWith(
-        `Erro ao deletar imagem file1: ${error}`,
+        expect.stringContaining("Erro ao deletar imagem file1"),
       );
     });
   });

@@ -26,7 +26,7 @@ describe("UserController", () => {
           useValue: mockUserService,
         },
         {
-          provide: getModelToken("Users"),
+          provide: getModelToken(Users.name, "Datas"),
           useValue: {},
         },
       ],

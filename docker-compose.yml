@@ -51,6 +51,7 @@ services:
       ZOOKEEPER_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
     ports:
       - "2181:2181"
+    attach: false
     networks:
       - api
       
@@ -117,6 +118,7 @@ services:
         ipv4_address: 172.30.0.5
     ports:
       - "26379:26379"
+    attach: false
     depends_on:
       - redis-master-backend-app-marcelo
 
@@ -133,6 +135,7 @@ services:
         ipv4_address: 172.30.0.6
     ports:
       - "26380:26379"
+    attach: false
     depends_on:
       - redis-master-backend-app-marcelo
 
@@ -149,6 +152,7 @@ services:
         ipv4_address: 172.30.0.7
     ports:
       - "26381:26379"
+    attach: false
     depends_on:
       - redis-master-backend-app-marcelo
 

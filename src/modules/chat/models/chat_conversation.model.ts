@@ -22,7 +22,7 @@ export class ChatConversation {
     index: true,
   })
   @IsMongoId()
-  sender: string;
+  sender!: string;
 
   @ApiProperty({ type: [Files], description: "Array de URLs de imagens" })
   @Prop({

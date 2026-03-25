@@ -67,11 +67,11 @@ describe("UploadService", () => {
       providers: [
         UploadService,
         {
-          provide: getModelToken(AllowedFileTypes.name),
+          provide: getModelToken(AllowedFileTypes.name, "Datas"),
           useValue: allowedFileTypesModel,
         },
         {
-          provide: getModelToken(Files.name),
+          provide: getModelToken(Files.name, "Datas"),
           useValue: filesModel,
         },
         {

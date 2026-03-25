@@ -1,6 +1,6 @@
-FROM node:24.1
+FROM node:24.14
 
 RUN npm install -g pnpm
 RUN npm install -g @nestjs/cli
-USER node 
+USER root 
 WORKDIR /home/node/app

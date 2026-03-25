@@ -1,20 +1,32 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { firstValueFrom, of } from "rxjs";
+
 import { ChatProducerService } from "./chat.producer.service";
-import { ClientKafka } from "@nestjs/microservices";
-import { of } from "rxjs";
 
 describe("ChatProducerService", () => {
   let service: ChatProducerService;
-  let clientKafka: ClientKafka;
 
   const mockClientKafka = {
     subscribeToResponseOf: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
     close: jest.fn().mockResolvedValue(undefined),
-    emit: jest.fn().mockReturnValue(of({})),
+    emit: jest.fn(),
   };
 
+  const topics = [
+    "chat.create",
+    "chat.delete",
+    "chat.message.create",
+    "chat.message.update",
+    "chat.message.delete",
+    "chat.message.create.pending",
+    "chat.message.update.pending",
+    "chat.message.delete.pending",
+  ];
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatProducerService,
@@ -25,63 +37,47 @@ describe("ChatProducerService", () => {
       ],
     }).compile();
 
-    service = module.get<ChatProducerService>(ChatProducerService);
-    clientKafka = module.get<ClientKafka>("CHAT_MODULE");
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    service = module.get(ChatProducerService);
   });
 
   describe("onModuleInit", () => {
-    it("should subscribe to all topics and connect", async () => {
+    it("deve subscrever todos os tópicos e conectar no Kafka", async () => {
       await service.onModuleInit();
 
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledTimes(8);
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.create",
+      expect(mockClientKafka.subscribeToResponseOf).toHaveBeenCalledTimes(
+        topics.length,
       );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.delete",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.create",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.update",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.delete",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.create.pending",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.update.pending",
-      );
-      expect(clientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
-        "chat.message.delete.pending",
-      );
-      expect(clientKafka.connect).toHaveBeenCalled();
+
+      topics.forEach((topic) => {
+        expect(mockClientKafka.subscribeToResponseOf).toHaveBeenCalledWith(
+          topic,
+        );
+      });
+
+      expect(mockClientKafka.connect).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("onModuleDestroy", () => {
-    it("should close the client connection", async () => {
+    it("deve fechar a conexão do Kafka", async () => {
       await service.onModuleDestroy();
-      expect(clientKafka.close).toHaveBeenCalled();
+
+      expect(mockClientKafka.close).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("sendMessage", () => {
-    it("should emit message to given topic", () => {
+    it("deve emitir a mensagem no tópico informado e retornar um Observable", async () => {
       const topic = "chat.create";
-      const message = { id: "123", content: "Hello" };
+      const payload = { id: "123", content: "Hello" };
 
-      const result = service.sendMessage(topic, message);
+      mockClientKafka.emit.mockReturnValue(of({ ok: true }));
 
-      expect(clientKafka.emit).toHaveBeenCalledWith(topic, message);
-      expect(result).toBeInstanceOf(Object); // Verifica se retorna um Observable
+      const result$ = service.sendMessage(topic, payload);
+
+      expect(mockClientKafka.emit).toHaveBeenCalledWith(topic, payload);
+
+      await expect(firstValueFrom(result$)).resolves.toEqual({ ok: true });
     });
   });
 });
