@@ -24,17 +24,17 @@ export class Chats {
   @IsNotEmpty()
   @ArrayNotEmpty()
   @IsMongoId({ each: true })
-  chatters: string[];
+  chatters!: string[];
 
   @Prop({
     required: false,
   })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Prop({
     required: false,
   })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Prop({
     required: false,

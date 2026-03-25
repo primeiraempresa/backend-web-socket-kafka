@@ -6,25 +6,25 @@ export class Sports {
   @ApiProperty({ default: false })
   @IsBoolean({ message: "campo academia deve ser Boolean" })
   @Prop({ required: true, default: false, index: true })
-  academia: boolean;
+  academia!: boolean;
 
   @ApiProperty({ default: false })
   @IsBoolean({ message: "campo caminhada deve ser Boolean" })
   @Prop({ required: true, default: false, index: true })
-  caminhada: boolean;
+  caminhada!: boolean;
 
   @ApiProperty({ default: false })
   @IsBoolean({ message: "campo crossfit deve ser Boolean" })
   @Prop({ required: true, default: false, index: true })
-  crossfit: boolean;
+  crossfit!: boolean;
 
   @ApiProperty({ default: false })
   @IsBoolean({ message: "campo futebol deve ser Boolean" })
   @Prop({ required: true, default: false, index: true })
-  futebol: boolean;
+  futebol!: boolean;
 
   @ApiProperty({ default: false })
   @IsBoolean({ message: "campo futevolei deve ser Boolean" })
   @Prop({ required: true, default: false, index: true })
-  futevolei: boolean;
+  futevolei!: boolean;
 }

@@ -16,5 +16,5 @@ export class AllowedFileTypes {
   })
   @IsNotEmpty()
   @IsString()
-  type: string;
+  type!: string;
 }

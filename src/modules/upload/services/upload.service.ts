@@ -19,10 +19,10 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { FilesDocument } from "../schemas/files.schema";
-import { FilePagination } from "../models/file_pagination.model";
 import * as fileType from "file-type";
 import { configService } from "@config/config.service";
 import { CommonService } from "@common/services/common.service";
+import { IPagination } from "@common/interface/pagination.interface";
 @Injectable()
 export class UploadService {
   constructor(
@@ -61,7 +61,10 @@ export class UploadService {
     }
     return "type deleted";
   }
-  async getFileAll(page: number, limit: number): Promise<FilePagination> {
+  async getFileAll(
+    page: number,
+    limit: number,
+  ): Promise<IPagination<FilesDocument>> {
     const skip = (page - 1) * limit;
     const [items, totalItems] = await Promise.all([
       await this.filesModel

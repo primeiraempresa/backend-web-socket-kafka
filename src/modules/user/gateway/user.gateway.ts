@@ -1,3 +1,4 @@
+import { IPagination } from "@common/interface/pagination.interface";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/config.service";
 import { JwtService } from "@nestjs/jwt";
@@ -9,7 +10,6 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from "@nestjs/websockets";
-import { UserPagination } from "@user/models/userPagination.model";
 import { UsersDocument } from "@user/schemas/user.schema";
 import { UserService } from "@user/services/user.service";
 import { RawData, Server, WebSocket } from "ws";
@@ -20,7 +20,7 @@ import { RawData, Server, WebSocket } from "ws";
 })
 export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly webSocketService: WebSocketService,
@@ -89,18 +89,19 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() body: { page?: number; perPage?: number },
   ): Promise<{
     event: string;
-    data: UserPagination | Error;
+    data: IPagination<UsersDocument> | Error;
   }> {
     try {
-      const result: UserPagination = await this.userService.getUsers(
-        body?.page ? parseInt(body?.page.toString()) : 1,
-        body?.perPage ? parseInt(body?.perPage.toString()) : 10,
-      );
+      const result: IPagination<UsersDocument> =
+        await this.userService.getUsers(
+          body?.page ? parseInt(body?.page.toString()) : 1,
+          body?.perPage ? parseInt(body?.perPage.toString()) : 10,
+        );
       return {
         event: "user",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,
@@ -118,7 +119,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
         event: "user.id",
         data: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         event: "error",
         data: error?.response ?? error,

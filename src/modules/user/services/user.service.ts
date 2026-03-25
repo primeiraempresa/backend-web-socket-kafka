@@ -11,8 +11,8 @@ import { Model, ObjectId, isValidObjectId } from "mongoose";
 import * as bcrypt from "bcryptjs";
 import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
-import { UserPagination } from "@user/models/userPagination.model";
 import { CacheService } from "@common/services/cache.service";
+import { IPagination } from "@common/interface/pagination.interface";
 @Injectable()
 export class UserService {
   constructor(
@@ -20,7 +20,10 @@ export class UserService {
     private readonly usersModel: Model<UsersDocument>,
     private readonly cacheService: CacheService,
   ) {}
-  async getUsers(page: number, limit: number): Promise<UserPagination> {
+  async getUsers(
+    page: number,
+    limit: number,
+  ): Promise<IPagination<UsersDocument>> {
     const skip = (page - 1) * limit;
     const [items, totalItems] = await Promise.all([
       await this.usersModel

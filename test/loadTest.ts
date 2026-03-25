@@ -26,8 +26,8 @@ class LoadTestLogger {
   }
 }
 
-const WS_BASE = "ws://localhost:3000/";
-const API_BASE = "http://localhost:3000/api";
+const WS_BASE = `ws://localhost:${process.env.PORT}/`;
+const API_BASE = `http://localhost:${process.env.PORT}/api`;
 
 const CLIENT_ID = process.env.client_id;
 const CLIENT_SECRET = process.env.client_secret;
@@ -147,7 +147,7 @@ async function sendMessage(user: User, chatId: string, content: string) {
 }
 
 async function main() {
-  const userCount = 1000;
+  const userCount = 500;
   const users: User[] = [];
 
   LoadTestLogger.app(
