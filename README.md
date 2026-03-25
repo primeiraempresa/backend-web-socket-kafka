@@ -53,16 +53,31 @@ $ pnpm run test:cov
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+docker compose down
+docker network prune -f
+docker compose up -d
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-```bash
-$ pnpm install -g mau
-$ mau deploy
+--------------------------
+Stop all container:
+docker stop $(docker ps -q)
+
+Remove all containers
+docker rm -f $(docker ps -aq)
+
+Remove all volumes
+docker volume rm $(docker volume ls -q)
+
+Ge the environment variables form .env.example, and you are going to put the values in .env file. To authenticate your app on post api/auth
+
+
+## To grant permission: 
+ 
 ```
+$ chmod +x .docker/entrypoint.sh
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+$ chmod +x .docker/minio-seed.sh
+```
 
 ## Resources
 
@@ -92,11 +107,6 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 
-## To grant permission: 
- 
-```
-$ chmod +x .docker/entrypoint.sh
 
-$ chmod +x .docker/minio-seed.sh
-```
+
 
