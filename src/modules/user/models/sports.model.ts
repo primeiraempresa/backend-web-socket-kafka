@@ -1,30 +1,11 @@
-import { Prop } from "@nestjs/mongoose";
+import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean } from "class-validator";
-
+import { IsNotEmpty, IsString } from "class-validator";
+@Schema({ versionKey: false })
 export class Sports {
-  @ApiProperty({ default: false })
-  @IsBoolean({ message: "campo academia deve ser Boolean" })
-  @Prop({ required: true, default: false, index: true })
-  academia!: boolean;
-
-  @ApiProperty({ default: false })
-  @IsBoolean({ message: "campo caminhada deve ser Boolean" })
-  @Prop({ required: true, default: false, index: true })
-  caminhada!: boolean;
-
-  @ApiProperty({ default: false })
-  @IsBoolean({ message: "campo crossfit deve ser Boolean" })
-  @Prop({ required: true, default: false, index: true })
-  crossfit!: boolean;
-
-  @ApiProperty({ default: false })
-  @IsBoolean({ message: "campo futebol deve ser Boolean" })
-  @Prop({ required: true, default: false, index: true })
-  futebol!: boolean;
-
-  @ApiProperty({ default: false })
-  @IsBoolean({ message: "campo futevolei deve ser Boolean" })
-  @Prop({ required: true, default: false, index: true })
-  futevolei!: boolean;
+  @ApiProperty({ default: "academia" })
+  @IsString({ message: "campo do nome do esporte de ser string" })
+  @IsNotEmpty()
+  @Prop({ required: true, index: true, unique: true })
+  name!: string;
 }

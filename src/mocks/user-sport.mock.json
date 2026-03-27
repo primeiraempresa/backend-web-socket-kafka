@@ -1,0 +1,62 @@
+[
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000001"
+        },
+        "name": "academia"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000002"
+        },
+        "name": "natação"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000003"
+        },
+        "name": "futebol"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000004"
+        },
+        "name": "basquete"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000005"
+        },
+        "name": "corrida"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000006"
+        },
+        "name": "ciclismo"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000007"
+        },
+        "name": "crossfit"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000008"
+        },
+        "name": "yoga"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000009"
+        },
+        "name": "jiu-jitsu"
+    },
+    {
+        "_id": {
+            "$oid": "65f1a1b2c3d4e5f601000010"
+        },
+        "name": "boxe"
+    }
+]

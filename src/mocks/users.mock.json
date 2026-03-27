@@ -6,13 +6,16 @@
     "email": "renanfigueoli@outlook.com",
     "username": "Renan",
     "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
-    "esportes": {
-      "academia": true,
-      "caminhada": false,
-      "crossfit": false,
-      "futebol": false,
-      "futevolei": false
-    },
+    "sports": [
+      {
+        "sport": "65f1a1b2c3d4e5f601000001",
+        "active": true
+      },
+      {
+        "sport": "65f1a1b2c3d4e5f601000005",
+        "active": false
+      }
+    ],
     "profilePic": null
   },
   {
@@ -22,13 +25,16 @@
     "email": "teste@outlook.com",
     "username": "Teste",
     "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
-    "esportes": {
-      "academia": true,
-      "caminhada": false,
-      "crossfit": false,
-      "futebol": true,
-      "futevolei": false
-    },
+    "sports": [
+      {
+        "sport": "65f1a1b2c3d4e5f601000001",
+        "active": false
+      },
+      {
+        "sport": "65f1a1b2c3d4e5f601000005",
+        "active": true
+      }
+    ],
     "profilePic": null
   },
   {
@@ -38,13 +44,16 @@
     "email": "marcelo@teste.com",
     "username": "Marcelo",
     "password": "$2b$10$KIGtst8wpSaOxrVaFItnUOpsjAlNupoGg44Fvhyz4sYioHfWxotcy",
-    "esportes": {
-      "academia": true,
-      "caminhada": false,
-      "crossfit": false,
-      "futebol": false,
-      "futevolei": false
-    },
+    "sports": [
+      {
+        "sport": "65f1a1b2c3d4e5f601000001",
+        "active": true
+      },
+      {
+        "sport": "65f1a1b2c3d4e5f601000005",
+        "active": true
+      }
+    ],
     "profilePic": null
   }
 ]

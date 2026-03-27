@@ -8,9 +8,10 @@ import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 import { ExpressAdapter } from "@bull-board/express";
 import { WsAdapter } from "@nestjs/platform-ws";
 import { createBullBoard } from "@bull-board/api";
-import * as Queue from "bull";
+import Queue = require("bull");
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { redisSentinelsConfig } from "@config/redis.sentinels.config";
+import { MongoExceptionFilter } from "@common/filters/mongo-exception.filter";
 
 async function bootstrap() {
   const logger = new Logger();
@@ -18,8 +19,9 @@ async function bootstrap() {
   app.useWebSocketAdapter(new WsAdapter(app));
   app.enableCors();
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  app.setGlobalPrefix("/api");
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalFilters(new MongoExceptionFilter());
+  app.setGlobalPrefix("/api");
   //Config Swagger
   const configSwagger = new DocumentBuilder()
     .setTitle("API app Marcelo")

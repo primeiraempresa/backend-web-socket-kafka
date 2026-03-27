@@ -76,6 +76,7 @@ services:
       - "9093:9093"
     networks:
       - api
+    attach: false
     depends_on:
       - zookeeper-backend-app-marcelo
   redis-master-backend-app-marcelo:
@@ -208,9 +209,10 @@ services:
       - -c
       - | 
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection Users --file home/node/app/src/mocks/users.mock.json --jsonArray &&
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection Sports --file home/node/app/src/mocks/user-sport.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection Chats --file home/node/app/src/mocks/chats.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Chats_Messages --collection ChatMessage_67f9f61c571627cad4f95818 --file home/node/app/src/mocks/chats_conversation.mock.json --jsonArray &&
-        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection Allowed_file_types --file home/node/app/src/mocks/upload-type.mock.json --jsonArray &&
+        mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection AllowedFileTypes --file home/node/app/src/mocks/upload-type.mock.json --jsonArray &&
         mongoimport --uri mongodb://mongodb-backend-app-marcelo:27017/Datas --collection Files --file home/node/app/src/mocks/upload-files.mock.json --jsonArray
 
   minio-seed-backend-app-marcelo:

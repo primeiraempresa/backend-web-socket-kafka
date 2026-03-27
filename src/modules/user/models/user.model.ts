@@ -1,14 +1,17 @@
-import { Sports } from "./sports.model";
 import { Prop, Schema } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
-  IsObject,
   IsString,
   IsStrongPassword,
 } from "class-validator";
 import mongoose from "mongoose";
+import { UserSport } from "./user-sport.model";
+import { UserSport_schema } from "@user/schemas/user-sport.schem";
+
 @Schema()
 export class Users {
   @ApiProperty({ required: true })
@@ -31,10 +34,11 @@ export class Users {
   @IsString()
   password!: string;
 
-  @ApiProperty({ required: true })
-  @Prop({ required: true })
-  @IsObject()
-  esportes!: Sports;
+  @ApiProperty({ type: [UserSport], required: false })
+  @IsArray()
+  @Type(() => UserSport)
+  @Prop({ type: [UserSport_schema], default: [] })
+  sports!: UserSport[];
 
   @ApiProperty({ default: null })
   @Prop({ required: false, default: null })

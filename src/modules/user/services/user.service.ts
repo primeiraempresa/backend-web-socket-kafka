@@ -13,6 +13,7 @@ import { UsersDto } from "@user/dto/users.dto";
 import { UserLogin } from "@user/dto/user_login.dto";
 import { CacheService } from "@common/services/cache.service";
 import { IPagination } from "@common/interface/pagination.interface";
+
 @Injectable()
 export class UserService {
   constructor(
@@ -20,24 +21,29 @@ export class UserService {
     private readonly usersModel: Model<UsersDocument>,
     private readonly cacheService: CacheService,
   ) {}
+
   async getUsers(
     page: number,
     limit: number,
   ): Promise<IPagination<UsersDocument>> {
     const skip = (page - 1) * limit;
+
     const [items, totalItems] = await Promise.all([
-      await this.usersModel
+      this.usersModel
         .find()
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate("profilePic")
+        .populate("sports.sport")
         .exec(),
-      await this.usersModel.countDocuments(),
+      this.usersModel.countDocuments(),
     ]);
+
     if (!items || items.length < 1) {
       throw new NotFoundException(["no users found"]);
     }
+
     return {
       items,
       totalItems,
@@ -46,84 +52,117 @@ export class UserService {
       nextPage: page * limit < totalItems ? page + 1 : null,
     };
   }
+
   async getUserByID(_id: ObjectId | string): Promise<UsersDocument> {
     if (!isValidObjectId(_id)) {
       throw new NotFoundException(["user not found"]);
     }
+
     const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
+
     const cachedUser: UsersDocument | null =
       await this.cacheService.getFromCache<UsersDocument>(cacheKey);
+
     if (cachedUser) return cachedUser;
+
     const user = await this.usersModel
       .findById(_id)
       .populate("profilePic")
+      .populate("sports.sport")
       .exec();
+
     if (!user) {
       throw new NotFoundException(["user not found"]);
     }
+
     await this.cacheService.setToCache(cacheKey, user);
     return user;
   }
+
   async registerUser(body: Users): Promise<UsersDocument> {
     await this.emailExist(body.email);
     await this.userNameExist(body.username);
+
     const { password } = body;
     const encryptedPassowrd = await bcrypt.hash(password, 10);
     body.password = encryptedPassowrd;
+
     return await this.usersModel.create(body);
   }
+
   async updateUser(
     body: UsersDto,
     _id: ObjectId | string,
   ): Promise<UsersDocument> {
     const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
     const user = await this.getUserByID(_id);
+
     if (body?.email && body.email !== user.email) {
       await this.emailExist(body?.email);
     }
+
     if (body?.username && body.username !== user.username) {
       await this.userNameExist(body?.username);
     }
+
+    if (body?.password) {
+      body.password = await bcrypt.hash(body.password, 10);
+    }
+
     await this.cacheService.deleteFromCache(cacheKey);
+
     const updatedUser = await this.usersModel
       .findByIdAndUpdate(user._id, body, {
         new: true,
         runValidators: true,
       })
+      .populate("profilePic")
+      .populate("sports.sport")
       .exec();
+
     if (!updatedUser) {
       throw new NotFoundException(["user not found"]);
     }
+
     return updatedUser;
   }
+
   async loginUser(userLogin: UserLogin): Promise<UsersDocument> {
     const user = await this.findUser(userLogin.user);
     const message = "username/email ou senha incorreto. ";
+
     if (!user) {
       throw new UnauthorizedException([message]);
     }
+
     const isPasswordValid = await bcrypt.compare(
       userLogin.password,
       user.password,
     );
+
     if (!isPasswordValid) {
       throw new UnauthorizedException([message]);
     }
+
     return user;
   }
 
   async deleteUser(userLogin: UserLogin, _id: ObjectId | string) {
     await this.loginUser(userLogin);
+
     const cacheKey = `user_${typeof _id == "string" ? _id : _id.toString()}`;
     await this.cacheService.deleteFromCache(cacheKey);
+
     return await this.usersModel.findOneAndDelete({ _id });
   }
+
   private async findUser(user: string): Promise<UsersDocument | null> {
     const userFind = await this.usersModel
       .findOne({
         $or: [{ email: user }, { username: user }],
       })
       .exec();
+
     return userFind;
   }
 

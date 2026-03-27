@@ -1,71 +1,59 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { DateService } from "./date.service";
-import { ConfigService } from "@nestjs/config";
+import { toZonedTime } from "date-fns-tz";
 
-class MockConfigService {
-  get(key: string): string {
-    if (key === "TZ") return "America/Sao_Paulo";
-    return "";
-  }
-}
+jest.mock("date-fns-tz", () => ({
+  toZonedTime: jest.fn(),
+}));
 
 describe("DateService", () => {
   let service: DateService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DateService,
-        {
-          provide: ConfigService,
-          useClass: MockConfigService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<DateService>(DateService);
+  beforeEach(() => {
+    service = new DateService();
+    jest.clearAllMocks();
   });
 
-  it("should be defined", () => {
-    expect(service).toBeDefined();
+  describe("now", () => {
+    it("should return zoned current date", () => {
+      const fakeDate = new Date("2024-01-01T00:00:00Z");
+      const zonedDate = new Date("2024-01-01T03:00:00Z");
+
+      jest.spyOn(global, "Date").mockImplementation(() => fakeDate as any);
+
+      (toZonedTime as jest.Mock).mockReturnValue(zonedDate);
+
+      const result = service.now();
+
+      expect(toZonedTime).toHaveBeenCalledWith(fakeDate, expect.any(String));
+      expect(result).toBe(zonedDate);
+    });
   });
 
-  it("should return the current date in the configured timezone", () => {
-    const result = service.now();
+  describe("date", () => {
+    it("should convert provided date to zoned time", () => {
+      const input = "2024-01-01T00:00:00Z";
+      const parsedDate = new Date(input);
+      const zonedDate = new Date("2024-01-01T03:00:00Z");
 
-    // Usamos jest.spyOn para garantir que o método toISOString funciona corretamente
-    const spy = jest
-      .spyOn(result, "toISOString")
-      .mockReturnValue("2024-01-01T12:00:00.000Z");
-    expect(result).toBeInstanceOf(Date);
-    expect(result.toISOString()).toContain("2024-01-01T");
-    spy.mockRestore();
-  });
+      (toZonedTime as jest.Mock).mockReturnValue(zonedDate);
 
-  it("should fallback to America/Sao_Paulo if TZ is not set", async () => {
-    const mockConfigService = new MockConfigService();
-    mockConfigService.get = jest.fn().mockReturnValue(undefined); // Forçando o valor de TZ para undefined
+      const result = service.date(input);
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DateService,
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
-      ],
-    }).compile();
+      expect(toZonedTime).toHaveBeenCalledWith(parsedDate, expect.any(String));
+      expect(result).toBe(zonedDate);
+    });
 
-    service = module.get<DateService>(DateService);
+    it("should accept timestamp number", () => {
+      const input = 1704067200000;
+      const parsedDate = new Date(input);
+      const zonedDate = new Date("2024-01-01T03:00:00Z");
 
-    const result = service.now();
+      (toZonedTime as jest.Mock).mockReturnValue(zonedDate);
 
-    // Usamos jest.spyOn para garantir que o método toISOString funciona corretamente
-    const spy = jest
-      .spyOn(result, "toISOString")
-      .mockReturnValue("2024-01-01T12:00:00.000Z");
-    expect(result).toBeInstanceOf(Date);
-    expect(result.toISOString()).toContain("2024-01-01T");
-    spy.mockRestore();
+      const result = service.date(input);
+
+      expect(toZonedTime).toHaveBeenCalledWith(parsedDate, expect.any(String));
+      expect(result).toBe(zonedDate);
+    });
   });
 });
