@@ -30,7 +30,7 @@ export class UploadConsumerController {
         "upload.create",
         upload,
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       return this.webSocketService.sendToUser(
         message.userId,
@@ -52,7 +52,7 @@ export class UploadConsumerController {
       return this.webSocketService.sendToUser(message.userId, "upload.delete", {
         message: del,
       });
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(error);
       return this.webSocketService.sendToUser(
         message.userId,

@@ -5,7 +5,7 @@ import { Server, WebSocket } from "ws";
 export class WebSocketService {
   private readonly logger = new Logger(WebSocketService.name);
 
-  server: Server;
+  server!: Server;
   usersOnline: Map<string, WebSocket> = new Map<string, WebSocket>();
 
   setServer(server: Server) {

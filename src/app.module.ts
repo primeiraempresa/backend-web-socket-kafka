@@ -23,7 +23,10 @@ import { redisStore } from "cache-manager-redis-store";
     }),
     MongooseModule.forRoot(
       `${configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string}`,
-      { connectionName: "Datas", dbName: "Datas" },
+      {
+        connectionName: "Datas",
+        dbName: "Datas",
+      },
     ),
     MongooseModule.forRoot(
       `${configService.get<string>("DBAAS_MONGODB_ENDPOINT") as string}`,

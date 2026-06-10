@@ -55,8 +55,8 @@ async function createUser(index: number): Promise<User> {
     username: `user${index}`,
     email: `user${index}@test.com`,
     password: "Test@123",
-    esportes: {},
-    profilePic: "",
+    sports: [],
+    profilePic: null,
   };
 
   const res = await axios.post(`${API_BASE}/user`, userData, {
