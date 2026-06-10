@@ -49,36 +49,53 @@ services:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_LISTENER_PORT: 2181
       ZOOKEEPER_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      ZOOKEEPER_TICK_TIME: 2000
+    attach: false 
     ports:
       - "2181:2181"
-    attach: false
+    volumes:
+      - zookeeper_data:/opt/zookeeper-3.4.13/data
+      - zookeeper_datalog:/opt/zookeeper-3.4.13/datalog
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - api
       
   kafka-backend-app-marcelo:
     image: wurstmeister/kafka:latest
-    container_name: kafka-backend-app-marcelo
-    environment:
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka-backend-app-marcelo:9093
-      KAFKA_LISTENERS: INSIDE://kafka-backend-app-marcelo:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT
-      KAFKA_LISTENER_NAME_INSIDE: INSIDE
-      KAFKA_LISTENER_PORT: 9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
-      KAFKA_LISTENER_INTERFACES: INSIDE
-      KAFKA_LISTENER_NAMES: INSIDE
-      KAFKA_LISTENER_INTERNAL: INSIDE://kafka-backend-app-marcelo:9093
-      KAFKA_LISTENER_MODE: BROKER
-      KAFKA_ADVERTISED_LISTENER: INSIDE://kafka-backend-app-marcelo:9093
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper-backend-app-marcelo:2181
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE 
+    depends_on:
+      zookeeper-backend-app-marcelo:
+        condition: service_healthy
     ports:
       - "9093:9093"
     networks:
       - api
-    attach: false
-    depends_on:
-      - zookeeper-backend-app-marcelo
+    attach: false 
+    volumes:
+      - kafka_data:/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9093 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-backend-app-marcelo:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-backend-app-marcelo:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /kafka/kafka-logs
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 6000
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 6000
+
   redis-master-backend-app-marcelo:
     image: redis
     container_name: redis-master-backend-app-marcelo
@@ -160,13 +177,20 @@ services:
   app:
     build: .
     depends_on:
-      - mongodb-backend-app-marcelo
-      - minio-backend-app-marcelo
-      - kafka-backend-app-marcelo
-      - zookeeper-backend-app-marcelo
-      - redis-sentinel-backend-app-marcelo
-      - redis-sentinel2-backend-app-marcelo
-      - redis-sentinel3-backend-app-marcelo
+      kafka-backend-app-marcelo:
+        condition: service_healthy
+      mongodb-backend-app-marcelo:
+        condition: service_started
+      minio-backend-app-marcelo:
+        condition: service_started
+      zookeeper-backend-app-marcelo:
+        condition: service_healthy
+      redis-sentinel-backend-app-marcelo:
+        condition: service_started
+      redis-sentinel2-backend-app-marcelo:
+        condition: service_started
+      redis-sentinel3-backend-app-marcelo:
+        condition: service_started
     entrypoint: .docker/entrypoint.sh
     ports:
       - "${PORT}:${PORT}"
@@ -229,6 +253,9 @@ services:
 
 volumes: 
   minio_data:
+  zookeeper_data:
+  zookeeper_datalog:
+  kafka_data:
 
 networks:
   redis-network:
