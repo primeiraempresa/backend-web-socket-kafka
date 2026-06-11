@@ -1,4 +1,4 @@
-name: Nestjs Test - TDD
+name: Nestjs EsLint
 on: [push]
 jobs:
   test:
