@@ -1,9 +1,0 @@
-allowBuilds:
-  '@nestjs/core': false
-  '@playwright/browser-chromium': false
-  '@scarf/scarf': false
-  '@swc/core': false
-  aws-sdk: false
-  msgpackr-extract: false
-  protobufjs: false
-  unix-dgram: false
