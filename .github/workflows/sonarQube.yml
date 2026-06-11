@@ -26,6 +26,12 @@ jobs:
         with:
           version: '8'
 
+      - name: Debug
+        run: |
+          pwd
+          ls -la
+          cat pnpm-workspace.yaml || true
+          
       - name: Instalar dependências
         run: pnpm install
 

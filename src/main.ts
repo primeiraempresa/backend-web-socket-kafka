@@ -32,10 +32,7 @@ async function bootstrap() {
       flows: {
         password: {
           tokenUrl: `${configService.get<string>("URL")}api/auth/`,
-          scopes: {
-            read: "read",
-            write: "write",
-          },
+          scopes: {},
         },
       },
     })
