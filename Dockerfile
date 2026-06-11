@@ -1,7 +1,6 @@
-FROM node:24.14
+FROM node:24.1.0
 
-RUN npm install -g pnpm
-RUN npm install -g @nestjs/cli
+RUN npm install -g pnpm@9.15.0 @nestjs/cli
 
 USER node
 
