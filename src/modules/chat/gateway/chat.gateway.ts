@@ -18,22 +18,26 @@ import {
 } from "@nestjs/websockets";
 import { UserService } from "@user/services/user.service";
 import { Observable } from "rxjs";
-import { Chat_T, Chat_T_WS } from "@chat/interfaces/chat-T.interface";
-import {
-  ChatConversationT,
-  ChatConversationTwS,
-} from "@chat/interfaces/chat_conversation-T.interface";
-import {
-  Chat_conversation_messageT,
-  Chat_conversation_messageT_Ws,
-} from "@chat/interfaces/chat_conversation_message-T.interface";
+import { Chat_T_WS } from "@chat/interfaces/chat-T.interface";
+import { ChatConversationTwS } from "@chat/interfaces/chat_conversation-T.interface";
+import { Chat_conversation_messageT_Ws } from "@chat/interfaces/chat_conversation_message-T.interface";
 import { RawData, Server, WebSocket } from "ws";
 import { JwtService } from "@nestjs/jwt";
 import { Job, Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 import { ChatConversationDocument } from "@chat/schemas/chat_conversation.schema";
 import { IPagination } from "@common/interface/pagination.interface";
-
+import { AsyncApiSend } from "nestjs-asyncapi";
+import {
+  createMessageDTO,
+  deleteChatDTO,
+  deleteMessageDTO,
+  getAllChatsApiSendDTO,
+  getChatsByUserIdDTO,
+  getMessageByIdDTO,
+  getMessagensDTO,
+  updateMessageDTO,
+} from "@chat/dto/chats.gateway.dto";
 @WebSocketGateway({
   transports: ["websocket"],
   cors: { origin: "*" },
@@ -151,10 +155,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @AsyncApiSend({
+    channel: "chat",
+    message: {
+      payload: getAllChatsApiSendDTO,
+    },
+  })
   @SubscribeMessage("chat")
-  async getAllChats(
-    @MessageBody() body: { userIds?: string[]; chatId?: string },
-  ): Promise<{
+  async getAllChats(@MessageBody() body: getAllChatsApiSendDTO): Promise<{
     event: string;
     data: ChatsDocument | Error;
   }> {
@@ -174,8 +182,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       };
     }
   }
+
+  @AsyncApiSend({
+    channel: "chats.user",
+    message: {
+      payload: getChatsByUserIdDTO,
+    },
+  })
   @SubscribeMessage("chats.user")
-  async getChatsByUserId(@MessageBody() body: { userId: string }) {
+  async getChatsByUserId(@MessageBody() body: getChatsByUserIdDTO) {
     try {
       const result = await this.chatService.getChatsByUserId(body.userId);
       return {
@@ -190,10 +205,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @AsyncApiSend({
+    channel: "chat.message",
+    message: {
+      payload: getMessagensDTO,
+    },
+  })
   @SubscribeMessage("chat.message")
-  async getMessagens(
-    @MessageBody() body: { chatId: string; page?: number; perPage?: number },
-  ): Promise<{
+  async getMessagens(@MessageBody() body: getMessagensDTO): Promise<{
     event: string;
     data: IPagination<ChatConversationDocument> | Error;
   }> {
@@ -215,8 +234,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @AsyncApiSend({
+    channel: "chat.message.id",
+    message: {
+      payload: getMessageByIdDTO,
+    },
+  })
   @SubscribeMessage("chat.message.id")
-  async getMessageById(@MessageBody() body: Chat_T): Promise<{
+  async getMessageById(@MessageBody() body: getMessageByIdDTO): Promise<{
     event: string;
     data: ChatConversation | Error;
   }> {
@@ -236,6 +261,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       };
     }
   }
+
+  @AsyncApiSend({
+    channel: "chat.create",
+    message: {
+      payload: Chats,
+    },
+  })
   @SubscribeMessage("chat.create")
   createChat(
     @MessageBody() body: Chats,
@@ -254,10 +286,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @AsyncApiSend({
+    channel: "chat.message.create",
+    message: {
+      payload: createMessageDTO,
+    },
+  })
   @SubscribeMessage("chat.message.create")
   createMessage(
     @MessageBody()
-    message: ChatConversationT,
+    message: createMessageDTO,
     @ConnectedSocket() client: WebSocket,
   ): Observable<ChatConversationTwS> | { error: string } {
     const userId = this.webSocketService.getUserIdBySocket(client) as string;
@@ -275,13 +313,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  @AsyncApiSend({
+    channel: "chat.message.update",
+    message: {
+      payload: updateMessageDTO,
+    },
+  })
   @SubscribeMessage("chat.message.update")
   async updateMessage(
     @MessageBody()
-    data: Chat_conversation_messageT,
+    data: updateMessageDTO,
     @ConnectedSocket() client: WebSocket,
   ): Promise<
-    | Observable<Chat_conversation_messageT>
+    | Observable<updateMessageDTO>
     | {
         event: string;
         data: string;
@@ -309,9 +353,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @AsyncApiSend({
+    channel: "chat.message.delete",
+    message: {
+      payload: deleteMessageDTO,
+    },
+  })
   @SubscribeMessage("chat.message.delete")
   deleteMessage(
-    @MessageBody() data: { chatId: string; messageId: string },
+    @MessageBody() data: deleteMessageDTO,
     @ConnectedSocket() client: WebSocket,
   ):
     | Observable<{
@@ -340,9 +390,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  @AsyncApiSend({
+    channel: "chat.delete",
+    message: {
+      payload: deleteChatDTO,
+    },
+  })
   @SubscribeMessage("chat.delete")
   async deleteChat(
-    @MessageBody() data: { chatId: string },
+    @MessageBody() data: deleteChatDTO,
     @ConnectedSocket() client: WebSocket,
   ): Promise<
     Observable<{

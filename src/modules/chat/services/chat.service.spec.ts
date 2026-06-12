@@ -14,6 +14,7 @@ import { Chats } from "../models/chat.model";
 import { Users } from "@user/models/user.model";
 import { Files } from "@upload/models/files.model";
 import { ChatConversationSchema } from "../schemas/chat_conversation.schema";
+import { Sports } from "@user/models/sports.model";
 
 jest.mock("@common/services/date.service", () => ({
   DateService: jest.fn().mockImplementation(() => ({
@@ -58,7 +59,7 @@ describe("ChatService", () => {
 
   const userModelMock = {};
   const fileModelMock = {};
-
+  const sportsMock = {};
   const chatsConnectionMock = {
     createCollection: jest.fn(),
     model: jest.fn(),
@@ -95,6 +96,11 @@ describe("ChatService", () => {
           provide: getModelToken(Files.name, "Datas"),
           useValue: fileModelMock,
         },
+        {
+          provide: getModelToken(Sports.name, "Datas"),
+          useValue: sportsMock,
+        },
+
         { provide: getQueueToken("chat.process"), useValue: queueMock },
         { provide: CommonService, useValue: commonServiceMock },
         { provide: UploadService, useValue: uploadServiceMock },
@@ -105,7 +111,7 @@ describe("ChatService", () => {
   });
 
   describe("createChat", () => {
-    it("should return an existing chat populated with chatters", async () => {
+    it("should return an existing chat populated with chatters and nested sports", async () => {
       const populatedChat = {
         _id: validChatId,
         chatters: [{ _id: validUserId1 }],
@@ -122,7 +128,13 @@ describe("ChatService", () => {
       expect(chatModelMock.findOne).toHaveBeenCalledWith({
         chatters: { $all: [validUserId1, validUserId2] },
       });
-      expect(existingChat.populate).toHaveBeenCalledWith("chatters");
+      expect(existingChat.populate).toHaveBeenCalledWith({
+        path: "chatters",
+        populate: {
+          path: "sports.sport",
+          model: sportsMock,
+        },
+      });
       expect(chatsConnectionMock.createCollection).not.toHaveBeenCalled();
       expect(result).toBe(populatedChat);
     });
@@ -147,7 +159,13 @@ describe("ChatService", () => {
       expect(chatsConnectionMock.createCollection).toHaveBeenCalledWith(
         `ChatMessage_${validChatId}`,
       );
-      expect(newChat.populate).toHaveBeenCalledWith("chatters");
+      expect(newChat.populate).toHaveBeenCalledWith({
+        path: "chatters",
+        populate: {
+          path: "sports.sport",
+          model: sportsMock,
+        },
+      });
       expect(result).toEqual({
         _id: validChatId,
         chatters: [validUserId1, validUserId2],
@@ -190,6 +208,8 @@ describe("ChatService", () => {
         chatters: { $in: [new mongoose.Types.ObjectId(validUserId1)] },
       });
 
+      // chatters + lastMessage.sender (ambos com populate aninhado de sports)
+      expect(findChain.populate).toHaveBeenCalledTimes(2);
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(
         expect.objectContaining({
@@ -213,7 +233,7 @@ describe("ChatService", () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it("should create a message, populate relations and update the chat when file exists", async () => {
+    it("should create a message, populate relations (including nested sports) and update the chat when file exists", async () => {
       const messageModelMock = {
         create: jest.fn(),
       };
@@ -245,15 +265,26 @@ describe("ChatService", () => {
         `ChatMessage_${validChatId}`,
       );
       expect(messageModelMock.create).toHaveBeenCalledWith(body);
+
+      // Com arquivo: 4 chamadas (sender plain, sender nested sports, images, file)
+      expect(newMessage.populate).toHaveBeenCalledTimes(4);
       expect(newMessage.populate).toHaveBeenNthCalledWith(1, {
         path: "sender",
         model: userModelMock,
       });
       expect(newMessage.populate).toHaveBeenNthCalledWith(2, {
+        path: "sender",
+        model: userModelMock,
+        populate: {
+          path: "sports.sport",
+          model: sportsMock,
+        },
+      });
+      expect(newMessage.populate).toHaveBeenNthCalledWith(3, {
         path: "images",
         model: fileModelMock,
       });
-      expect(newMessage.populate).toHaveBeenNthCalledWith(3, {
+      expect(newMessage.populate).toHaveBeenNthCalledWith(4, {
         path: "file",
         model: fileModelMock,
       });
@@ -291,7 +322,8 @@ describe("ChatService", () => {
         file: null,
       } as any);
 
-      expect(newMessage.populate).toHaveBeenCalledTimes(2);
+      // Sem arquivo: 3 chamadas (sender plain, sender nested sports, images)
+      expect(newMessage.populate).toHaveBeenCalledTimes(3);
       expect(result).toBe(newMessage);
     });
   });
@@ -324,7 +356,7 @@ describe("ChatService", () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it("should return paginated messages", async () => {
+    it("should return paginated messages with nested sender.sports populated", async () => {
       commonServiceMock.validateMongoID.mockReturnValue(true);
 
       const messageModelMock = {
@@ -352,6 +384,22 @@ describe("ChatService", () => {
       expect(findChain.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(findChain.skip).toHaveBeenCalledWith(0);
       expect(findChain.limit).toHaveBeenCalledWith(10);
+      expect(findChain.populate).toHaveBeenCalledWith({
+        path: "sender",
+        model: userModelMock,
+        populate: {
+          path: "sports.sport",
+          model: sportsMock,
+        },
+      });
+      expect(findChain.populate).toHaveBeenCalledWith({
+        path: "images",
+        model: fileModelMock,
+      });
+      expect(findChain.populate).toHaveBeenCalledWith({
+        path: "file",
+        model: fileModelMock,
+      });
     });
   });
 

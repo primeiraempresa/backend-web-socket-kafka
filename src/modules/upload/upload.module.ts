@@ -13,6 +13,7 @@ import { UploadGateway } from "./gateway/upload.gateway";
 import { CommonModule } from "@common/common.module";
 import { UploadConsumerController } from "./controllers/upload.consumer.controller";
 import { UploadProducerService } from "./services/upload.producer.service";
+import { grupIDs } from "@common/utils/groupsID.util";
 
 @Module({
   imports: [
@@ -44,7 +45,7 @@ import { UploadProducerService } from "./services/upload.producer.service";
             },
           },
           consumer: {
-            groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+            groupId: grupIDs,
             allowAutoTopicCreation: true,
           },
         },

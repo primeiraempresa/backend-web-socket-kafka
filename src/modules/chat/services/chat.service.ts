@@ -24,6 +24,8 @@ import { DateService } from "@common/services/date.service";
 import { IPagination } from "@common/interface/pagination.interface";
 import { Files } from "@upload/models/files.model";
 import { UsersDocument } from "@user/schemas/user.schema";
+import { Sports } from "@user/models/sports.model";
+import { SportsDocument } from "@user/schemas/sports.schema";
 
 @Injectable()
 export class ChatService {
@@ -40,7 +42,10 @@ export class ChatService {
     @InjectModel(Files.name, "Datas")
     private readonly fileModel: Model<FilesDocument>,
 
-    @InjectQueue("chat.process") private readonly queue: Queue,
+    @InjectModel(Sports.name, "Datas")
+    private readonly SportModel: Model<SportsDocument>,
+    @InjectQueue("chat.process")
+    private readonly queue: Queue,
     private readonly commonService: CommonService,
     private readonly uploadService: UploadService,
   ) {}
@@ -51,7 +56,13 @@ export class ChatService {
     });
 
     if (existingChat) {
-      return existingChat.populate("chatters");
+      return existingChat.populate({
+        path: "chatters",
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
+      });
     }
 
     const newChat = await this.chatModel.create({
@@ -62,7 +73,13 @@ export class ChatService {
       `ChatMessage_${newChat._id.toString()}`,
     );
 
-    return newChat.populate("chatters");
+    return newChat.populate({
+      path: "chatters",
+      populate: {
+        path: "sports.sport",
+        model: this.SportModel,
+      },
+    });
   }
 
   async getChatsByUserId(userId: string) {
@@ -71,10 +88,20 @@ export class ChatService {
       .find({
         chatters: { $in: [userObjectId] },
       })
-      .populate("chatters")
+      .populate({
+        path: "chatters",
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
+      })
       .populate({
         path: "lastMessage.sender",
         model: this.userModel,
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
       })
       .exec();
 
@@ -119,6 +146,14 @@ export class ChatService {
     const newMessage = await messageModel.create(chat_conversation);
 
     await newMessage.populate({ path: "sender", model: this.userModel });
+    await newMessage.populate({
+      path: "sender",
+      model: this.userModel,
+      populate: {
+        path: "sports.sport",
+        model: this.SportModel,
+      },
+    });
     await newMessage.populate({ path: "images", model: this.fileModel });
     if (newMessage.file) {
       await newMessage.populate({ path: "file", model: this.fileModel });
@@ -149,16 +184,23 @@ export class ChatService {
     );
 
     const [items, totalItems] = await Promise.all([
-      await messageModel
+      messageModel
         .find()
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate({ path: "sender", model: this.userModel })
+        .populate({
+          path: "sender",
+          model: this.userModel,
+          populate: {
+            path: "sports.sport",
+            model: this.SportModel,
+          },
+        })
         .populate({ path: "images", model: this.fileModel })
         .populate({ path: "file", model: this.fileModel })
         .exec(),
-      await messageModel.countDocuments(),
+      messageModel.countDocuments(),
     ]);
 
     if (!items || items.length < 1) {
@@ -193,10 +235,20 @@ export class ChatService {
       .findOne({
         $or: [{ chatters: { $all: userIds } }, { _id }],
       })
-      .populate("chatters")
+      .populate({
+        path: "chatters",
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
+      })
       .populate({
         path: "lastMessage.sender",
         model: this.userModel,
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
       })
       .exec();
 
@@ -223,7 +275,14 @@ export class ChatService {
 
     const findById = await messageModel
       .findOne({ _id: message_id })
-      .populate({ path: "sender", model: this.userModel })
+      .populate({
+        path: "sender",
+        model: this.userModel,
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
+      })
       .populate({ path: "images", model: this.fileModel })
       .populate({ path: "file", model: this.fileModel });
 
@@ -276,7 +335,14 @@ export class ChatService {
         new: true,
         runValidators: true,
       })
-      .populate({ path: "sender", model: this.userModel })
+      .populate({
+        path: "sender",
+        model: this.userModel,
+        populate: {
+          path: "sports.sport",
+          model: this.SportModel,
+        },
+      })
       .populate({ path: "images", model: this.fileModel })
       .populate({ path: "file", model: this.fileModel })
       .exec();
@@ -317,7 +383,14 @@ export class ChatService {
 
       const deleteMessageById = await messageModel
         .findByIdAndDelete(message_id)
-        .populate({ path: "sender", model: this.userModel })
+        .populate({
+          path: "sender",
+          model: this.userModel,
+          populate: {
+            path: "sports.sport",
+            model: this.SportModel,
+          },
+        })
         .populate({ path: "images", model: this.fileModel })
         .populate({ path: "file", model: this.fileModel })
         .exec();

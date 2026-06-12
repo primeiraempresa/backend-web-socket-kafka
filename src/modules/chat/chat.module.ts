@@ -22,6 +22,9 @@ import { Users } from "@user/models/user.model";
 import { Users_schema } from "@user/schemas/user.schema";
 import { Files } from "@upload/models/files.model";
 import { FilesSchema } from "@upload/schemas/files.schema";
+import { Sports } from "@user/models/sports.model";
+import { Sports_schema } from "@user/schemas/sports.schema";
+import { grupIDs } from "@common/utils/groupsID.util";
 
 @Module({
   imports: [
@@ -36,6 +39,7 @@ import { FilesSchema } from "@upload/schemas/files.schema";
           name: Files.name,
           schema: FilesSchema,
         },
+        { name: Sports.name, schema: Sports_schema, collection: Sports.name },
       ],
       "Datas",
     ),
@@ -56,7 +60,7 @@ import { FilesSchema } from "@upload/schemas/files.schema";
             },
           },
           consumer: {
-            groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+            groupId: grupIDs,
             allowAutoTopicCreation: true,
           },
         },
