@@ -13,7 +13,6 @@ import { ChatGateway } from "./gateway/chat.gateway";
 import { UserModule } from "@user/user.module";
 import { BullModule } from "@nestjs/bull";
 import { UploadModule } from "@upload/upload.module";
-import { ChatProcessorService } from "./jobs/chat.processor.service";
 import {
   ChatConversation,
   ChatConversationSchema,
@@ -69,19 +68,11 @@ import { grupIDs } from "@common/utils/groupsID.util";
     BullModule.registerQueue({
       name: "chat",
     }),
-    BullModule.registerQueue({
-      name: "chat.process",
-    }),
     CommonModule,
     UserModule,
     UploadModule,
   ],
   controllers: [ChatController, ChatConsumerController],
-  providers: [
-    ChatService,
-    ChatGateway,
-    ChatProducerService,
-    ChatProcessorService,
-  ],
+  providers: [ChatService, ChatGateway, ChatProducerService],
 })
 export class ChatModule {}

@@ -3,7 +3,7 @@ import { ClientKafka } from "@nestjs/microservices";
 import { UploadProducerService } from "./upload.producer.service";
 
 describe("UploadProducerService", () => {
-  let service: UploadProducerService<any>;
+  let service: UploadProducerService;
   let clientKafka: ClientKafka;
 
   const clientKafkaMock = {
@@ -24,7 +24,7 @@ describe("UploadProducerService", () => {
       ],
     }).compile();
 
-    service = module.get<UploadProducerService<any>>(UploadProducerService);
+    service = module.get<UploadProducerService>(UploadProducerService);
     clientKafka = module.get<ClientKafka>("UPLOAD_MODULE");
 
     jest.clearAllMocks();

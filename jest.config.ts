@@ -46,6 +46,7 @@ const config: Config = {
     "/coverage/",
     "sonar-project.ts",
     "/enums/",
+    "/utils/",
     "sonar-project.ts ",
     "changelog.config.js",
     "sonar-project.ts",

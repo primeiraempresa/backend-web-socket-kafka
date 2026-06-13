@@ -18,14 +18,14 @@ import { FilesDocument } from "@upload/schemas/files.schema";
 import { CommonService } from "@common/services/common.service";
 import { ChatConversationDTO } from "../dto/chat_conversation.dto";
 import { UploadService } from "@upload/services/upload.service";
-import { Queue } from "bull";
-import { InjectQueue } from "@nestjs/bull";
 import { DateService } from "@common/services/date.service";
 import { IPagination } from "@common/interface/pagination.interface";
 import { Files } from "@upload/models/files.model";
 import { UsersDocument } from "@user/schemas/user.schema";
 import { Sports } from "@user/models/sports.model";
 import { SportsDocument } from "@user/schemas/sports.schema";
+import { ChatProducerService } from "./chat.producer.service";
+import { UploadProducerService } from "@upload/services/upload.producer.service";
 
 @Injectable()
 export class ChatService {
@@ -44,10 +44,10 @@ export class ChatService {
 
     @InjectModel(Sports.name, "Datas")
     private readonly SportModel: Model<SportsDocument>,
-    @InjectQueue("chat.process")
-    private readonly queue: Queue,
     private readonly commonService: CommonService,
     private readonly uploadService: UploadService,
+    private readonly chatProducerService: ChatProducerService,
+    private readonly uploadProducerService: UploadProducerService,
   ) {}
 
   async createChat(userIds: string[]): Promise<ChatsDocument> {
@@ -350,11 +350,12 @@ export class ChatService {
     if (!updatedMessage) throw new NotFoundException(["message not found"]);
 
     if (removedImages.length > 0) {
-      await this.queue.add("file.delete", {
-        files: {
-          images: removedImages,
-          file: null,
-        },
+      this.uploadProducerService.sendMessage<{
+        images?: ReturnType<FilesDocument["toJSON"]>[];
+        file?: ReturnType<FilesDocument["toJSON"]>;
+      }>("upload.delete.process", {
+        images: removedImages?.map((item) => item.toJSON()),
+        file: undefined,
       });
     }
 
@@ -420,9 +421,12 @@ export class ChatService {
     if (!this.commonService.validateMongoID(_id))
       throw new BadRequestException(["invalid chat id"]);
 
-    const findChatById = await this.chatModel.findById(_id);
+    const findChatById = await this.chatModel.findById(_id).exec();
     if (!findChatById) throw new NotFoundException(["chat not found"]);
 
-    return await this.queue.add("chat.delete", findChatById);
+    return this.chatProducerService.sendMessage<string>(
+      "chat.delete.process",
+      findChatById._id.toString(),
+    );
   }
 }

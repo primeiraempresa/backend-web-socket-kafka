@@ -61,4 +61,36 @@ export class UploadConsumerController {
       );
     }
   }
+
+  @MessagePattern("upload.delete.process")
+  async handleUploadDeleteProcess(
+    @Payload()
+    message: {
+      images?: ReturnType<FilesDocument["toJSON"]>[];
+      file?: ReturnType<FilesDocument["toJSON"]>;
+    },
+  ) {
+    if (message?.images) {
+      for (const item2 of message.images) {
+        try {
+          await this.uploadService.deleteFile(item2._id.toString());
+        } catch (error) {
+          this.logger.error(
+            `Erro ao deletar imagem ${item2._id.toString()}:`,
+            error,
+          );
+        }
+      }
+    }
+    if (message?.file) {
+      try {
+        await this.uploadService.deleteFile(message.file._id.toString());
+      } catch (error) {
+        this.logger.error(
+          `Erro ao deletar imagem ${message.file._id.toString()}:`,
+          error,
+        );
+      }
+    }
+  }
 }

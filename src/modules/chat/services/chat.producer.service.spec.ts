@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { firstValueFrom, of } from "rxjs";
 
 import { ChatProducerService } from "./chat.producer.service";
+import { SubscribeToResponseOffChats } from "@chat/utils/subscribeToResponsesOff.util";
 
 describe("ChatProducerService", () => {
   let service: ChatProducerService;
@@ -13,16 +14,7 @@ describe("ChatProducerService", () => {
     emit: jest.fn(),
   };
 
-  const topics = [
-    "chat.create",
-    "chat.delete",
-    "chat.message.create",
-    "chat.message.update",
-    "chat.message.delete",
-    "chat.message.create.pending",
-    "chat.message.update.pending",
-    "chat.message.delete.pending",
-  ];
+  const topics = SubscribeToResponseOffChats;
 
   beforeEach(async () => {
     jest.clearAllMocks();

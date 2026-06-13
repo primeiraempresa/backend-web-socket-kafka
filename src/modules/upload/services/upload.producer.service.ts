@@ -9,7 +9,7 @@ import { subscribeToResponseOfUpload } from "@upload/utils/subscribeToResponsesO
 import { Observable } from "rxjs";
 
 @Injectable()
-export class UploadProducerService<T> implements OnModuleInit, OnModuleDestroy {
+export class UploadProducerService implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject("UPLOAD_MODULE") private readonly client: ClientKafka) {}
   async onModuleInit() {
     subscribeToResponseOfUpload.forEach((item: string) => {
@@ -20,7 +20,7 @@ export class UploadProducerService<T> implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     await this.client.close();
   }
-  sendMessage(topic: string, message: T): Observable<T> {
+  sendMessage<T>(topic: string, message: T): Observable<T> {
     return this.client.emit<T>(topic, message);
   }
 }

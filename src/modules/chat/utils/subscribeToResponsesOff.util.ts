@@ -7,4 +7,5 @@ export const SubscribeToResponseOffChats = [
   "chat.message.create.pending",
   "chat.message.update.pending",
   "chat.message.delete.pending",
+  "chat.delete.process",
 ];

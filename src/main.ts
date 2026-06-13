@@ -91,12 +91,9 @@ async function bootstrap() {
   //Config Bull DashBord
   const serverAdapter = new ExpressAdapter();
   const queue_chat = new Queue("chat", { redis: redisSentinelsConfig });
-  const queue_chat_process = new Queue("chat.process", {
-    redis: redisSentinelsConfig,
-  });
   serverAdapter.setBasePath("/admin/queues/");
   createBullBoard({
-    queues: [new BullAdapter(queue_chat), new BullAdapter(queue_chat_process)],
+    queues: [new BullAdapter(queue_chat)],
     serverAdapter,
   });
   app.use("/admin/queues", serverAdapter.getRouter());
