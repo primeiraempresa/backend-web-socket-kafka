@@ -14,7 +14,7 @@ import { UploadModule } from "./modules/upload/upload.module";
 import { BullModule } from "@nestjs/bull";
 import { redisSentinelsConfig } from "@config/redis.sentinels.config";
 import { redisStore } from "cache-manager-redis-store";
-
+import { StringValue } from "ms";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -47,7 +47,7 @@ import { redisStore } from "cache-manager-redis-store";
       global: true,
       secret: configService.get<string>("client_secret"),
       signOptions: {
-        expiresIn: configService.get<string>("EXPIRES_TOKEN") ?? "48h",
+        expiresIn: configService.get<StringValue>("EXPIRES_TOKEN") ?? "48h",
       },
     }),
     BullModule.forRoot({

@@ -3,11 +3,13 @@ import { UploadService } from "@upload/services/upload.service";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { FilesDocument } from "@upload/schemas/files.schema";
 import { UploadConsumerController } from "./upload.consumer.controller";
+
 jest.mock("file-type", () => ({
   fileTypeFromBuffer: jest
     .fn()
     .mockResolvedValue({ ext: "png", mime: "image/png" }),
 }));
+
 describe("UploadConsumerController", () => {
   let controller: UploadConsumerController;
   let uploadService: UploadService;
@@ -47,9 +49,7 @@ describe("UploadConsumerController", () => {
 
     it("should upload file and send success message via websocket", async () => {
       const uploadedFile = { _id: "file123" } as FilesDocument;
-
-      uploadService.upload = jest.fn().mockResolvedValue(uploadedFile);
-      webSocketService.sendToUser = jest.fn();
+      jest.spyOn(uploadService, "upload").mockResolvedValue(uploadedFile);
 
       await controller.handleUploadCreate(message);
 
@@ -57,7 +57,6 @@ describe("UploadConsumerController", () => {
         message.bucket,
         message.file,
       );
-
       expect(webSocketService.sendToUser).toHaveBeenCalledWith(
         message.userId,
         "upload.create",
@@ -66,12 +65,8 @@ describe("UploadConsumerController", () => {
     });
 
     it("should handle error and send error message via websocket", async () => {
-      const error = {
-        response: { response: "Upload error" },
-      };
-
-      uploadService.upload = jest.fn().mockRejectedValue(error);
-      webSocketService.sendToUser = jest.fn();
+      const error = { response: { response: "Upload error" } };
+      jest.spyOn(uploadService, "upload").mockRejectedValue(error);
 
       await controller.handleUploadCreate(message);
 
@@ -79,6 +74,19 @@ describe("UploadConsumerController", () => {
         message.userId,
         "error",
         "Upload error",
+      );
+    });
+
+    it("should send raw error when error.response.response is not available", async () => {
+      const error = new Error("Raw upload error");
+      jest.spyOn(uploadService, "upload").mockRejectedValue(error);
+
+      await controller.handleUploadCreate(message);
+
+      expect(webSocketService.sendToUser).toHaveBeenCalledWith(
+        message.userId,
+        "error",
+        error,
       );
     });
   });
@@ -90,13 +98,11 @@ describe("UploadConsumerController", () => {
     };
 
     it("should delete file and send success message via websocket", async () => {
-      uploadService.deleteFile = jest.fn().mockResolvedValue("File deleted");
-      webSocketService.sendToUser = jest.fn();
+      jest.spyOn(uploadService, "deleteFile").mockResolvedValue("File deleted");
 
       await controller.handleUploadDelete(message);
 
       expect(uploadService.deleteFile).toHaveBeenCalledWith(message.id);
-
       expect(webSocketService.sendToUser).toHaveBeenCalledWith(
         message.userId,
         "upload.delete",
@@ -105,12 +111,8 @@ describe("UploadConsumerController", () => {
     });
 
     it("should handle error and send error message via websocket", async () => {
-      const error = {
-        response: { response: "Delete error" },
-      };
-
-      uploadService.deleteFile = jest.fn().mockRejectedValue(error);
-      webSocketService.sendToUser = jest.fn();
+      const error = { response: { response: "Delete error" } };
+      jest.spyOn(uploadService, "deleteFile").mockRejectedValue(error);
 
       await controller.handleUploadDelete(message);
 
@@ -119,6 +121,90 @@ describe("UploadConsumerController", () => {
         "error",
         "Delete error",
       );
+    });
+
+    it("should send raw error when error.response.response is not available", async () => {
+      const error = new Error("Raw delete error");
+      jest.spyOn(uploadService, "deleteFile").mockRejectedValue(error);
+
+      await controller.handleUploadDelete(message);
+
+      expect(webSocketService.sendToUser).toHaveBeenCalledWith(
+        message.userId,
+        "error",
+        error,
+      );
+    });
+  });
+
+  describe("handleUploadDeleteProcess", () => {
+    it("should delete images when message.images is provided", async () => {
+      const message = {
+        images: [
+          { _id: "image1" },
+          { _id: "image2" },
+          { _id: "image3" },
+        ] as unknown as ReturnType<FilesDocument["toJSON"]>[],
+      };
+      jest.spyOn(uploadService, "deleteFile").mockResolvedValue("File deleted");
+
+      await controller.handleUploadDeleteProcess(message);
+
+      expect(uploadService.deleteFile).toHaveBeenCalledTimes(3);
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("image1");
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("image2");
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("image3");
+    });
+
+    it("should log error when image deletion fails", async () => {
+      const message = {
+        images: [{ _id: "image1" }, { _id: "image2" }] as unknown as ReturnType<
+          FilesDocument["toJSON"]
+        >[],
+      };
+      jest
+        .spyOn(uploadService, "deleteFile")
+        .mockRejectedValue(new Error("Delete failed"));
+      jest.spyOn(controller["logger"], "error").mockImplementation();
+
+      await controller.handleUploadDeleteProcess(message);
+
+      expect(controller["logger"].error).toHaveBeenCalledTimes(2);
+    });
+
+    it("should delete single file when message.file is provided", async () => {
+      const message = {
+        file: {
+          _id: "file1",
+        } as unknown as ReturnType<FilesDocument["toJSON"]>,
+      };
+      jest.spyOn(uploadService, "deleteFile").mockResolvedValue("File deleted");
+
+      await controller.handleUploadDeleteProcess(message);
+
+      expect(uploadService.deleteFile).toHaveBeenCalledWith("file1");
+    });
+
+    it("should log error when single file deletion fails", async () => {
+      const message = {
+        file: {
+          _id: "file1",
+        } as unknown as ReturnType<FilesDocument["toJSON"]>,
+      };
+      jest
+        .spyOn(uploadService, "deleteFile")
+        .mockRejectedValue(new Error("Delete failed"));
+      jest.spyOn(controller["logger"], "error").mockImplementation();
+
+      await controller.handleUploadDeleteProcess(message);
+
+      expect(controller["logger"].error).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not call deleteFile when message is empty", async () => {
+      await controller.handleUploadDeleteProcess({});
+
+      expect(uploadService.deleteFile).not.toHaveBeenCalled();
     });
   });
 });

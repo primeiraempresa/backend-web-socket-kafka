@@ -1,7 +1,6 @@
 import { IPagination } from "@common/interface/pagination.interface";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { configService } from "@config/config.service";
-import { Inject } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
@@ -29,17 +28,7 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly webSocketService: WebSocketService,
     private readonly userService: UserService,
     private readonly uploadService: UploadService,
-    @Inject("UploadProducerService_create")
-    private readonly uploadProducerService_create: UploadProducerService<{
-      userId: string;
-      file: Base64URLString;
-      bucket: string;
-    }>,
-    @Inject("UploadProducerService_delete")
-    private readonly UploadProducerService_delete: UploadProducerService<{
-      userId: string;
-      id: string;
-    }>,
+    private readonly UploadProducerService: UploadProducerService,
     private readonly jwtService: JwtService,
   ) {}
   async handleConnection(client: WebSocket, req: Request) {
@@ -182,7 +171,11 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const userId = this.webSocketService.getUserIdBySocket(client) as string;
-      return this.uploadProducerService_create.sendMessage("upload.create", {
+      return this.UploadProducerService.sendMessage<{
+        userId: string;
+        file: Base64URLString;
+        bucket: string;
+      }>("upload.create", {
         userId,
         ...body,
       });
@@ -203,7 +196,10 @@ export class UploadGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       const userId = this.webSocketService.getUserIdBySocket(client) as string;
-      return this.UploadProducerService_delete.sendMessage("upload.delete", {
+      return this.UploadProducerService.sendMessage<{
+        userId: string;
+        id: string;
+      }>("upload.delete", {
         userId,
         id: body.id,
       });

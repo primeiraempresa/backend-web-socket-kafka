@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/only-throw-error */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { Test, TestingModule } from "@nestjs/testing";
 import { JwtService } from "@nestjs/jwt";
@@ -6,6 +7,7 @@ import { UploadGateway } from "./upload.gateway";
 import { WebSocketService } from "@common/services/webSocket.service";
 import { UserService } from "@user/services/user.service";
 import { UploadService } from "@upload/services/upload.service";
+import { UploadProducerService } from "@upload/services/upload.producer.service";
 
 jest.mock("@config/config.service", () => ({
   configService: {
@@ -35,11 +37,7 @@ describe("UploadGateway", () => {
     searchFile: jest.fn(),
   };
 
-  const uploadProducerCreateMock = {
-    sendMessage: jest.fn(),
-  };
-
-  const uploadProducerDeleteMock = {
+  const uploadProducerServiceMock = {
     sendMessage: jest.fn(),
   };
 
@@ -74,14 +72,7 @@ describe("UploadGateway", () => {
         { provide: WebSocketService, useValue: webSocketServiceMock },
         { provide: UserService, useValue: userServiceMock },
         { provide: UploadService, useValue: uploadServiceMock },
-        {
-          provide: "UploadProducerService_create",
-          useValue: uploadProducerCreateMock,
-        },
-        {
-          provide: "UploadProducerService_delete",
-          useValue: uploadProducerDeleteMock,
-        },
+        { provide: UploadProducerService, useValue: uploadProducerServiceMock },
         { provide: JwtService, useValue: jwtServiceMock },
       ],
     }).compile();
@@ -175,18 +166,11 @@ describe("UploadGateway", () => {
       expect(client.on).toHaveBeenCalledWith("message", expect.any(Function));
 
       handlers.message("hello");
-
       handlers.message(Buffer.from("buffer"));
       handlers.message([Buffer.from("a"), Buffer.from("b")]);
       const arrayBuffer = Buffer.from("arraybuffer").buffer;
-
       handlers.message(arrayBuffer as ArrayBuffer);
 
-      expect(webSocketServiceMock.handleMessage).toHaveBeenNthCalledWith(
-        4,
-        client,
-        Buffer.from(arrayBuffer).toString("utf8"),
-      );
       expect(webSocketServiceMock.handleMessage).toHaveBeenNthCalledWith(
         1,
         client,
@@ -202,13 +186,17 @@ describe("UploadGateway", () => {
         client,
         "ab",
       );
+      expect(webSocketServiceMock.handleMessage).toHaveBeenNthCalledWith(
+        4,
+        client,
+        Buffer.from(arrayBuffer).toString("utf8"),
+      );
     });
   });
 
   describe("handleDisconnect", () => {
     it("deve remover cliente quando socket estiver mapeado", () => {
       const client = {} as any;
-
       webSocketServiceMock.usersOnline.set("user-1", client);
 
       gateway.handleDisconnect(client);
@@ -225,41 +213,23 @@ describe("UploadGateway", () => {
 
   describe("getUpload", () => {
     it("deve buscar paginação com defaults", async () => {
-      const result = {
-        items: [],
-        total: 0,
-        page: 1,
-        perPage: 10,
-      } as any;
-
+      const result = { items: [], total: 0, page: 1, perPage: 10 } as any;
       uploadServiceMock.getFileAll.mockResolvedValue(result);
 
       const response = await gateway.getUpload({});
 
       expect(uploadServiceMock.getFileAll).toHaveBeenCalledWith(1, 10);
-      expect(response).toEqual({
-        event: "upload",
-        data: result,
-      });
+      expect(response).toEqual({ event: "upload", data: result });
     });
 
     it("deve buscar paginação com page e perPage informados", async () => {
-      const result = {
-        items: [],
-        total: 1,
-        page: 2,
-        perPage: 5,
-      } as any;
-
+      const result = { items: [], total: 1, page: 2, perPage: 5 } as any;
       uploadServiceMock.getFileAll.mockResolvedValue(result);
 
       const response = await gateway.getUpload({ page: 2, perPage: 5 });
 
       expect(uploadServiceMock.getFileAll).toHaveBeenCalledWith(2, 5);
-      expect(response).toEqual({
-        event: "upload",
-        data: result,
-      });
+      expect(response).toEqual({ event: "upload", data: result });
     });
 
     it("deve retornar error.response quando houver erro com response", async () => {
@@ -280,10 +250,7 @@ describe("UploadGateway", () => {
 
       const response = await gateway.getUpload({});
 
-      expect(response).toEqual({
-        event: "error",
-        data: expect.any(Error),
-      });
+      expect(response).toEqual({ event: "error", data: expect.any(Error) });
     });
   });
 
@@ -295,10 +262,7 @@ describe("UploadGateway", () => {
       const response = await gateway.getUploadById({ id: "file-1" });
 
       expect(uploadServiceMock.getFileByID).toHaveBeenCalledWith("file-1");
-      expect(response).toEqual({
-        event: "upload.id",
-        data: file,
-      });
+      expect(response).toEqual({ event: "upload.id", data: file });
     });
 
     it("deve retornar error.response quando houver erro com response", async () => {
@@ -319,10 +283,7 @@ describe("UploadGateway", () => {
 
       const response = await gateway.getUploadById({ id: "x" });
 
-      expect(response).toEqual({
-        event: "error",
-        data: expect.any(Error),
-      });
+      expect(response).toEqual({ event: "error", data: expect.any(Error) });
     });
   });
 
@@ -350,10 +311,25 @@ describe("UploadGateway", () => {
         "content",
         "mime",
       );
-      expect(response).toEqual({
-        event: "upload.id",
-        data: files,
-      });
+      expect(response).toEqual({ event: "upload.id", data: files });
+    });
+
+    it("deve buscar com filtros parciais", async () => {
+      const files = [{ id: "1" }] as any;
+      uploadServiceMock.searchFile.mockResolvedValue(files);
+
+      const response = await gateway.searchUpload({ bucket: "bucket" });
+
+      expect(uploadServiceMock.searchFile).toHaveBeenCalledWith(
+        "bucket",
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(response).toEqual({ event: "upload.id", data: files });
     });
 
     it("deve retornar error.response quando houver erro com response", async () => {
@@ -374,22 +350,15 @@ describe("UploadGateway", () => {
 
       const response = await gateway.searchUpload({ bucket: "bucket" });
 
-      expect(response).toEqual({
-        event: "error",
-        data: expect.any(Error),
-      });
+      expect(response).toEqual({ event: "error", data: expect.any(Error) });
     });
   });
 
   describe("createUpload", () => {
     it("deve enviar mensagem com userId, file e bucket", () => {
       const client = {} as any;
-
       webSocketServiceMock.getUserIdBySocket.mockReturnValue("user-1");
-      uploadProducerCreateMock.sendMessage.mockResolvedValue({
-        event: "upload.create",
-        data: { ok: true },
-      });
+      uploadProducerServiceMock.sendMessage.mockReturnValue({ ok: true });
 
       const response = gateway.createUpload(
         { file: "base64-file" as any, bucket: "bucket-1" },
@@ -399,7 +368,7 @@ describe("UploadGateway", () => {
       expect(webSocketServiceMock.getUserIdBySocket).toHaveBeenCalledWith(
         client,
       );
-      expect(uploadProducerCreateMock.sendMessage).toHaveBeenCalledWith(
+      expect(uploadProducerServiceMock.sendMessage).toHaveBeenCalledWith(
         "upload.create",
         {
           userId: "user-1",
@@ -407,12 +376,11 @@ describe("UploadGateway", () => {
           bucket: "bucket-1",
         },
       );
-      expect(response).toEqual(expect.any(Promise));
+      expect(response).toEqual({ ok: true });
     });
 
     it("deve retornar error quando getUserIdBySocket lançar erro", () => {
       const client = {} as any;
-
       webSocketServiceMock.getUserIdBySocket.mockImplementation(() => {
         throw new Error("socket error");
       });
@@ -427,36 +395,49 @@ describe("UploadGateway", () => {
         data: expect.any(Error),
       });
     });
+
+    it("deve retornar error.response quando erro tiver response", () => {
+      const client = {} as any;
+      const error = { response: { message: "fail" } };
+      webSocketServiceMock.getUserIdBySocket.mockImplementation(() => {
+        throw error;
+      });
+
+      const response = gateway.createUpload(
+        { file: "base64-file" as any, bucket: "bucket-1" },
+        client,
+      );
+
+      expect(response).toEqual({
+        event: "error",
+        data: { message: "fail" },
+      });
+    });
   });
 
   describe("deleteUpload", () => {
     it("deve enviar mensagem de delete com userId e id", () => {
       const client = {} as any;
-
       webSocketServiceMock.getUserIdBySocket.mockReturnValue("user-1");
-      uploadProducerDeleteMock.sendMessage.mockResolvedValue({
-        event: "upload.delete",
-        data: { ok: true },
-      });
+      uploadProducerServiceMock.sendMessage.mockReturnValue({ ok: true });
 
       const response = gateway.deleteUpload({ id: "file-1" }, client);
 
       expect(webSocketServiceMock.getUserIdBySocket).toHaveBeenCalledWith(
         client,
       );
-      expect(uploadProducerDeleteMock.sendMessage).toHaveBeenCalledWith(
+      expect(uploadProducerServiceMock.sendMessage).toHaveBeenCalledWith(
         "upload.delete",
         {
           userId: "user-1",
           id: "file-1",
         },
       );
-      expect(response).toEqual(expect.any(Promise));
+      expect(response).toEqual({ ok: true });
     });
 
     it("deve retornar error quando getUserIdBySocket lançar erro", () => {
       const client = {} as any;
-
       webSocketServiceMock.getUserIdBySocket.mockImplementation(() => {
         throw new Error("socket error");
       });
@@ -466,6 +447,21 @@ describe("UploadGateway", () => {
       expect(response).toEqual({
         event: "error",
         data: expect.any(Error),
+      });
+    });
+
+    it("deve retornar error.response quando erro tiver response", () => {
+      const client = {} as any;
+      const error = { response: { message: "fail" } };
+      webSocketServiceMock.getUserIdBySocket.mockImplementation(() => {
+        throw error;
+      });
+
+      const response = gateway.deleteUpload({ id: "file-1" }, client);
+
+      expect(response).toEqual({
+        event: "error",
+        data: { message: "fail" },
       });
     });
   });

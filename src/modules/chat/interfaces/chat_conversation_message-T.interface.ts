@@ -5,7 +5,6 @@ export interface Chat_conversation_messageT {
   messageId: string;
   chat_conversation: ChatConversationDTO;
 }
-export interface Chat_conversation_messageT_Ws
-  extends Chat_conversation_messageT {
+export interface Chat_conversation_messageT_Ws extends Chat_conversation_messageT {
   userId: string;
 }

@@ -5,20 +5,22 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ClientKafka } from "@nestjs/microservices";
+import { subscribeToResponseOfUpload } from "@upload/utils/subscribeToResponsesOff.util";
 import { Observable } from "rxjs";
 
 @Injectable()
-export class UploadProducerService<T> implements OnModuleInit, OnModuleDestroy {
+export class UploadProducerService implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject("UPLOAD_MODULE") private readonly client: ClientKafka) {}
   async onModuleInit() {
-    this.client.subscribeToResponseOf("upload.create");
-    this.client.subscribeToResponseOf("upload.delete");
+    subscribeToResponseOfUpload.forEach((item: string) => {
+      this.client.subscribeToResponseOf(item);
+    });
     await this.client.connect();
   }
   async onModuleDestroy() {
     await this.client.close();
   }
-  sendMessage(topic: string, message: T): Observable<T> {
+  sendMessage<T>(topic: string, message: T): Observable<T> {
     return this.client.emit<T>(topic, message);
   }
 }

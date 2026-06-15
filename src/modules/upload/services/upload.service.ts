@@ -67,13 +67,13 @@ export class UploadService {
   ): Promise<IPagination<FilesDocument>> {
     const skip = (page - 1) * limit;
     const [items, totalItems] = await Promise.all([
-      await this.filesModel
+      this.filesModel
         .find()
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
-      await this.filesModel.countDocuments(),
+      this.filesModel.countDocuments(),
     ]);
     if (!items || items.length < 1) {
       throw new NotFoundException(["no files found"]);

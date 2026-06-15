@@ -12,13 +12,21 @@ import { Queue } from "bull";
 import { InjectQueue } from "@nestjs/bull";
 import * as bcrypt from "bcryptjs";
 import { DateService } from "@common/services/date.service";
-
+import { Connection, Model } from "mongoose";
+import { InjectConnection, InjectModel } from "@nestjs/mongoose";
+import { UploadProducerService } from "@upload/services/upload.producer.service";
+import { FilesDocument } from "@upload/schemas/files.schema";
 @Controller()
 export class ChatConsumerController {
   constructor(
+    @InjectConnection("ChatsConnection")
+    private readonly connection: Connection,
+    @InjectModel(Chats.name, "Datas")
+    private readonly chatModel: Model<ChatsDocument>,
     private readonly chatService: ChatService,
     private readonly webSocketService: WebSocketService,
     private readonly chatProducerService: ChatProducerService,
+    private readonly uploadProducerService: UploadProducerService,
     @InjectQueue("chat")
     private readonly queue: Queue,
     private readonly dateService: DateService,
@@ -201,7 +209,7 @@ export class ChatConsumerController {
     }
   }
   @MessagePattern("chat.message.create.pending")
-  async handleMessageCreatepending(@Payload() message: ChatConversationTwS) {
+  async handleMessageCreatePending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.create`, message, {
@@ -209,7 +217,7 @@ export class ChatConsumerController {
     });
   }
   @MessagePattern("chat.message.update.pending")
-  async handleMessageUpdatepending(@Payload() message: ChatConversationTwS) {
+  async handleMessageUpdatePending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.update`, message, {
@@ -217,11 +225,41 @@ export class ChatConsumerController {
     });
   }
   @MessagePattern("chat.message.delete.pending")
-  async handleMessageDeletepending(@Payload() message: ChatConversationTwS) {
+  async handleMessageDeletePending(@Payload() message: ChatConversationTwS) {
     const date = this.dateService.now().toISOString();
     const hash = await bcrypt.hash(date, 10);
     return await this.queue.add(`chat.message.delete`, message, {
       jobId: `chat.message.delete.${message.userId}-${hash}`,
     });
+  }
+
+  @MessagePattern("chat.delete.process")
+  async handleMessageDeleteProcess(@Payload() message: string) {
+    const chat = (
+      await this.chatService.getChatByUsersIds(undefined, message)
+    ).toJSON();
+    const collectionName = chat._id.toString();
+    console.log(collectionName);
+    let page = 1;
+    while (true) {
+      const message = await this.chatService.getMessages(
+        collectionName,
+        page,
+        1,
+      );
+      for (const item of message.items) {
+        this.uploadProducerService.sendMessage<{
+          images?: ReturnType<FilesDocument["toJSON"]>[];
+          file?: ReturnType<FilesDocument["toJSON"]>;
+        }>("upload.delete.process", {
+          images: item.images?.map((item) => item.toJSON()),
+          file: item.file?.toJSON(),
+        });
+      }
+      page++;
+      if (!message?.nextPage) break;
+    }
+    await this.connection.dropCollection(`ChatMessage_${collectionName}`);
+    await this.chatModel.findByIdAndDelete(collectionName);
   }
 }

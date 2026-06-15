@@ -13,7 +13,6 @@ import { ChatGateway } from "./gateway/chat.gateway";
 import { UserModule } from "@user/user.module";
 import { BullModule } from "@nestjs/bull";
 import { UploadModule } from "@upload/upload.module";
-import { ChatProcessorService } from "./jobs/chat.processor.service";
 import {
   ChatConversation,
   ChatConversationSchema,
@@ -22,6 +21,9 @@ import { Users } from "@user/models/user.model";
 import { Users_schema } from "@user/schemas/user.schema";
 import { Files } from "@upload/models/files.model";
 import { FilesSchema } from "@upload/schemas/files.schema";
+import { Sports } from "@user/models/sports.model";
+import { Sports_schema } from "@user/schemas/sports.schema";
+import { grupIDs } from "@common/utils/groupsID.util";
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { FilesSchema } from "@upload/schemas/files.schema";
           name: Files.name,
           schema: FilesSchema,
         },
+        { name: Sports.name, schema: Sports_schema, collection: Sports.name },
       ],
       "Datas",
     ),
@@ -56,7 +59,7 @@ import { FilesSchema } from "@upload/schemas/files.schema";
             },
           },
           consumer: {
-            groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+            groupId: grupIDs,
             allowAutoTopicCreation: true,
           },
         },
@@ -65,19 +68,11 @@ import { FilesSchema } from "@upload/schemas/files.schema";
     BullModule.registerQueue({
       name: "chat",
     }),
-    BullModule.registerQueue({
-      name: "chat.process",
-    }),
     CommonModule,
     UserModule,
     UploadModule,
   ],
   controllers: [ChatController, ChatConsumerController],
-  providers: [
-    ChatService,
-    ChatGateway,
-    ChatProducerService,
-    ChatProcessorService,
-  ],
+  providers: [ChatService, ChatGateway, ChatProducerService],
 })
 export class ChatModule {}

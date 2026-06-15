@@ -12,6 +12,12 @@ import Queue = require("bull");
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { redisSentinelsConfig } from "@config/redis.sentinels.config";
 import { MongoExceptionFilter } from "@common/filters/mongo-exception.filter";
+import {
+  AsyncApiDocumentBuilder,
+  AsyncApiModule,
+  AsyncServerObject,
+} from "nestjs-asyncapi";
+import { grupIDs } from "@common/utils/groupsID.util";
 
 async function bootstrap() {
   const logger = new Logger();
@@ -54,21 +60,40 @@ async function bootstrap() {
         brokers: [configService.get<string>("KAFKA_BROKER") as string],
       },
       consumer: {
-        groupId: configService.get<string>("KAFKA_GROUP_ID") as string,
+        groupId: grupIDs,
         allowAutoTopicCreation: true,
       },
     },
   });
   await app.startAllMicroservices();
+
+  const wsServer: AsyncServerObject = {
+    host: "localhost:5000",
+    pathname: "/",
+    protocol: "ws",
+    protocolVersion: "13",
+    description: "WebSocket server - App Marcelo",
+    variables: {},
+    bindings: {},
+  };
+
+  const asyncApiOptions = new AsyncApiDocumentBuilder()
+    .setTitle("API app Marcelo - Events")
+    .setDescription("WebSocket")
+    .setVersion(configService.get<string>("APP_VERSION") || "1.0")
+    .setDefaultContentType("application/json")
+    .addServer("websocket", wsServer)
+    .build();
+
+  const asyncapiDocument = AsyncApiModule.createDocument(app, asyncApiOptions);
+  await AsyncApiModule.setup("/async-api", app, asyncapiDocument);
+
   //Config Bull DashBord
   const serverAdapter = new ExpressAdapter();
   const queue_chat = new Queue("chat", { redis: redisSentinelsConfig });
-  const queue_chat_process = new Queue("chat.process", {
-    redis: redisSentinelsConfig,
-  });
   serverAdapter.setBasePath("/admin/queues/");
   createBullBoard({
-    queues: [new BullAdapter(queue_chat), new BullAdapter(queue_chat_process)],
+    queues: [new BullAdapter(queue_chat)],
     serverAdapter,
   });
   app.use("/admin/queues", serverAdapter.getRouter());
@@ -76,6 +101,7 @@ async function bootstrap() {
   await app.listen(configService.get<number>("PORT") ?? 3000);
   logger.debug(`sever on in ${await app.getUrl()}`);
   logger.debug(`swagger on in ${await app.getUrl()}/swagger`);
+  logger.debug(`AsyncAPI on ${await app.getUrl()}/async-api`);
   logger.debug(`S3 Local on in http://localhost:9000`);
   logger.debug(`UI of Kafka on in http://localhost:8080`);
   logger.debug(`Bull Board on in ${await app.getUrl()}/admin/queues/`);

@@ -14,7 +14,7 @@ export class ChatConversation {
   @IsString()
   message?: string;
 
-  @ApiProperty({ required: true, default: "_id of user" })
+  @ApiProperty({ required: true, default: "_id of user", type: [Users] })
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: Users.name,
