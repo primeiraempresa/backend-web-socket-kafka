@@ -110,3 +110,18 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 
 
+## Bugs or Errors
+
+## /bin/sh: /seed/minio-seed.sh: /bin/sh^M: bad interpreter: No such file or directory
+  - solution:
+  got to Microsift store:
+  ![alt text](image.png)
+  username: admin
+
+- Configuração do docker
+  Habilitar Ubuntu
+  ![alt text](image-1.png)
+
+- After create password and user insert two commands on terminal
+  - chmod +x .docker/entrypoint.sh
+  - chmod +x .docker/minio-seed.sh
